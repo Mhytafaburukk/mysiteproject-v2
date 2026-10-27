@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <title>Panel - English Learning Platform</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .dashboard-container {
+            display: flex;
+            gap: 2rem;
+            max-width: 1000px;
+            width: 95%;
+            margin-top: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .stats-card {
+            flex: 1;
+            min-width: 300px;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.05));
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 10px 0;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 10px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 5px;
+            overflow: hidden;
+            margin: 15px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #00fa9a;
+            width: 0%;
+            transition: width 1s ease;
+        }
+
+        .menu-grid {
+            flex: 2;
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            min-width: 300px;
+        }
+
+        .menu-card {
+            background: rgba(255, 255, 255, 0.9);
+            color: #333;
+            padding: 1.5rem;
+            border-radius: 15px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 150px;
+        }
+
+        .menu-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .menu-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .welcome-text {
+            width: 100%;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+            color: white;
+        }
+
+        /* --- BİLDİRİM SİSTEMİ STİLLERİ --- */
+        .nav-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 10px 20px;
+            gap: 15px;
+        }
+
+        .notif-container {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .notif-bell {
+            font-size: 1.8rem;
+            color: white;
+            transition: 0.3s;
+        }
+
+        .notif-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: #ff4d4d;
+            color: white;
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 50%;
+            font-weight: bold;
+            display: none;
+            border: 2px solid #6482AD;
+        }
+
+        .notif-dropdown {
+            position: absolute;
+            top: 45px;
+            right: 0;
+            background: white;
+            width: 260px;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            display: none;
+            z-index: 2000;
+            color: #333;
+            overflow: hidden;
+        }
+
+        .notif-dropdown.show {
+            display: block;
+        }
+
+        .notif-header {
+            padding: 12px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+            font-size: 14px;
+            color: #555;
+        }
+
+        .notif-item {
+            padding: 12px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            cursor: pointer;
+            transition: 0.2s;
+            color: #333;
+            text-align: left;
+        }
+
+        .notif-item:hover {
+            background: #f0f4ff;
+        }
+
+        .notif-item:last-child {
+            border-bottom: none;
+        }
+
+        .footer {
+            margin-top: 30px;
+            color: white;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="nav-container">
+        <div class="notif-container" id="notifBtn">
+            <span class="notif-bell">🔔</span>
+            <span class="notif-badge" id="notifCount">0</span>
+            <div class="notif-dropdown" id="notifBox">
+                <div class="notif-header">Bildirimler</div>
+                <div id="notifList">
+                    <div style="padding:15px; text-align:center; color:#999; font-size:12px;">Yeni mesaj yok</div>
+                </div>
+            </div>
+        </div>
+
+        <a href="girisliindex.html" class="nav-link" style="background:white; color:#6482AD; font-weight:600;">Panel</a>
+        <button id="logoutBtn" class="nav-link" style="background:rgba(255,0,0,0.2); border:none; color:white; cursor:pointer;">Çıkış Yap</button>
+    </div>
+
+    <div class="dashboard-container">
+        <div class="welcome-text" id="welcomeMsg">Hoşgeldiniz</div>
+
+        <div class="stats-card">
+            <h3>İlerleme Durumu</h3>
+            <div class="stat-number" id="knownCount">0</div>
+            <p>Bilinen Kelime Sayısı</p>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            <p id="totalWords">Yükleniyor...</p> 
+        </div>
+
+        <div class="menu-grid" id="menuGrid">
+            <a href="kelime.html" class="menu-card">
+                <div class="menu-icon">📝</div>
+                <h3>Kelime Testi</h3>
+                <p>Kendini sına</p>
+            </a>
+            <a href="dinleme_testi.html" class="menu-card">
+                <div class="menu-icon">🎧</div>
+                <h3>Dinleme Testi</h3>
+                <p>Sürükle ve Eşleştir</p>
+            </a>
+            <a href="Profil.html?action=users" class="menu-card">
+                <div class="menu-icon">💬</div>
+                <h3>Mesajlar</h3>
+                <p>Arkadaşlarınla konuş</p>
+            </a>
+            <a href="Profil.html" class="menu-card">
+                <div class="menu-icon">👤</div>
+                <h3>Profilim</h3>
+                <p>Hesap ayarları</p>
+            </a>
+            <a href="TumKelimeler.html" class="menu-card">
+                <div class="menu-icon">📚</div>
+                <h3>Kelime Listesi</h3>
+                <p>Tüm kelimeleri gör</p>
+            </a>
+            </div>
+    </div>
+
+    <div class="footer">
+        © 2024 English Learning Platform
+    </div>
+
+    <script src="all_words.js"></script>
+<script>
+        document.addEventListener("DOMContentLoaded", async () => {
+            const API_URL = "https://englishfavorablecondition.onrender.com";
+            const username = localStorage.getItem("username");
+            
+            let originalTitle = document.title;
+            let titleInterval = null;
+
+            if (!username) {
+                window.location.href = "giris.html";
+                return;
+            }
+
+            document.getElementById("welcomeMsg").textContent = `Hoşgeldiniz, ${username}`;
+
+            if (username === "Burak") {
+                const menuGrid = document.getElementById("menuGrid");
+                const adminCard = document.createElement("a");
+                adminCard.href = "Admin.html";
+                adminCard.className = "menu-card admin-card";
+                adminCard.innerHTML = `
+                    <div class="menu-icon">🛡️</div>
+                    <h3>Admin Paneli</h3>
+                    <p>Kullanıcı Yönetimi</p>
+                `;
+                menuGrid.appendChild(adminCard);
+            }
+
+
+            document.getElementById("logoutBtn").onclick = () => {
+                localStorage.removeItem("username");
+                window.location.href = "index.html";
+            };
+
+            const notifBtn = document.getElementById("notifBtn");
+            const notifBox = document.getElementById("notifBox");
+            const notifCount = document.getElementById("notifCount");
+            const notifList = document.getElementById("notifList");
+
+            notifBtn.onclick = (e) => {
+                e.stopPropagation();
+                notifBox.classList.toggle("show");
+
+                clearInterval(titleInterval);
+                titleInterval = null;
+                document.title = originalTitle;
+            };
+
+            document.onclick = () => notifBox.classList.remove("show");
+
+            async function checkNotifications() {
+                try {
+                    const res = await fetch(`${API_URL}/get-all-messages/${username}`);
+                    const data = await res.json();
+
+                    if (data.success && data.messages) {
+                        const unreadMessages = data.messages.filter(m => m.receiver === username && m.isRead === false);
+                        const distinctSenders = [...new Set(unreadMessages.map(m => m.sender))];
+
+                        if (distinctSenders.length > 0) {
+                            notifCount.style.display = "block";
+                            notifCount.textContent = distinctSenders.length; 
+                            
+                            notifList.innerHTML = distinctSenders.map(sender => `
+                                <div class="notif-item" onclick="location.href='Profil.html?action=users'">
+                                    <strong>${sender}</strong> kullanıcısından yeni mesajınız var.
+                                </div>
+                            `).join("");
+
+                            if (!titleInterval) {
+                                titleInterval = setInterval(() => {
+                                    document.title = (document.title === originalTitle) ? "🔴 Yeni Mesajın Var!" : originalTitle;
+                                }, 1000);
+                            }
+                        } else {
+                            notifCount.style.display = "none";
+                            notifList.innerHTML = `<div style="padding:15px; text-align:center; color:#999; font-size:12px;">Yeni mesaj yok</div>`;
+                            
+                            clearInterval(titleInterval);
+                            titleInterval = null;
+                            document.title = originalTitle;
+                        }
+                    }
+                } catch (error) {
+                    console.log("Bildirim hatası:", error);
+                }
+            }
+
+            checkNotifications();
+            setInterval(checkNotifications, 10000); 
+
+            let total = 0;
+            if (typeof comprehensiveWordList !== 'undefined') {
+                total = comprehensiveWordList.length;
+            } else {
+                total = 542;
+            }
+            document.getElementById("totalWords").textContent = `Toplam: ${total} Kelime`;
+
+            try {
+                const res = await fetch(`${API_URL}/get-user-info/${username}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (data.success) {
+                        const known = data.user.knownWords || 0;
+                        document.getElementById("knownCount").textContent = known;
+                        const pct = total > 0 ? Math.min((known / total) * 100, 100) : 0;
+                        document.getElementById("progressFill").style.width = pct + "%";
+                    }
+                }
+            } catch (e) {
+                console.error("İstatistik hatası:", e);
+            }
+        });
+    </script>
+</body>
+</html>

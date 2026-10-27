@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <title>Tüm Kelimeler - İngilizce Kelime Listesi</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        /* Page specific overrides if needed, but mostly relying on style.css */
+        .main-container {
+            width: 90%;
+            max-width: 1000px;
+            /* Wider for the table */
+        }
+
+        .word-table-container {
+            width: 100%;
+            overflow-x: auto;
+            margin-top: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        table.word-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        th,
+        td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background-color: var(--primary-color);
+            color: white;
+            font-weight: 600;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+
+        .alphabet-nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+            margin-top: 20px;
+            margin-bottom: 20px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 15px;
+        }
+
+        .letter-link {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            color: var(--primary-color);
+            border-radius: 50%;
+            font-weight: bold;
+            font-size: 0.9rem;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .letter-link:hover,
+        .letter-link.active {
+            background: var(--primary-color);
+            color: white;
+            transform: translateY(-2px);
+        }
+
+        .search-box {
+            width: 100%;
+            max-width: 400px;
+            padding: 12px 20px;
+            border-radius: 25px;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+            margin: 0 auto;
+            display: block;
+            font-size: 1rem;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(5px);
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        .search-box:focus {
+            background: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 15px rgba(106, 17, 203, 0.2);
+        }
+
+        .section-header {
+            margin-top: 30px;
+            margin-bottom: 10px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid var(--secondary-color);
+            color: var(--primary-color);
+            font-size: 1.5rem;
+            text-align: left;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="nav-container">
+        <a href="girisliindex.html" class="nav-link">Anasayfa</a>
+        <a href="kelime.html" class="nav-link">Kelime Testi</a>
+        <a href="dinleme_testi.html" class="nav-link">Dinleme Testi</a>
+        <a href="TumKelimeler.html" class="nav-link" style="background:white; color:var(--primary-color);">Kelime
+            Listesi</a>
+    </div>
+
+    <div class="main-container">
+        <h1 class="title">Tüm Kelimeler</h1>
+        <p style="margin-bottom: 20px;">Toplam <span id="word-count">...</span> kelime listeleniyor.</p>
+
+        <input type="text" id="searchInput" class="search-box" placeholder="Kelime ara...">
+
+        <div class="alphabet-nav" id="alphabetNav">
+            <!-- Alphabet links will be generated here -->
+        </div>
+
+        <div id="wordsContainer">
+            <!-- Words will be populated here -->
+        </div>
+    </div>
+
+    <div class="footer">
+        © 2024 English Learning Platform
+    </div>
+
+    <script src="all_words.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // Check if all_words.js loaded correctly
+            if (typeof comprehensiveWordList === 'undefined') {
+                document.getElementById('wordsContainer').innerHTML = '<p>Kelime listesi yüklenemedi. Lütfen sayfayı yenileyin.</p>';
+                return;
+            }
+
+            const wordList = comprehensiveWordList; // From all_words.js
+            const container = document.getElementById('wordsContainer');
+            const navContainer = document.getElementById('alphabetNav');
+            const searchInput = document.getElementById('searchInput');
+            const countSpan = document.getElementById('word-count');
+
+            countSpan.textContent = wordList.length;
+
+            // Generate Alphabet Navigation
+            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
+            alphabet.forEach(letter => {
+                const a = document.createElement('a');
+                a.className = 'letter-link';
+                a.textContent = letter;
+                a.onclick = () => {
+                    const section = document.getElementById('section-' + letter);
+                    if (section) {
+                        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+                        // Active state handling
+                        document.querySelectorAll('.letter-link').forEach(l => l.classList.remove('active'));
+                        a.classList.add('active');
+                    }
+                };
+                navContainer.appendChild(a);
+            });
+
+            // Group words by first letter
+            // Sort words alphabetically first
+            wordList.sort((a, b) => a.word.localeCompare(b.word));
+
+            let userFavorites = [];
+            const savedUsername = localStorage.getItem("username");
+
+            // Fetch user favorites on load
+            if (savedUsername) {
+                fetch(`http://localhost:5001/get-favorites/${savedUsername}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            userFavorites = data.favorikelimeler || [];
+                            renderWords(); // Re-render to show stars
+                        }
+                    })
+                    .catch(err => console.error("Favoriler yüklenemedi:", err));
+            }
+
+            function renderWords(filterText = "") {
+                container.innerHTML = "";
+                filterText = filterText.toLowerCase();
+
+                let hasMatches = false;
+
+                // Grouping Logic
+                const grouped = {};
+                alphabet.forEach(l => grouped[l] = []);
+
+                wordList.forEach(item => {
+                    if (item.word.toLowerCase().includes(filterText) || item.meaning.toLowerCase().includes(filterText)) {
+                        const firstChar = item.word.charAt(0).toUpperCase();
+                        if (grouped[firstChar]) {
+                            grouped[firstChar].push(item);
+                        } else {
+                            if (!grouped['#']) grouped['#'] = [];
+                            grouped['#'].push(item);
+                        }
+                    }
+                });
+
+                Object.keys(grouped).forEach(letter => {
+                    if (grouped[letter].length > 0) {
+                        hasMatches = true;
+
+                        // Section Header
+                        const header = document.createElement('h2');
+                        header.className = 'section-header';
+                        header.id = 'section-' + letter;
+                        header.textContent = letter;
+                        container.appendChild(header);
+
+                        // Table
+                        const tableContainer = document.createElement('div');
+                        tableContainer.className = 'word-table-container';
+
+                        const table = document.createElement('table');
+                        table.className = 'word-table';
+
+                        // Construct table HTML with Favorite Column
+                        table.innerHTML = `
+                            <thead>
+                                <tr>
+                                    <th>İngilizce</th>
+                                    <th>Türkçe</th>
+                                    <th style="width: 50px; text-align: center;">Favori</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            </tbody>
+                        `;
+
+                        const tbody = table.querySelector('tbody');
+
+                        grouped[letter].forEach(w => {
+                            const isFav = userFavorites.includes(w.word);
+                            const tr = document.createElement('tr');
+                            tr.innerHTML = `
+                                <td><strong>${w.word}</strong></td>
+                                <td>${w.meaning}</td>
+                                <td style="text-align: center;">
+                                    <span class="fav-icon ${isFav ? 'active' : ''}" data-word="${w.word}" style="cursor: pointer; font-size: 1.2rem; color: ${isFav ? 'gold' : '#ccc'};">
+                                        ★
+                                    </span>
+                                </td>
+                            `;
+                            tbody.appendChild(tr);
+                        });
+
+                        tableContainer.appendChild(table);
+                        container.appendChild(tableContainer);
+                    }
+                });
+
+                if (!hasMatches) {
+                    container.innerHTML = '<p style="margin-top:20px;">Eşleşen kelime bulunamadı.</p>';
+                }
+
+                // Add Event Listeners for Stars
+                document.querySelectorAll('.fav-icon').forEach(icon => {
+                    icon.addEventListener('click', function () {
+                        if (!savedUsername) {
+                            alert("Favorilere eklemek için lütfen giriş yapın!");
+                            return;
+                        }
+
+                        const word = this.getAttribute('data-word');
+                        const isCurrentlyFav = this.classList.contains('active');
+
+                        // Optimistic UI Update
+                        if (!isCurrentlyFav) {
+                            this.classList.add('active');
+                            this.style.color = 'gold';
+                            // Add to backend
+                            fetch('http://localhost:5001/add-favorite', {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ username: savedUsername, word: word })
+                            })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        // alert("Kelime favorilere eklendi!"); // Too annoying for every click
+                                        if (!userFavorites.includes(word)) userFavorites.push(word);
+                                    } else {
+                                        alert(data.message);
+                                        // Revert
+                                        this.classList.remove('active');
+                                        this.style.color = '#ccc';
+                                    }
+                                });
+                        } else {
+                            // Logic for removing logic is not in single-endpoint API yet, but let's assume simple toggle or add logic
+                            // The backend 'add-favorite' only adds. 'update-favorites' is for bulk.
+                            // The user ONLY asked to "save/add". Removing might be a feature request later.
+                            // For now, I will prevent expanding scope unless necessary.
+                            // But usually toggle is expected.
+                            // Let's just alert "Already in favorites" as per current backend generic "success: false" message for existing.
+
+                            // Checking backend server2.js: 
+                            // if (user.favorikelimeler.includes(word)) res.json({ success: false, message: "Bu kelime zaten favorilerde." });
+
+                            alert("Bu kelime zaten favorilerde ekli.");
+                        }
+                    });
+                });
+            }
+
+            // Initial Render
+            renderWords();
+
+            // Search Functionality
+            searchInput.addEventListener('input', (e) => {
+                renderWords(e.target.value);
+            });
+        });
+    </script>
+</body>
+
+</html>

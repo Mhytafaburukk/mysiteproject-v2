@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <title>Giriş Yap - İngilizce Kelime Testi</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="nav-container">
+        <a href="index.html" class="nav-link">Anasayfa</a>
+        <a href="kaydol.html" class="nav-link">Kayıt Ol</a>
+    </div>
+
+    <div class="main-container">
+        <h1 class="title">Giriş Yap</h1>
+        <form id="girisForm" class="login-form">
+            <div class="input-group">
+                <label for="adsoyad">Kullanıcı Adı</label>
+                <input type="text" id="adsoyad" class="styled-input" placeholder="Kullanıcı adınız" required>
+            </div>
+            <div class="input-group">
+                <label for="sifreid">Şifre</label>
+                <input type="password" id="sifreid" class="styled-input" placeholder="••••••" required>
+            </div>
+            <button type="submit" id="submitBtn" class="btn-primary">Giriş Yap</button>
+        </form>
+        <div id="labelenter" class="status-message"></div>
+    </div>
+
+    <script>
+const LOGIN_URL = window.location.origin + "/login";
+
+        document.getElementById("girisForm").addEventListener("submit", async function (event) {
+            event.preventDefault();
+            const labelenter = document.getElementById("labelenter");
+            const submitBtn = document.getElementById("submitBtn");
+
+            const username = document.getElementById("adsoyad").value.trim();
+            const password = document.getElementById("sifreid").value.trim();
+
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Giriş Yapılıyor...";
+
+            try {
+                const response = await fetch(LOGIN_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    labelenter.style.color = "#28a745";
+                    labelenter.textContent = "Giriş başarılı! Hoş geldiniz.";
+                    
+                    // ÖNEMLİ: Kullanıcı ismini tarayıcıya kaydediyoruz
+                    localStorage.setItem("username", username);
+                    
+                    setTimeout(() => { 
+                        window.location.href = "girisliindex.html"; 
+                    }, 1000);
+                } else {
+                    throw new Error(data.message || "Kullanıcı adı veya şifre hatalı.");
+                }
+            } catch (error) {
+                console.error("Hata:", error);
+                labelenter.style.color = "#dc3545";
+                labelenter.textContent = "Bağlantı Hatası: Sunucuya ulaşılamıyor.";
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Giriş Yap";
+            }
+        });
+    </script>
+</body>
+</html>

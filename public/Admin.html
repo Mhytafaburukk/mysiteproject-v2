@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <title>Yönetici Girişi - Admin</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; background: #1a1a2e; color: white; display: flex; justify-content: center; align-items: center; min-height: 100vh; margin: 0; }
+        .admin-box { background: rgba(255, 255, 255, 0.1); padding: 2rem; border-radius: 20px; backdrop-filter: blur(10px); width: 90%; max-width: 800px; text-align: center; border: 1px solid rgba(255,255,255,0.2); }
+        .secure-input { padding: 12px; border-radius: 10px; border: none; width: 200px; margin-bottom: 10px; font-size: 16px; text-align: center; }
+        .btn-verify { padding: 12px 25px; border-radius: 10px; border: none; background: #ff4d4d; color: white; cursor: pointer; font-weight: bold; }
+        #adminContent { display: none; margin-top: 20px; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; background: white; color: #333; border-radius: 10px; overflow: hidden; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        th { background: #008069; color: white; }
+        tr:hover { background: #f1f1f1; }
+        .back-link { color: #aaa; text-decoration: none; display: block; margin-top: 20px; font-size: 14px; }
+    </style>
+</head>
+<body>
+
+    <div class="admin-box">
+        <div id="authArea">
+            <h2>🛡️ Admin Güvenlik Doğrulaması</h2>
+            <p>Lütfen devam etmek için yönetici parolasını girin.</p>
+            <input type="password" id="adminPass" class="secure-input" placeholder="Yönetici Şifresi">
+            <br>
+            <button onclick="verifyAdmin()" class="btn-verify">Yetkiyi Doğrula</button>
+        </div>
+
+        <div id="adminContent">
+            <h3>Kullanıcı Veritabanı Yedekleme</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Kullanıcı Adı</th>
+                        <th>Şifre (SHA-256 Hash)</th>
+                        <th>Kelimeler</th>
+                    </tr>
+                </thead>
+                <tbody id="userList"></tbody>
+            </table>
+        </div>
+        <a href="girisliindex.html" class="back-link">← Panele Geri Dön</a>
+    </div>
+
+    <script>
+        const API_URL = "https://englishfavorablecondition.onrender.com";
+        const ADMIN_SECRET = "6864hatay1071"; 
+
+        async function verifyAdmin() {
+            const input = document.getElementById("adminPass").value;
+            const currentUsername = localStorage.getItem("username");
+
+            // 1. Güvenlik: Kullanıcı Burak mı?
+            if (currentUsername !== "Burak") {
+                alert("Bu işlem için yetkiniz yok!");
+                window.location.href = "girisliindex.html";
+                return;
+            }
+
+            // 2. Güvenlik: İkinci şifre doğru mu?
+            if (input === ADMIN_SECRET) {
+                document.getElementById("authArea").style.display = "none";
+                document.getElementById("adminContent").style.display = "block";
+                loadUsers();
+            } else {
+                alert("Hatalı yönetici şifresi!");
+            }
+        }
+
+        async function loadUsers() {
+            try {
+                // Sunucuda admin-get-all-users rotası tanımlı olmalı (Bir önceki mesajda verdiğim server kodu)
+                const res = await fetch(`${API_URL}/admin-get-all-users/Burak`);
+                const data = await res.json();
+
+                if (data.success) {
+                    const list = document.getElementById("userList");
+                    list.innerHTML = data.users.map(u => `
+                        <tr>
+                            <td><strong>${u.username}</strong></td>
+                            <td><code>${u.password}</code></td>
+                            <td>${u.knownWords || 0}</td>
+                        </tr>
+                    `).join("");
+                } else {
+                    alert("Veriler çekilemedi: " + data.message);
+                }
+            } catch (err) {
+                alert("Sunucu bağlantı hatası!");
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+[
+  {
+    "username": "Burak",
+    "password": "d4b189c8982cedfab5eb9fbd8c407bfa65e7dcea5246ecbd3e053f26f505d447",
+    "knownWords": 120,
+    "profilePic": "",
+    "favorikelimeler": [
+      "achievement",
+      "resilience",
+      "innovation",
+      "success"
+    ],
+    "followers": [
+      "Alice_Bot",
+      "David_Bot",
+      "Sophia_Bot"
+    ],
+    "following": [
+      "Alice_Bot",
+      "David_Bot"
+    ],
+    "messages": [
+      {
+        "sender": "Alice_Bot",
+        "receiver": "Burak",
+        "content": "Hello Burak! Ready to practice some English vocabulary today?",
+        "timestamp": "2026-10-27T10:00:00.000Z",
+        "isRead": true
+      },
+      {
+        "sender": "Burak",
+        "receiver": "Alice_Bot",
+        "content": "Hi Alice! Yes, let's practice advanced words and listening exercises.",
+        "timestamp": "2026-10-27T10:02:00.000Z",
+        "isRead": true
+      }
+    ]
+  },
+  {
+    "username": "Alice_Bot",
+    "password": "4e40e8ffe0ee32fa53e139147ed559229a5930f89c2204706fc174beb36210b3",
+    "knownWords": 95,
+    "profilePic": "",
+    "favorikelimeler": [
+      "comprehension",
+      "fluency",
+      "grammar"
+    ],
+    "followers": [
+      "Burak",
+      "David_Bot"
+    ],
+    "following": [
+      "Burak"
+    ],
+    "messages": [
+      {
+        "sender": "Alice_Bot",
+        "receiver": "Burak",
+        "content": "Hello Burak! Ready to practice some English vocabulary today?",
+        "timestamp": "2026-10-27T10:00:00.000Z",
+        "isRead": true
+      },
+      {
+        "sender": "Burak",
+        "receiver": "Alice_Bot",
+        "content": "Hi Alice! Yes, let's practice advanced words and listening exercises.",
+        "timestamp": "2026-10-27T10:02:00.000Z",
+        "isRead": true
+      }
+    ]
+  },
+  {
+    "username": "David_Bot",
+    "password": "0f14089313b20c1723ec1d660b0aaa4f473cf5b321cd370f2d48b7bcf9a7b234",
+    "knownWords": 150,
+    "profilePic": "",
+    "favorikelimeler": [
+      "pronunciation",
+      "idiom",
+      "expression"
+    ],
+    "followers": [
+      "Burak"
+    ],
+    "following": [
+      "Burak",
+      "Alice_Bot"
+    ],
+    "messages": []
+  },
+  {
+    "username": "Sophia_Bot",
+    "password": "2993dd514d3adc941f7ea41b49834d23d8af6b9e201a9a570bedc3f9aa40ac36",
+    "knownWords": 75,
+    "profilePic": "",
+    "favorikelimeler": [
+      "communication",
+      "dialogue",
+      "phrase"
+    ],
+    "followers": [],
+    "following": [
+      "Burak"
+    ],
+    "messages": []
+  }
+]

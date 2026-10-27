@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <title>English Learning Platform</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .hero-section {
+            text-align: center;
+            padding: 2rem;
+            max-width: 800px;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            background: -webkit-linear-gradient(45deg, #fff, #e0e0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero-subtitle {
+            font-size: 1.2rem;
+            margin-bottom: 2rem;
+            color: rgba(255, 255, 255, 0.9);
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 3rem;
+        }
+
+        .feature-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            padding: 2rem;
+            border-radius: 20px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.3s;
+            text-align: left;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-5px);
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .feature-title {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .cta-buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-top: 2rem;
+        }
+
+        .btn-large {
+            padding: 15px 30px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="nav-container">
+        <a href="index.html" class="nav-link">Anasayfa</a>
+        <a href="giris.html" class="nav-link" style="background:white; color:var(--primary-color);">Giriş Yap</a>
+        <a href="kaydol.html" class="nav-link">Kayıt Ol</a>
+    </div>
+
+    <div class="hero-section">
+        <h1 class="hero-title">İngilizce Öğrenmenin<br>Modern Yolu</h1>
+        <p class="hero-subtitle">Kelime hazineni geliştir, dinleme becerilerini test et ve arkadaşlarınla yarış.</p>
+
+        <div class="cta-buttons">
+            <a href="giris.html" class="btn-primary btn-large">Hemen Başla</a>
+            <a href="kaydol.html" class="btn-secondary btn-large" style="color:white; border-color:white;">Hesap
+                Oluştur</a>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📚</div>
+                <h3 class="feature-title">Kelime Testi</h3>
+                <p>Binlerce kelime ile kendini sına. Yanlış yaptıklarını tekrar ederek öğren.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">🎧</div>
+                <h3 class="feature-title">Dinleme & Eşleştirme</h3>
+                <p>Duyduğun kelimeleri görsellerle eşleştirerek hafızanı güçlendir.</p>
+            </div>
+            <div class="feature-card">
+                <div class="feature-icon">💬</div>
+                <h3 class="feature-title">Global Mesajlaşma</h3>
+                <p>Diğer öğrencilerle iletişim kur ve pratik yap.</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="footer">
+        © 2024 English Learning Platform
+    </div>
+
+</body>
+
+</html>

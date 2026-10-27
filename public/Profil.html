@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İngilizce Kelime Testi - Profil</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        /* TEMEL STİLLER */
+        a:hover, a:visited, a:active, a:link { text-decoration: none; }
+        
+        #Menu {
+            padding: 15px;
+            position: absolute;
+            right: 0px;
+            top: 0px;
+            z-index: 20;
+        }
+
+        #forbackbutton {
+            position: absolute;
+            left: 15px;
+            top: 15px;
+            z-index: 20;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        #container {
+            padding: 20px;
+            border-radius: 10px;
+            max-width: 90%;
+            width: 500px;
+            text-align: center;
+            z-index: 10;
+            position: relative;
+            background: rgba(255, 255, 255, 0.1) !important;
+            backdrop-filter: blur(5px);
+        }
+
+        .header, #section, #section2, .result1 {
+            background: rgba(255, 255, 255, 0.2) !important;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 10px;
+            padding: 15px;
+            margin-bottom: 10px;
+            color: white;
+        }
+
+        button {
+            color: black;
+            border: none;
+            padding: 10px 15px;
+            margin: 5px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: 0.3s;
+            font-weight: 600;
+        }
+
+        #content1 {
+            overflow-y: auto;
+            max-height: 150px;
+            text-align: left;
+        }
+
+        /* PROFİL RESMİ */
+        .profile-pic-container {
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 15px;
+        }
+
+        .profile-pic {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 3px solid white;
+            background: #eee;
+        }
+
+        .upload-label {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            background: #6a5acd;
+            color: white;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 18px;
+            border: 2px solid white;
+        }
+
+        #fileInput { display: none; }
+
+        .egik { border-radius: 10px; color: white; padding: 5px 10px; }
+
+        /* ANİMASYON ELEMENTLERİ */
+        p[id^='büyük'], p[id^='kücük'], p[id^='hareketli'] {
+            width: 10px; height: 10px; position: fixed; border-radius: 50%; z-index: 0; pointer-events: none;
+        }
+
+        /* USERS LİSTESİ TABLO */
+        table { width: 100%; color: white; border-collapse: collapse; }
+        td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); }
+        .visit-btn { background-color: #6a5acd; color: white; padding: 5px 10px; font-size: 12px; }
+    </style>
+</head>
+
+<body>
+    <p id="büyük"></p><p id="kücük"></p><p id="hareketliKutu"></p><p id="hareketliKutu2"></p>
+    <p id="büyük2"></p><p id="büyük3"></p><p id="büyük4"></p><p id="büyük5"></p>
+    <p id="büyük6"></p><p id="büyük7"></p><p id="büyük8"></p>
+
+    <div id="forbackbutton">
+        <button id="backbutton">Back</button>
+    </div>
+
+    <div id="Menu">
+        <a href="girisliindex.html" class="egik">Anasayfa</a>
+        <a href="kelime.html" class="egik">İngilizce testler</a>
+    </div>
+
+    <div id="container">
+        <div class="profile-pic-container">
+            <img src="https://via.placeholder.com/100" id="profileImage" class="profile-pic">
+            <label for="fileInput" class="upload-label">+</label>
+            <input type="file" id="fileInput" accept="image/*">
+        </div>
+
+        <div class="header" id="greeting">Hoşgeldiniz</div>
+
+        <div id="section">
+            <button id="Favorikelime">My Favourite Words</button>
+            <button id="users">Users</button>
+            <div id="followStats" style="margin-top: 15px; display: flex; justify-content: center; gap: 20px;">
+                <div id="followersClick" style="cursor: pointer;"><strong id="followerCount">0</strong> Takipçi</div>
+                <div id="followingClick" style="cursor: pointer;"><strong id="followingCount">0</strong> Takip Edilen</div>
+            </div>
+        </div>
+
+        <div class="result1">
+            <div id="content1">Bir işlem seçin...</div>
+        </div>
+
+        <div id="section2">
+            <button id="Deleteaccount" style="background-color: #ff4d4d; color: white;">Delete Account</button>
+            <button id="language">Language</button>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const API_URL = "https://englishfavorablecondition.onrender.com"; 
+            const savedUsername = localStorage.getItem("username") || "Kullanıcı";
+            const savedTheme = localStorage.getItem("selectedTheme");
+            const profileImage = document.getElementById("profileImage");
+            const content1 = document.getElementById("content1");
+
+            // TEMA UYGULAMA
+            if (savedTheme === 'black') {
+                document.body.style.backgroundColor = "#222831";
+                document.getElementById("container").style.backgroundColor = "rgba(0,0,0,0.5)";
+            } else {
+                document.body.style.backgroundColor = "#6482AD";
+                document.getElementById("container").style.backgroundColor = "rgba(255,255,255,0.1)";
+            }
+
+            // KULLANICI BİLGİLERİNİ VE RESMİ ÇEKME
+            function loadUserInfo() {
+                fetch(`${API_URL}/get-user-info/${savedUsername}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success && data.user) {
+                            // Eğer veritabanında profil resmi varsa yükle
+                            if (data.user.profilePic) {
+                                profileImage.src = data.user.profilePic;
+                            }
+                            document.getElementById("followerCount").textContent = (data.user.followers || []).length;
+                            document.getElementById("followingCount").textContent = (data.user.following || []).length;
+                            document.getElementById("greeting").textContent = "Hoşgeldiniz, " + savedUsername;
+                        }
+                    })
+                    .catch(err => console.error("Bilgi çekme hatası:", err));
+            }
+
+            loadUserInfo();
+
+            // PROFİL RESMİ GÜNCELLEME
+            document.getElementById("fileInput").addEventListener("change", function () {
+                const file = this.files[0];
+                if (file) {
+                    // Dosya boyutu kontrolü (Örn: Max 2MB)
+                    if (file.size > 2 * 1024 * 1024) {
+                        content1.innerHTML = "<span style='color:red;'>Hata: Dosya boyutu çok büyük (Max 2MB).</span>";
+                        return;
+                    }
+
+                    const reader = new FileReader();
+                    content1.innerHTML = "Resim yükleniyor...";
+
+                    reader.onload = function (e) {
+                        const base64Image = e.target.result;
+
+                        fetch(`${API_URL}/update-profile-pic`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ 
+                                username: savedUsername, 
+                                imageBase64: base64Image 
+                            })
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if(data.success) {
+                                profileImage.src = base64Image;
+                                content1.innerHTML = "<span style='color:#00ff00;'>Profil resmi başarıyla güncellendi!</span>";
+                            } else {
+                                content1.innerHTML = "<span style='color:red;'>Yükleme hatası: " + data.message + "</span>";
+                            }
+                        })
+                        .catch(err => {
+                            content1.innerHTML = "<span style='color:red;'>Sunucu hatası oluştu.</span>";
+                        });
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            // USERS LİSTESİ
+            document.getElementById("users").onclick = function () {
+                content1.innerHTML = "Kullanıcılar listeleniyor...";
+                fetch(`${API_URL}/users`)
+                    .then(res => res.json())
+                    .then(usersArray => {
+                        const others = usersArray.filter(u => u.username !== savedUsername);
+                        let html = "<table>";
+                        others.forEach(u => {
+                            // Kullanıcı listesinde resim varsa ufak bir simge olarak gösterilebilir
+                            const miniPic = u.profilePic ? u.profilePic : 'https://via.placeholder.com/30';
+                            html += `<tr>
+                                <td><img src="${miniPic}" style="width:30px; height:30px; border-radius:50%; vertical-align:middle; margin-right:10px;">${u.username}</td>
+                                <td align="right"><button class="visit-btn" data-user="${u.username}">Ziyaret Et</button></td>
+                            </tr>`;
+                        });
+                        html += "</table>";
+                        content1.innerHTML = html;
+
+                        document.querySelectorAll(".visit-btn").forEach(btn => {
+                            btn.onclick = function() {
+                                localStorage.setItem("currentusername", this.getAttribute("data-user"));
+                                window.location.href = "Otherprofiles.html";
+                            };
+                        });
+                    });
+            };
+
+            // HESAP SİLME
+            document.getElementById("Deleteaccount").onclick = function () {
+                const confirmation = confirm("Hesabınızı silmek istediğinize emin misiniz?");
+                if (confirmation) {
+                    fetch(`${API_URL}/delete-account`, {
+                        method: "DELETE",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username: savedUsername })
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            alert("Hesabınız silindi.");
+                            localStorage.clear();
+                            window.location.href = "index.html";
+                        }
+                    });
+                }
+            };
+
+            // ANİMASYON
+            function hareket(box) {
+                let t = Math.random()*500, l = Math.random()*800, vd=1, hd=1;
+                setInterval(() => {
+                    l += 2*hd; t += 2*vd;
+                    if(l <= 0 || l+30 >= window.innerWidth) hd *= -1;
+                    if(t <= 0 || t+30 >= window.innerHeight) vd *= -1;
+                    box.style.top = t+"px"; box.style.left = l+"px";
+                }, 100);
+            }
+            document.querySelectorAll("p[id^='büyük'], p[id^='hareketli'], p[id^='kücük']").forEach(p => {
+                hareket(p);
+                p.style.boxShadow = (savedTheme === 'black') ? "0 0 30px 15px #76ABAE" : "0 0 30px 15px #E2DAD6";
+            });
+
+            document.getElementById("backbutton").onclick = () => window.location.href = "girisliindex.html";
+        });
+    </script>
+</body>
+</html>
+
+
+
+
+
+
+

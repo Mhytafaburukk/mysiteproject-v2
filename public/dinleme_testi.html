@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <title>Dinleme ve Sürükleme Testi</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .test-area {
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+
+        .words-container {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+            min-height: 60px;
+            padding: 10px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+
+        .draggable-word {
+            background: white;
+            color: var(--primary-color);
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: grab;
+            font-weight: 600;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            /* Align text and icon */
+        }
+
+        .draggable-word:active {
+            cursor: grabbing;
+        }
+
+        .audio-icon {
+            font-size: 1.2rem;
+            transition: transform 0.2s;
+            display: inline-block;
+        }
+
+        .audio-icon:hover {
+            transform: scale(1.2);
+            color: #4a90e2;
+        }
+
+        .drop-zones {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            flex-wrap: wrap;
+        }
+
+        .drop-zone {
+            width: 120px;
+            height: 120px;
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+            border-radius: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s;
+            position: relative;
+        }
+
+        .drop-zone.hovered {
+            border-color: white;
+            background: rgba(255, 255, 255, 0.1);
+        }
+
+        .drop-zone img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            margin-bottom: 5px;
+            pointer-events: none;
+            /* Prevent image from interrupting drop */
+        }
+
+        .drop-zone span {
+            font-size: 0.8rem;
+            color: rgba(0, 0, 0, 0.5);
+        }
+
+        .play-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 1.5rem;
+            color: white;
+            margin-bottom: 10px;
+            transition: transform 0.2s;
+        }
+
+        .play-btn:hover {
+            transform: scale(1.1);
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="nav-container">
+        <a href="girisliindex.html" class="nav-link">Anasayfa</a>
+        <a href="kelime.html" class="nav-link">Kelime Testi</a>
+        <a href="dinleme_testi.html" class="nav-link" style="background:white; color:var(--primary-color);">Dinleme
+            Testi</a>
+        <a href="TumKelimeler.html" class="nav-link">Kelime Listesi</a>
+    </div>
+
+    <div class="main-container" style="width: 700px; max-width: 95%;">
+        <h1 class="title">Sürükle ve Eşleştir</h1>
+        <p>Kelimeleri doğru resimlerin üzerine sürükleyin.</p>
+
+        <div class="test-area">
+
+            <div class="words-container" id="words-source">
+                <!-- Words will be injected here -->
+            </div>
+
+            <div class="drop-zones" id="drop-target">
+                <!-- Drop zones will be injected here -->
+            </div>
+
+        </div>
+
+    </div>
+
+    <div class="footer">
+        © 2024 English Learning Platform
+    </div>
+
+    <script src="all_words.js"></script>
+    <script src="dinleme_testi.js"></script>
+</body>
+
+</html>

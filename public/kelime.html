@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="tr">
+
+<head>
+    <title>Kelime ve Gramer Testi</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .options-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .option-btn {
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: #444;
+            font-weight: 500;
+        }
+
+        .option-btn:hover {
+            background: white;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: #6a5acd;
+            color: #6a5acd;
+        }
+
+        .question-header {
+            font-size: 0.9rem;
+            color: rgba(0, 0, 0, 0.5);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .btn-finish {
+            background: #6a5acd;
+            color: white;
+            padding: 12px 25px;
+            border-radius: 10px;
+            border: none;
+            cursor: pointer;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            margin-top: 15px;
+        }
+
+        @media (max-width: 500px) {
+            .options-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="nav-container">
+        <a href="girisliindex.html" class="nav-link">Anasayfa</a>
+        <a href="kelime.html" class="nav-link" style="background:white; color:#6a5acd;">Kelime Testi</a>
+        <a href="dinleme_testi.html" class="nav-link">Dinleme Testi</a>
+        <a href="TumKelimeler.html" class="nav-link">Kelime Listesi</a>
+    </div>
+
+    <div class="main-container" id="quiz-container" style="width: 500px; min-height: 400px; display:flex; flex-direction:column; justify-content:center; text-align: center; margin: 40px auto; background: rgba(255,255,255,0.1); backdrop-filter: blur(10px); border-radius: 20px; padding: 20px;">
+        Test Başlatılıyor...
+    </div>
+
+    <div class="footer">
+        © 2024 English Learning Platform
+    </div>
+
+    <script src="all_words.js"></script>
+    <script>
+        // --- TEST MANTIĞI ---
+        const wordList = (typeof comprehensiveWordList !== 'undefined') ? comprehensiveWordList : [
+            { word: "approve", meaning: "onaylamak" },
+            { word: "appointment", meaning: "randevu" }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+        let mistakes = [];
+        let isRetrying = false;
+
+        function shuffle(array) {
+            for (let i = array.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [array[i], array[j]] = [array[j], array[i]];
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            shuffle(wordList);
+            showQuestion();
+        });
+
+        function showQuestion() {
+            const container = document.getElementById("quiz-container");
+
+            if (currentQuestionIndex >= 10 && !isRetrying) {
+                finishTest();
+                return;
+            }
+            if (isRetrying && mistakes.length === 0) {
+                finishTest();
+                return;
+            }
+
+            let currentWord = isRetrying ? mistakes[0] : wordList[currentQuestionIndex];
+            
+            // Seçenekleri oluştur
+            let options = [currentWord.meaning];
+            while (options.length < 4) {
+                const randomWord = wordList[Math.floor(Math.random() * wordList.length)];
+                if (!options.includes(randomWord.meaning)) options.push(randomWord.meaning);
+            }
+            shuffle(options);
+
+            container.innerHTML = `
+                <div class="question-header">Soru ${isRetrying ? "(Tekrar)" : currentQuestionIndex + 1}</div>
+                <h2 style="font-size: 2.2rem; color: white; margin-bottom: 10px;">${currentWord.word}</h2>
+                <p style="color: rgba(255,255,255,0.8);">Bu kelimenin anlamı nedir?</p>
+                <div class="options-grid">
+                    ${options.map(opt => `<button class="option-btn" onclick="checkAnswer('${opt}', '${currentWord.meaning}')">${opt}</button>`).join('')}
+                </div>
+            `;
+        }
+
+        function checkAnswer(selected, correct) {
+            if (selected === correct) {
+                if (!isRetrying) score++;
+                if (isRetrying) mistakes.shift();
+            } else {
+                if (!isRetrying) {
+                    mistakes.push(wordList[currentQuestionIndex]);
+                } else {
+                    const wrongWord = mistakes.shift();
+                    mistakes.push(wrongWord);
+                }
+            }
+            if (!isRetrying) currentQuestionIndex++;
+            showQuestion();
+        }
+
+        async function finishTest() {
+            const container = document.getElementById("quiz-container");
+            const username = localStorage.getItem("username");
+            const apiBase = window.location.origin;
+
+            container.innerHTML = `<h2 style="color:white;">Sonuçlar Kaydediliyor...</h2>`;
+
+            // Skor Kaydı
+            if (!isRetrying && score > 0 && username) {
+                try {
+                    const infoRes = await fetch(`${apiBase}/get-user-info/${username}`);
+                    const infoData = await infoRes.json();
+                    if (infoData.success) {
+                        const newTotal = (Number(infoData.user.knownWords) || 0) + score;
+                        await fetch(`${apiBase}/update-score`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ username, score: newTotal })
+                        });
+                    }
+                } catch (e) { console.error(e); }
+            }
+
+            // Bitiş Ekranı
+            if (mistakes.length > 0 && !isRetrying) {
+                container.innerHTML = `
+                    <h2 style="color:white;">Test Tamamlandı</h2>
+                    <p style="color:white; font-size:1.2rem;">Skor: +${score} Kelime</p>
+                    <p style="color:#ffb7b7;">${mistakes.length} hata yaptınız.</p>
+                    <button class="btn-finish" onclick="isRetrying=true; showQuestion();">Hataları Tekrar Et</button>
+                    <a href="girisliindex.html" style="color:white; margin-top:15px; text-decoration:none; display:block;">Anasayfaya Dön</a>
+                `;
+            } else {
+                container.innerHTML = `
+                    <h2 style="color:white;">Tebrikler!</h2>
+                    <p style="color:white; font-size:1.2rem;">Testi başarıyla bitirdiniz.</p>
+                    <a href="girisliindex.html" class="btn-finish" style="text-decoration:none; display:inline-block;">Panele Dön</a>
+                `;
+            }
+        }
+    </script>
+</body>
+
+</html>

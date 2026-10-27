@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <title>Kayıt Ol - İngilizce Kelime Testi</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="nav-container">
+        <a href="index.html" class="nav-link">Anasayfa</a>
+        <a href="giris.html" class="nav-link">Giriş Yap</a>
+    </div>
+
+    <div class="main-container">
+        <h1 class="title">Yeni Hesap Oluştur</h1>
+        <form id="kayitForm" class="login-form">
+            <div class="input-group">
+                <label for="adsoyad">Kullanıcı Adı</label>
+                <input type="text" id="adsoyad" class="styled-input" placeholder="Kullanıcı adı belirle" required>
+            </div>
+            <div class="input-group">
+                <label for="sifreid">Şifre</label>
+                <input type="password" id="sifreid" class="styled-input" placeholder="Güçlü bir şifre seç" required>
+            </div>
+            <button type="submit" id="kayitBtn" class="btn-primary">Kayıt Ol</button>
+        </form>
+        <div id="statusMessage" class="status-message"></div>
+    </div>
+
+    <script>
+        const API_URL = window.location.origin + "/register";
+
+        document.getElementById("kayitForm").addEventListener("submit", async function (event) {
+            event.preventDefault();
+            const statusMessage = document.getElementById("statusMessage");
+            const kayitBtn = document.getElementById("kayitBtn");
+            
+            const username = document.getElementById("adsoyad").value.trim();
+            const password = document.getElementById("sifreid").value.trim();
+
+            kayitBtn.disabled = true;
+            kayitBtn.innerText = "Kaydediliyor...";
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username, password })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    statusMessage.style.color = "#28a745";
+                    statusMessage.textContent = "Kayıt başarılı! Giriş sayfasına yönlendiriliyorsunuz...";
+                    setTimeout(() => { window.location.href = "giris.html"; }, 1500);
+                } else {
+                    throw new Error(data.message || "Bu kullanıcı adı zaten alınmış olabilir.");
+                }
+            } catch (error) {
+                statusMessage.style.color = "#dc3545";
+                statusMessage.textContent = "Hata: " + error.message;
+                kayitBtn.disabled = false;
+                kayitBtn.innerText = "Kayıt Ol";
+            }
+        });
+    </script>
+</body>
+</html>
