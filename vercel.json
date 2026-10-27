@@ -1,5 +1,5 @@
 {
   "routes": [
-    { "src": "/(.*)", "dest": "/html - Kopya/$1" }
+    { "src": "/(.*)", "dest": "/public/$1" }
   ]
 }

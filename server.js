@@ -18,7 +18,7 @@ function hashPassword(password) {
 app.use(cors({ origin: "*" }));
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use(express.static(path.join(__dirname, 'html - Kopya')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 const filePath = path.join(__dirname, "users.json");
 
