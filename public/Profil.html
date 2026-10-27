@@ -169,7 +169,7 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function () {
-            const API_URL = "https://englishfavorablecondition.onrender.com"; 
+            const API_URL = window.location.origin;
             const savedUsername = localStorage.getItem("username") || "Kullanıcı";
             const savedTheme = localStorage.getItem("selectedTheme");
             const profileImage = document.getElementById("profileImage");

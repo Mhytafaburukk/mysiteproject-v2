@@ -247,7 +247,7 @@
     <script src="all_words.js"></script>
 <script>
         document.addEventListener("DOMContentLoaded", async () => {
-            const API_URL = "https://englishfavorablecondition.onrender.com";
+            const API_URL = window.location.origin;
             const username = localStorage.getItem("username");
             
             let originalTitle = document.title;
