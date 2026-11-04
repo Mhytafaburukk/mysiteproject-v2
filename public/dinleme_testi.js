@@ -1,4 +1,4 @@
-// Kelime Eşleştirme Testi (Dinleme özellikleri kaldırıldı, modern eşleştirme)
+// dinleme_testi.js - Modern & Mobil Uyumlu Kelime Eşleştirme Testi
 
 const wordImages = {
     'apple': 'https://img.icons8.com/color/96/apple.png',
@@ -29,20 +29,20 @@ let gameWordsSource = (typeof comprehensiveWordList !== 'undefined') ? comprehen
 let roundWords = [];
 let matchedCount = 0;
 let totalScore = 0;
-let selectedWordEl = null; // Tıklayarak eşleştirme desteği için
+let selectedWordEl = null;
 
 document.addEventListener("DOMContentLoaded", initGame);
 
 function initGame() {
-    const draggablesContainer = document.getElementById("words-source");
-    const dropzonesContainer = document.getElementById("drop-target");
+    const wordsContainer = document.getElementById("words-source");
+    const targetsContainer = document.getElementById("drop-target");
     const matchedCountEl = document.getElementById("matched-count");
     const totalRoundCountEl = document.getElementById("total-round-count");
 
-    if (!draggablesContainer || !dropzonesContainer) return;
+    if (!wordsContainer || !targetsContainer) return;
 
-    draggablesContainer.innerHTML = '';
-    dropzonesContainer.innerHTML = '';
+    wordsContainer.innerHTML = '';
+    targetsContainer.innerHTML = '';
     matchedCount = 0;
     selectedWordEl = null;
     if (matchedCountEl) matchedCountEl.textContent = '0';
@@ -64,23 +64,24 @@ function initGame() {
 
     if (totalRoundCountEl) totalRoundCountEl.textContent = roundWords.length;
 
-    // İngilizce Kelimeler (Sürükleme ve Tıklama)
+    // İngilizce Kelimeler (word-chip)
     const shuffledForDrag = [...roundWords].sort(() => Math.random() - 0.5);
     shuffledForDrag.forEach(item => {
         const dragEl = document.createElement("div");
-        dragEl.classList.add("draggable-word");
+        dragEl.classList.add("word-chip");
         dragEl.draggable = true;
         dragEl.textContent = item.word;
         dragEl.id = "word-" + item.word.replace(/\s+/g, "_");
         dragEl.setAttribute("data-word", item.word);
 
-        // Tıklama ile eşleştirme desteği
+        // Tıklayarak veya Dokunarak Eşleştirme (Mobilde süper kolay)
         dragEl.addEventListener("click", () => {
             if (dragEl.classList.contains("matched")) return;
-            if (selectedWordEl) {
+            if (selectedWordEl && selectedWordEl !== dragEl) {
                 selectedWordEl.classList.remove("selected");
             }
             if (selectedWordEl === dragEl) {
+                selectedWordEl.classList.remove("selected");
                 selectedWordEl = null;
             } else {
                 selectedWordEl = dragEl;
@@ -88,33 +89,31 @@ function initGame() {
             }
         });
 
-        // Drag & Drop desteği
+        // Masaüstü Drag & Drop
         dragEl.addEventListener("dragstart", dragStart);
-        draggablesContainer.appendChild(dragEl);
+        wordsContainer.appendChild(dragEl);
     });
 
-    // Hedef Alanlar (Türkçe Karşılıklar)
+    // Hedef Türkçe Kutuları (target-box)
     const shuffledForDrop = [...roundWords].sort(() => Math.random() - 0.5);
     shuffledForDrop.forEach(item => {
         const dropEl = document.createElement("div");
-        dropEl.classList.add("drop-zone");
+        dropEl.classList.add("target-box");
         dropEl.setAttribute("data-match", item.word);
         dropEl.setAttribute("data-meaning", item.meaning);
 
-        // İkon veya soru işareti
         const imgPath = wordImages[item.word.toLowerCase()] || 'https://img.icons8.com/color/96/translation.png';
         const img = document.createElement("img");
         img.src = imgPath;
         img.alt = item.meaning;
         dropEl.appendChild(img);
 
-        // Anlam metni
         const span = document.createElement("span");
-        span.classList.add("meaning-text");
+        span.classList.add("meaning-label");
         span.textContent = item.meaning;
         dropEl.appendChild(span);
 
-        // Tıklama ile eşleştirme
+        // Tıklayarak Eşleştirme Tetikleyicisi
         dropEl.addEventListener("click", () => {
             if (dropEl.classList.contains("matched")) return;
             if (selectedWordEl) {
@@ -123,11 +122,11 @@ function initGame() {
             }
         });
 
-        // Sürükle bırak olayları
+        // Sürükle Bırak Olayları
         dropEl.addEventListener("dragover", dragOver);
         dropEl.addEventListener("dragleave", dragLeave);
         dropEl.addEventListener("drop", drop);
-        dropzonesContainer.appendChild(dropEl);
+        targetsContainer.appendChild(dropEl);
     });
 }
 
@@ -138,28 +137,29 @@ function dragStart(e) {
 
 function dragOver(e) {
     e.preventDefault();
-    if (!e.target.closest(".drop-zone").classList.contains("matched")) {
-        e.target.closest(".drop-zone").classList.add("drag-over");
+    const box = e.target.closest(".target-box");
+    if (box && !box.classList.contains("matched")) {
+        box.classList.add("drag-over");
     }
 }
 
 function dragLeave(e) {
-    const zone = e.target.closest(".drop-zone");
-    if (zone) zone.classList.remove("drag-over");
+    const box = e.target.closest(".target-box");
+    if (box) box.classList.remove("drag-over");
 }
 
 function drop(e) {
     e.preventDefault();
-    const zone = e.target.closest(".drop-zone");
-    if (!zone) return;
-    zone.classList.remove("drag-over");
+    const box = e.target.closest(".target-box");
+    if (!box) return;
+    box.classList.remove("drag-over");
 
     const draggedWord = e.dataTransfer.getData("text/plain");
     const draggedElementId = e.dataTransfer.getData("elementId");
     const draggedElement = document.getElementById(draggedElementId);
 
     if (draggedElement) {
-        executeMatch(draggedElement, zone, draggedWord);
+        executeMatch(draggedElement, box, draggedWord);
     }
 }
 
@@ -169,12 +169,12 @@ function executeMatch(sourceElement, targetZone, word) {
     const meaning = targetZone.getAttribute("data-meaning");
 
     if (word === targetMatch) {
-        // Başarılı eşleşme
+        // Doğru Eşleşme
         targetZone.classList.add("matched");
         targetZone.innerHTML = `
-            <div style="font-size:1.8rem; margin-bottom:4px;">✨</div>
-            <strong style="font-size:1.05rem; display:block;">${word}</strong>
-            <span style="font-size:0.85rem; opacity:0.9;">= ${meaning}</span>
+            <div style="font-size:1.6rem; margin-bottom:2px;">✨</div>
+            <div class="matched-title">${word}</div>
+            <div class="matched-sub">${meaning}</div>
         `;
 
         sourceElement.remove();
@@ -189,14 +189,14 @@ function executeMatch(sourceElement, targetZone, word) {
 
         if (matchedCount === roundWords.length) {
             setTimeout(() => {
-                alert(`Tebrikler! Tüm kelimeleri başarıyla eşleştirdiniz. Toplam Puan: ${totalScore}`);
+                alert(`🎉 Tebrikler! Tüm kelimeleri başarıyla eşleştirdiniz!\nToplam Skor: ${totalScore}`);
                 initGame();
-            }, 500);
+            }, 400);
         }
     } else {
-        // Yanlış eşleşme efekti
-        targetZone.style.borderColor = "#ff4d4d";
-        targetZone.style.background = "rgba(255, 77, 77, 0.25)";
+        // Yanlış Eşleşme Efekti
+        targetZone.style.borderColor = "#ef4444";
+        targetZone.style.background = "rgba(239, 68, 68, 0.25)";
         if (sourceElement.classList.contains("selected")) {
             sourceElement.classList.remove("selected");
             selectedWordEl = null;

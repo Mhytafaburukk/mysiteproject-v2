@@ -1,5 +1,35 @@
 [
   {
+    "username": "English_AI",
+    "password": "0754094ab4cc29add6c86cace34569a0f8965d5072a98116a5993aa28a461320",
+    "favorikelimeler": [
+      "comprehension",
+      "fluency",
+      "resilience",
+      "vocabulary",
+      "intelligence"
+    ],
+    "messages": [
+      {
+        "sender": "English_AI",
+        "receiver": "Burak",
+        "content": "Hello Burak! 👋 Ben sitenin resmi Yapay Zeka (AI) Asistanıyım. Doğrulanmış mavi rozetimle buradayım. Bana soru sorabilir, kelime anlamı öğrenebilir veya İngilizce sohbet edebilirsin!",
+        "timestamp": "2026-11-04T11:20:40.337Z",
+        "isRead": true
+      }
+    ],
+    "followers": [
+      "Burak"
+    ],
+    "following": [
+      "Burak"
+    ],
+    "knownWords": 5000,
+    "profilePic": "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%236a5acd;stop-opacity:1'/><stop offset='100%25' style='stop-color:%2300fa9a;stop-opacity:1'/></linearGradient></defs><circle cx='50' cy='50' r='48' fill='url(%23grad)'/><rect x='28' y='32' width='44' height='36' rx='10' fill='%23ffffff'/><circle cx='40' cy='48' r='5' fill='%236a5acd'/><circle cx='60' cy='48' r='5' fill='%236a5acd'/><path d='M 42 58 Q 50 64 58 58' stroke='%236a5acd' stroke-width='3' fill='none' stroke-linecap='round'/><rect x='47' y='18' width='6' height='14' fill='%23ffffff' rx='3'/><circle cx='50' cy='16' r='5' fill='%2300fa9a'/></svg>",
+    "isAI": true,
+    "isVerified": true
+  },
+  {
     "username": "Burak",
     "password": "d4b189c8982cedfab5eb9fbd8c407bfa65e7dcea5246ecbd3e053f26f505d447",
     "knownWords": 120,

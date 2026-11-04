@@ -1,272 +1,923 @@
 <!DOCTYPE html>
 <html lang="tr">
+
 <head>
-    <title>Mesajlaşma</title>
+    <title>İngilizce Mesajlaşma & AI Asistanı</title>
     <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; margin: 0; background-color: #d1d7db; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; }
-        #messagediv { width: 100%; height: 100%; max-width: 500px; max-height: 90vh; background-color: #efe7dd; background-image: url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png"); display: flex; flex-direction: column; position: relative; box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2); z-index: 10; border-radius: 10px; overflow: hidden; }
-        
-        .chat-header { background-color: #008069; color: white; padding: 10px 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); }
-        .chat-header img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: white; border: 1px solid rgba(255,255,255,0.5); }
-        
-        .chat-body { flex: 1; overflow-y: auto; padding: 20px; display: flex; flex-direction: column; gap: 10px; }
-        .message-bubble { max-width: 70%; padding: 8px 12px; border-radius: 7.5px; font-size: 14.2px; line-height: 19px; position: relative; word-wrap: break-word; box-shadow: 0 1px 0.5px rgba(0, 0, 0, 0.13); }
-        .message-sent { align-self: flex-end; background-color: #dcf8c6; }
-        .message-received { align-self: flex-start; background-color: #ffffff; }
-        .message-time { font-size: 11px; color: #999; float: right; margin-top: 5px; margin-left: 10px; }
-        
-        .chat-footer { background-color: #f0f2f5; padding: 10px; display: flex; flex-direction: column; }
-        .footer-row { display: flex; align-items: center; gap: 10px; }
-        .chat-footer input { flex: 1; padding: 12px; border: none; border-radius: 20px; outline: none; font-size: 15px; }
-        .chat-footer button { background: #008069; color: white; border: none; width: 45px; height: 45px; border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 20px; transition: 0.2s; }
-        
-        .box { position: fixed; width: 40px; height: 40px; border-radius: 8px; z-index: 1; pointer-events: none; opacity: 0.5; }
+        :root {
+            --primary: #4f46e5;
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            --ai-accent: #06b6d4;
+            --bg-dark: #0f172a;
+            --chat-bg: #1e293b;
+            --msg-sent: #4338ca;
+            --msg-received: #334155;
+            --text-light: #f8fafc;
+            --text-dim: #94a3b8;
+            --verified: #00d2ff;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: radial-gradient(circle at 50% 20%, #1e1b4b 0%, #0f172a 100%);
+            color: var(--text-light);
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            padding: 0;
+        }
+
+        #messagediv {
+            width: 100%;
+            max-width: 680px;
+            height: 100vh;
+            height: 100dvh;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.6);
+            border-left: 1px solid rgba(255, 255, 255, 0.1);
+            border-right: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        @media (min-width: 768px) {
+            #messagediv {
+                height: 92vh;
+                border-radius: 24px;
+                border: 1px solid rgba(255, 255, 255, 0.15);
+            }
+        }
+
+        /* Header */
+        .chat-header {
+            background: rgba(30, 41, 59, 0.9);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            z-index: 10;
+        }
+
+        .btn-icon {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #ffffff;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .btn-icon:hover {
+            background: rgba(255, 255, 255, 0.18);
+            transform: translateY(-1px);
+        }
+
+        .avatar-wrap {
+            position: relative;
+            width: 44px;
+            height: 44px;
+            flex-shrink: 0;
+        }
+
+        .header-avatar {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            object-fit: cover;
+            border: 2px solid var(--primary);
+            background: #334155;
+        }
+
+        .online-dot {
+            position: absolute;
+            bottom: 0;
+            right: 0;
+            width: 12px;
+            height: 12px;
+            background: #10b981;
+            border-radius: 50%;
+            border: 2px solid #0f172a;
+        }
+
+        .user-meta {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .user-title-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .user-name {
+            font-size: 1rem;
+            font-weight: 600;
+            color: #ffffff;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .badge-verified {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            color: white;
+            font-size: 10px;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            font-weight: bold;
+            box-shadow: 0 0 8px rgba(0, 210, 255, 0.5);
+            flex-shrink: 0;
+        }
+
+        .badge-ai {
+            background: rgba(6, 182, 212, 0.2);
+            color: #38bdf8;
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            font-size: 0.7rem;
+            padding: 1px 7px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+
+        .user-status {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .ai-config-btn {
+            background: rgba(99, 102, 241, 0.2);
+            border: 1px solid rgba(99, 102, 241, 0.4);
+            color: #a5b4fc;
+            padding: 6px 12px;
+            border-radius: 14px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .ai-config-btn:hover {
+            background: var(--primary);
+            color: #ffffff;
+        }
+
+        /* Hızlı Aksiyon Hapları (Quick Actions) */
+        .quick-actions-bar {
+            background: rgba(15, 23, 42, 0.8);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            padding: 8px 12px;
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            white-space: nowrap;
+            scrollbar-width: none;
+        }
+        .quick-actions-bar::-webkit-scrollbar { display: none; }
+
+        .quick-pill {
+            background: rgba(30, 41, 59, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e2e8f0;
+            padding: 5px 12px;
+            border-radius: 16px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .quick-pill:hover {
+            background: rgba(99, 102, 241, 0.35);
+            border-color: #6366f1;
+            color: #ffffff;
+            transform: translateY(-1px);
+        }
+
+        /* Chat Body */
+        .chat-body {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            scroll-behavior: smooth;
+        }
+
+        .message-row {
+            display: flex;
+            flex-direction: column;
+            max-width: 82%;
+        }
+
+        .message-sent {
+            align-self: flex-end;
+        }
+
+        .message-received {
+            align-self: flex-start;
+        }
+
+        .message-bubble {
+            padding: 10px 14px;
+            border-radius: 18px;
+            font-size: 0.92rem;
+            line-height: 1.5;
+            word-wrap: break-word;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        .message-sent .message-bubble {
+            background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+            color: #ffffff;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message-received .message-bubble {
+            background: #334155;
+            color: #f1f5f9;
+            border-bottom-left-radius: 4px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .message-received.ai-message .message-bubble {
+            background: linear-gradient(145deg, #1e293b 0%, #27354a 100%);
+            border: 1px solid rgba(6, 182, 212, 0.25);
+            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.1);
+        }
+
+        .message-meta {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-top: 4px;
+            font-size: 0.7rem;
+            color: var(--text-dim);
+            padding: 0 4px;
+        }
+
+        .message-sent .message-meta {
+            justify-content: flex-end;
+        }
+
+        .tts-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #38bdf8;
+            font-size: 0.85rem;
+            opacity: 0.8;
+            transition: 0.2s;
+        }
+        .tts-btn:hover { opacity: 1; transform: scale(1.15); }
+
+        /* Footer & Input */
+        .chat-footer {
+            background: rgba(30, 41, 59, 0.95);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+            padding: 10px 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .input-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .input-box {
+            flex: 1;
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 24px;
+            padding: 10px 18px;
+            color: #ffffff;
+            font-size: 0.94rem;
+            outline: none;
+            transition: all 0.2s;
+        }
+
+        .input-box:focus {
+            border-color: #6366f1;
+            box-shadow: 0 0 10px rgba(99, 102, 241, 0.35);
+        }
+
+        .input-box::placeholder {
+            color: #64748b;
+        }
+
+        .btn-action {
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.15rem;
+            transition: all 0.2s;
+            flex-shrink: 0;
+        }
+
+        .btn-send {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: white;
+            box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
+        }
+        .btn-send:hover {
+            transform: scale(1.05);
+        }
+
+        .btn-voice {
+            background: rgba(255, 255, 255, 0.08);
+            color: #38bdf8;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+        .btn-voice:hover {
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        /* MODAL (AI API KEY & MODEL AYARLARI) */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 16px;
+        }
+
+        .modal-card {
+            background: #1e293b;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 22px;
+            width: 100%;
+            max-width: 480px;
+            padding: 24px;
+            box-shadow: 0 25px 50px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 12px;
+        }
+
+        .modal-header h3 {
+            font-size: 1.15rem;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        .form-select, .form-input {
+            background: #0f172a;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 10px 14px;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .form-select:focus, .form-input:focus {
+            border-color: #6366f1;
+        }
+
+        .btn-modal-save {
+            background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            margin-top: 8px;
+        }
+
+        .btn-modal-save:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.4);
+        }
+
+        .api-info-text {
+            font-size: 0.78rem;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+
+        .api-info-text a {
+            color: #38bdf8;
+            text-decoration: underline;
+        }
+
+        /* MOBİL UYUM */
+        @media (max-width: 600px) {
+            .chat-header {
+                padding: 10px 12px;
+                gap: 8px;
+            }
+            .header-avatar {
+                width: 38px;
+                height: 38px;
+            }
+            .user-name {
+                font-size: 0.92rem;
+            }
+            .ai-config-btn span.full-text {
+                display: none;
+            }
+            .message-bubble {
+                font-size: 0.88rem;
+                padding: 8px 12px;
+            }
+            .input-box {
+                font-size: 0.88rem;
+                padding: 8px 14px;
+            }
+            .btn-action {
+                width: 38px;
+                height: 38px;
+            }
+        }
     </style>
 </head>
+
 <body>
-    <div id="büyük" class="box" style="background-color: #008069;"></div>
-    <div id="kücük" class="box" style="background-color: #dcf8c6;"></div>
 
     <div id="messagediv">
-        <div class="chat-header">
-            <button onclick="window.location.href='girisliindex.html'" style="background:none; border:none; color:white; cursor:pointer; font-size:24px; padding: 0 5px;">←</button>
-            <img id="header-pic" src="https://via.placeholder.com/45" alt="User">
-            <div class="user-info">
-                <h3 id="messagegreeting" style="margin:0; font-size: 16px;">Sohbet</h3>
+        <!-- HEADER -->
+        <header class="chat-header">
+            <button class="btn-icon" onclick="window.location.href='girisliindex.html'" title="Panele Dön">←</button>
+            
+            <div class="avatar-wrap">
+                <img id="header-pic" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%234f46e5'/><text x='50' y='60' font-size='35' text-anchor='middle' fill='white'>🤖</text></svg>" class="header-avatar" alt="Avatar">
+                <div class="online-dot" id="onlineDot"></div>
             </div>
-            <button id="refreshbutton" style="background:none; border:none; color:white; cursor:pointer; font-size:18px; margin-left:auto;">↻</button>
+
+            <div class="user-meta">
+                <div class="user-title-row">
+                    <span class="user-name" id="partnerName">English_AI</span>
+                    <span class="badge-verified" id="verifiedBadge" title="Doğrulanmış Resmi AI">✓</span>
+                    <span class="badge-ai" id="aiLabel">Yapay Zeka</span>
+                </div>
+                <div class="user-status" id="userStatus">
+                    <span>🟢 Çevrimiçi</span> • <span id="currentModelLabel">Gemini 1.5 Flash</span>
+                </div>
+            </div>
+
+            <!-- AI AYARLARI BUTONU -->
+            <button class="ai-config-btn" id="openSettingsBtn">
+                ⚙️ <span class="full-text">Model & API</span>
+            </button>
+
+            <button class="btn-icon" id="refreshBtn" title="Sohbeti Yenile">↻</button>
+        </header>
+
+        <!-- HIZLI AKSİYONLAR VE PRATİK HAPLARI -->
+        <div class="quick-actions-bar" id="quickActionsBar">
+            <div class="quick-pill" onclick="sendQuickPrompt('Bana seviyeme uygun bir İngilizce test sorusu sor!')">
+                📝 <span>Soru Sor</span>
+            </div>
+            <div class="quick-pill" onclick="sendQuickPrompt('Son yazdığım İngilizce cümledeki gramer hatalarını kontrol edip düzelt!')">
+                🔍 <span>Gramerimi Düzelt</span>
+            </div>
+            <div class="quick-pill" onclick="sendQuickPrompt('Bugün öğrenmem gereken harika bir İngilizce kelime ve örnek cümlesini açıkla!')">
+                🌟 <span>Günün Kelimesi</span>
+            </div>
+            <div class="quick-pill" onclick="sendQuickPrompt('Can we have a casual conversation in English? Ask me an interesting question!')">
+                💬 <span>İngilizce Sohbet</span>
+            </div>
+            <div class="quick-pill" onclick="sendQuickPrompt('Bana günlük hayatta çok kullanılan bir İngilizce deyim (idiom) öğret!')">
+                ⚡ <span>Deyim Öğret</span>
+            </div>
         </div>
-        
-        <div class="chat-body" id="content1"></div>
-        
-        <div class="chat-footer">
-            <div class="footer-row">
-                <input type="text" id="myinput" placeholder="Bir mesaj yazın" autocomplete="off">
-                <button id="recordBtn" style="background: #25d366; font-size: 18px;">🎤</button>
-                <button id="stopBtn" style="background: #e74c3c; display: none; font-size: 18px;">■</button>
-                <button id="sendbutton">➤</button>
+
+        <!-- SOHBET GÖVDESİ -->
+        <main class="chat-body" id="chatBody">
+            <!-- Mesajlar buraya yüklenecek -->
+        </main>
+
+        <!-- FOOTER & INPUT -->
+        <footer class="chat-footer">
+            <div class="input-row">
+                <input type="text" id="msgInput" class="input-box" placeholder="İngilizce bir şey yazın veya soru sorun..." autocomplete="off">
+                <button id="voiceBtn" class="btn-action btn-voice" title="Sesli Mesaj">🎤</button>
+                <button id="stopVoiceBtn" class="btn-action" style="background:#ef4444; color:white; display:none;" title="Durdur">■</button>
+                <button id="sendBtn" class="btn-action btn-send" title="Gönder">➤</button>
             </div>
+        </footer>
+    </div>
+
+    <!-- AI MODEL & API KEY AYARLARI MODALI -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>⚙️ AI Model & API Ayarları</h3>
+                <button class="btn-icon" id="closeSettingsBtn" style="width:32px; height:32px;">✕</button>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Yapay Zeka Sağlayıcısı & Modeli:</label>
+                <select id="modelSelect" class="form-select">
+                    <option value="gemini-1.5-flash">⚡ Google Gemini 1.5 Flash (Önerilen - Ücretsiz & Hızlı)</option>
+                    <option value="gemini-1.5-pro">🧠 Google Gemini 1.5 Pro (Derin Gramer Analizi)</option>
+                    <option value="gemini-2.0-flash">🚀 Google Gemini 2.0 Flash</option>
+                    <option value="gpt-4o-mini">🤖 OpenAI GPT-4o Mini</option>
+                    <option value="gpt-4o">🌟 OpenAI GPT-4o (Gelişmiş)</option>
+                    <option value="built-in">💻 Sitenin Yerleşik AI Motoru (API Key Gerekmez)</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="apiKeyGroup">
+                <label class="form-label">Kişisel API Anahtarınız (API Key):</label>
+                <input type="password" id="apiKeyInput" class="form-input" placeholder="AI Studio veya OpenAI API Key girin...">
+                <div class="api-info-text">
+                    🔑 Gemini API anahtarınızı <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a> üzerinden <strong>ücretsiz</strong> alabilirsiniz. Anahtarınız tarayıcınızda güvenle saklanır.
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">İngilizce Odak Modu:</label>
+                <select id="focusModeSelect" class="form-select">
+                    <option value="coach">🎯 Gramer Koçu (Hataları detaylı düzelt & açıkla)</option>
+                    <option value="casual">💬 Günlük Konuşma Partneri (Doğal ve samimi sohbet)</option>
+                    <option value="exam">📚 Sınav & Kelime Hazırlığı (TOEFL / IELTS / YDS / YDT)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">İngilizce Seviyeniz:</label>
+                <select id="levelSelect" class="form-select">
+                    <option value="auto">🌐 Otomatik (Yazdıklarıma göre ayarla)</option>
+                    <option value="A1-A2">A1 - A2 (Başlangıç Düzeyi)</option>
+                    <option value="B1-B2">B1 - B2 (Orta Düzey)</option>
+                    <option value="C1-C2">C1 - C2 (İleri Düzey)</option>
+                </select>
+            </div>
+
+            <button class="btn-modal-save" id="saveSettingsBtn">💾 Ayarları Kaydet</button>
         </div>
     </div>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const API_URL = window.location.origin;
-        const chatBody = document.getElementById("content1");
-        const msgInput = document.getElementById("myinput");
-        const sendBtn = document.getElementById("sendbutton");
-        const partnerLabel = document.getElementById("messagegreeting");
-        const recordBtn = document.getElementById("recordBtn");
-        const stopBtn = document.getElementById("stopBtn");
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const API_URL = window.location.origin;
+            const chatBody = document.getElementById("chatBody");
+            const msgInput = document.getElementById("msgInput");
+            const sendBtn = document.getElementById("sendBtn");
+            const partnerNameEl = document.getElementById("partnerName");
+            const headerPic = document.getElementById("header-pic");
+            const verifiedBadge = document.getElementById("verifiedBadge");
+            const aiLabel = document.getElementById("aiLabel");
+            const voiceBtn = document.getElementById("voiceBtn");
+            const stopVoiceBtn = document.getElementById("stopVoiceBtn");
+            const currentModelLabel = document.getElementById("currentModelLabel");
 
-        let lastMessageCount = 0; 
-        let originalTitle = document.title;
-        let titleAlertInterval = null;
-        let mediaRecorder;
-        let audioChunks = [];
+            // Modal Elementleri
+            const settingsModal = document.getElementById("settingsModal");
+            const openSettingsBtn = document.getElementById("openSettingsBtn");
+            const closeSettingsBtn = document.getElementById("closeSettingsBtn");
+            const saveSettingsBtn = document.getElementById("saveSettingsBtn");
+            const modelSelect = document.getElementById("modelSelect");
+            const apiKeyInput = document.getElementById("apiKeyInput");
+            const focusModeSelect = document.getElementById("focusModeSelect");
+            const levelSelect = document.getElementById("levelSelect");
 
-        const savedUsername = localStorage.getItem("username") || "Misafir";
-        const currentusername = localStorage.getItem("currentusername") || "Burak";
+            let savedUsername = localStorage.getItem("username") || "Kullanıcı";
+            let currentPartner = localStorage.getItem("currentusername") || "English_AI";
+            let lastMsgCount = 0;
+            let mediaRecorder;
+            let audioChunks = [];
 
-        partnerLabel.textContent = currentusername;
+            // AI AYARLARINI YÜKLE
+            let userApiKey = localStorage.getItem("ai_api_key") || "";
+            let selectedModel = localStorage.getItem("ai_selected_model") || "gemini-1.5-flash";
+            let focusMode = localStorage.getItem("ai_focus_mode") || "coach";
+            let englishLevel = localStorage.getItem("ai_level") || "auto";
 
-        window.addEventListener('focus', () => {
-            clearInterval(titleAlertInterval);
-            titleAlertInterval = null;
-            document.title = originalTitle;
-        });
+            apiKeyInput.value = userApiKey;
+            modelSelect.value = selectedModel;
+            focusModeSelect.value = focusMode;
+            levelSelect.value = englishLevel;
+            updateModelLabel();
 
-recordBtn.onclick = async () => {
-    try {
-        // SES AYARLARI: Otomatik kazanç ve gürültü engellemeyi kapatıyoruz 
-        // ki tarayıcı sesi "gürültü" sanıp kesmesin.
-        const stream = await navigator.mediaDevices.getUserMedia({ 
-            audio: {
-                echoCancellation: false,
-                noiseSuppression: false,
-                autoGainControl: false
-            } 
-        });
-        
-        const types = ["audio/mp4", "audio/webm;codecs=opus", "audio/ogg;codecs=opus", "audio/wav"];
-        const supportedType = types.find(type => MediaRecorder.isTypeSupported(type)) || "";
-
-        mediaRecorder = new MediaRecorder(stream, { 
-            mimeType: supportedType,
-            audioBitsPerSecond: 128000 // Ses kalitesini sabitleyelim
-        });
-        
-        audioChunks = [];
-
-        mediaRecorder.ondataavailable = (e) => {
-            if (e.data && e.data.size > 0) {
-                audioChunks.push(e.data);
-                console.log("Veri parçası alındı:", e.data.size); // Debug için
-            }
-        };
-
-        mediaRecorder.onstop = async () => {
-            // Kayıt biter bitmez tüm trackleri durdur
-            stream.getTracks().forEach(track => track.stop());
-
-            // Parçaları birleştir
-            const audioBlob = new Blob(audioChunks, { type: supportedType || 'audio/mp4' });
-            console.log("Final Blob boyutu:", audioBlob.size);
-
-            if (audioBlob.size < 500) { // Çok küçükse hata ver
-                alert("Ses çok kısa veya kaydedilemedi.");
-                return;
+            function updateModelLabel() {
+                const labels = {
+                    "gemini-1.5-flash": "Gemini 1.5 Flash ⚡",
+                    "gemini-1.5-pro": "Gemini 1.5 Pro 🧠",
+                    "gemini-2.0-flash": "Gemini 2.0 Flash 🚀",
+                    "gpt-4o-mini": "GPT-4o Mini 🤖",
+                    "gpt-4o": "GPT-4o 🌟",
+                    "built-in": "Yerleşik Motor 💻"
+                };
+                currentModelLabel.textContent = labels[selectedModel] || selectedModel;
             }
 
-            const reader = new FileReader();
-            reader.readAsDataURL(audioBlob);
-            reader.onloadend = () => {
-                sendVoiceMessage(reader.result);
+            // MODAL AÇ/KAPA
+            openSettingsBtn.onclick = () => settingsModal.style.display = "flex";
+            closeSettingsBtn.onclick = () => settingsModal.style.display = "none";
+            settingsModal.onclick = (e) => { if (e.target === settingsModal) settingsModal.style.display = "none"; };
+
+            saveSettingsBtn.onclick = () => {
+                userApiKey = apiKeyInput.value.trim();
+                selectedModel = modelSelect.value;
+                focusMode = focusModeSelect.value;
+                englishLevel = levelSelect.value;
+
+                localStorage.setItem("ai_api_key", userApiKey);
+                localStorage.setItem("ai_selected_model", selectedModel);
+                localStorage.setItem("ai_focus_mode", focusMode);
+                localStorage.setItem("ai_level", englishLevel);
+
+                updateModelLabel();
+                settingsModal.style.display = "none";
+                alert("✅ AI Ayarlarınız başarıyla kaydedildi!");
             };
-        };
-        // 500ms'lik parçalar halinde almak bazi tarayıcılarda sesin süresini hesaplamakta hata verdirip
-        // 2-3 saniye sonra oynatmayı durdurmasına neden olur.
-        // O yüzden parametresiz çağırarak tek parça kaliteli akış alınır.
-        mediaRecorder.start(); 
 
-        recordBtn.style.display = "none";
-        stopBtn.style.display = "flex";
-
-    } catch (err) {
-        alert("Mikrofon hatası: " + err.message);
-    }
-};
-
-        stopBtn.onclick = () => {
-            mediaRecorder.stop();
-            stopBtn.style.display = "none";
-            recordBtn.style.display = "flex";
-        };
-
-        async function sendVoiceMessage(base64) {
-            const finalContent = `[SES:${base64}]`;
-            await fetch(`${API_URL}/send-message`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ sender: savedUsername, receiver: currentusername, content: finalContent })
-            });
-            fetchMessages();
-        }
-
-        // Döngü Fonksiyonu (Global yapıldı ki HTML içinden erişilsin)
-        window.toggleLoop = function(btn, audioId) {
-            const audio = document.getElementById(audioId);
-            audio.loop = !audio.loop;
-            if (audio.loop) {
-                btn.style.color = "black";
-                btn.style.background = "#f1c40f";
-                btn.style.boxShadow = "0 0 10px #f1c40f";
-                btn.style.transform = "scale(1.15)";
+            // PARTNER BİLGİSİNİ AYARLA
+            partnerNameEl.textContent = currentPartner;
+            const isAI = (currentPartner === "English_AI" || currentPartner.includes("AI"));
+            if (isAI) {
+                verifiedBadge.style.display = "inline-flex";
+                aiLabel.style.display = "inline-block";
+                headerPic.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%234f46e5'/><stop offset='100%25' style='stop-color:%2306b6d4'/></linearGradient></defs><circle cx='50' cy='50' r='48' fill='url(%23g)'/><rect x='28' y='32' width='44' height='36' rx='10' fill='%23ffffff'/><circle cx='40' cy='48' r='5' fill='%234f46e5'/><circle cx='60' cy='48' r='5' fill='%234f46e5'/><path d='M 42 58 Q 50 64 58 58' stroke='%234f46e5' stroke-width='3' fill='none' stroke-linecap='round'/><rect x='47' y='18' width='6' height='14' fill='%23ffffff' rx='3'/><circle cx='50' cy='16' r='5' fill='%2306b6d4'/></svg>";
             } else {
-                btn.style.color = "white";
-                btn.style.background = "none";
-                btn.style.boxShadow = "none";
-                btn.style.transform = "scale(1)";
+                verifiedBadge.style.display = "none";
+                aiLabel.style.display = "none";
+                document.getElementById("quickActionsBar").style.display = "none";
             }
-        };
 
-        async function markAsRead() {
-            try {
-                await fetch(`${API_URL}/mark-messages-read`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ username: savedUsername, chatPartner: currentusername })
-                });
-            } catch (err) {}
-        }
-
-        function fetchMessages() {
-            fetch(`${API_URL}/get-messages/${savedUsername}/${currentusername}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        const isAtBottom = chatBody.scrollHeight - chatBody.scrollTop <= chatBody.clientHeight + 50;
-                        const newMessageArrived = data.messages.length > lastMessageCount;
-
-                        if (newMessageArrived && document.hidden) {
-                            const lastMsg = data.messages[data.messages.length - 1];
-                            if (lastMsg.sender !== savedUsername && !titleAlertInterval) {
-                                titleAlertInterval = setInterval(() => {
-                                    document.title = (document.title === originalTitle) ? "💌 Yeni Mesaj!" : originalTitle;
-                                }, 1000);
-                            }
-                        }
-
-                        if (data.messages.length !== lastMessageCount) {
-                            chatBody.innerHTML = data.messages.map((msg, index) => {
-                                const isMe = msg.sender === savedUsername;
-                                const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                                let content = msg.content;
-                                
-                                if(content.includes("[SES:")){
-                                    const audioData = content.replace("[SES:", "").replace("]", "");
-                                    const audioId = `audio_${index}`;
-                                    content = `
-                                        <div style="display:flex; align-items:center; gap:5px;">
-                                            <audio id="${audioId}" src="${audioData}" controls style="width:150px; height:30px;" 
-                                                   onloadedmetadata="if(!isFinite(this.duration)){this.currentTime=1e8;this.ontimeupdate=()=>{this.ontimeupdate=null;this.currentTime=0;};}">
-                                            </audio>
-                                            <button onclick="toggleLoop(this, '${audioId}')" style="border:none; cursor:pointer; font-size:18px; color:white; background:none; transition:0.3s; width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center;">🔁</button>
-                                        </div>`;
-                                }
-
-                                return `<div class="message-bubble ${isMe ? 'message-sent' : 'message-received'}">
-                                            ${content}
-                                            <div class="message-time">${time}</div>
-                                        </div>`;
-                            }).join("");
-
-                            if (isAtBottom || newMessageArrived) {
-                                chatBody.scrollTop = chatBody.scrollHeight;
-                            }
-                            lastMessageCount = data.messages.length;
-                        }
-                        markAsRead();
-                    }
-                });
-        }
-
-        async function sendMessage() {
-            let text = msgInput.value.trim();
-            if (!text) return;
-
-            try {
-                const response = await fetch(`${API_URL}/send-message`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ sender: savedUsername, receiver: currentusername, content: text })
-                });
-                if ((await response.json()).success) { 
-                    msgInput.value = ""; fetchMessages(); 
+            // SESLİ OKUMA (TTS)
+            window.speakText = function(text) {
+                if ('speechSynthesis' in window) {
+                    window.speechSynthesis.cancel();
+                    const clean = text.replace(/[*#_`]/g, "");
+                    const utter = new SpeechSynthesisUtterance(clean);
+                    utter.lang = 'en-US';
+                    utter.rate = 0.95;
+                    window.speechSynthesis.speak(utter);
                 }
-            } catch (error) { console.error(error); }
-        }
+            };
 
-        sendBtn.onclick = sendMessage;
-        msgInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
-        document.getElementById("refreshbutton").onclick = fetchMessages;
-        
-        fetchMessages();
-        setInterval(fetchMessages, 4000);
+            // HIZLI PROMPT GÖNDERME
+            window.sendQuickPrompt = function(promptText) {
+                msgInput.value = promptText;
+                sendMessage();
+            };
 
-        function hareket(box) {
-            let t = Math.random()*500, l = Math.random()*800, vd=1, hd=1;
-            setInterval(() => {
-                l += 1.5*hd; t += 1.5*vd;
-                if(l <= 0 || l+40 >= window.innerWidth) hd *= -1;
-                if(t <= 0 || t+40 >= window.innerHeight) vd *= -1;
-                box.style.top = t+"px"; box.style.left = l+"px";
-            }, 50);
-        }
-        document.querySelectorAll(".box").forEach(hareket);
-    });
-</script>
+            // MESAJLARI ÇEK
+            function fetchMessages() {
+                fetch(`${API_URL}/get-messages/${savedUsername}/${currentPartner}`)
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success && data.messages) {
+                            if (data.messages.length !== lastMsgCount) {
+                                renderMessages(data.messages);
+                                lastMsgCount = data.messages.length;
+                            }
+                        }
+                    })
+                    .catch(err => console.error("Mesaj çekme hatası:", err));
+            }
+
+            function renderMessages(messages) {
+                chatBody.innerHTML = messages.map((msg, index) => {
+                    const isMe = msg.sender === savedUsername;
+                    const isPartnerAI = msg.sender === "English_AI";
+                    const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    let content = msg.content;
+
+                    if (content.includes("[SES:")) {
+                        const audioData = content.replace("[SES:", "").replace("]", "");
+                        content = `<audio src="${audioData}" controls style="width:200px; height:36px;"></audio>`;
+                    } else {
+                        // Markdown kalın ve madde işaretleri
+                        content = content
+                            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+                            .replace(/\*(.*?)\*/g, '<em>$1</em>')
+                            .replace(/\n/g, '<br>');
+                    }
+
+                    return `
+                        <div class="message-row ${isMe ? 'message-sent' : 'message-received'} ${isPartnerAI ? 'ai-message' : ''}">
+                            <div class="message-bubble">
+                                ${content}
+                            </div>
+                            <div class="message-meta">
+                                <span>${time}</span>
+                                ${!isMe && !content.includes("<audio") ? `<button class="tts-btn" onclick="speakText('${msg.content.replace(/'/g, "\\'")}')" title="Telaffuzu Dinle">🔊 Dinle</button>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join("");
+
+                chatBody.scrollTop = chatBody.scrollHeight;
+            }
+
+            // DOĞRUDAN CANLI LLM ÇAĞRISI (Eğer kullanıcı Gemini/OpenAI API Key girmişse)
+            async function callLiveAI(userText) {
+                const systemPrompt = `You are a world-class, verified English Language Tutor and Conversation Partner (Verified AI) named English_AI.
+Your goal is to help the student learn, master, and practice English.
+Focus Mode: ${focusMode} (coach=correct grammar thoroughly, casual=natural conversation, exam=test/vocab focus).
+Student Level: ${englishLevel}.
+Always be encouraging, insightful, and clear. If they write in Turkish, guide them kindly in Turkish while explaining English grammar, vocabulary, synonyms, and examples. If they write in English, reply in English and highlight any corrections if applicable.`;
+
+                // 1. Google Gemini API Çağrısı
+                if (selectedModel.startsWith("gemini") && userApiKey) {
+                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${userApiKey}`;
+                    const payload = {
+                        contents: [
+                            { role: "user", parts: [{ text: `${systemPrompt}\n\nStudent says: ${userText}` }] }
+                        ]
+                    };
+                    const res = await fetch(endpoint, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify(payload)
+                    });
+                    const data = await res.json();
+                    if (data.candidates && data.candidates[0].content.parts[0].text) {
+                        return data.candidates[0].content.parts[0].text;
+                    }
+                }
+
+                // 2. OpenAI API Çağrısı
+                if (selectedModel.startsWith("gpt") && userApiKey) {
+                    const endpoint = `https://api.openai.com/v1/chat/completions`;
+                    const res = await fetch(endpoint, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${userApiKey}`
+                        },
+                        body: JSON.stringify({
+                            model: selectedModel,
+                            messages: [
+                                { role: "system", content: systemPrompt },
+                                { role: "user", content: userText }
+                            ]
+                        })
+                    });
+                    const data = await res.json();
+                    if (data.choices && data.choices[0].message) {
+                        return data.choices[0].message.content;
+                    }
+                }
+
+                return null; // Fallback to server engine
+            }
+
+            // MESAJ GÖNDERME
+            async function sendMessage() {
+                const text = msgInput.value.trim();
+                if (!text) return;
+
+                msgInput.value = "";
+
+                // Kullanıcının mesajını sunucuya kaydet
+                await fetch(`${API_URL}/send-message`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ sender: savedUsername, receiver: currentPartner, content: text })
+                });
+                fetchMessages();
+
+                // Eğer partner AI ise ve canlı API Key varsa
+                if (isAI && userApiKey && selectedModel !== "built-in") {
+                    try {
+                        const liveReply = await callLiveAI(text);
+                        if (liveReply) {
+                            // Canlı AI cevabını da sunucudaki mesaj geçmişine kaydet
+                            await fetch(`${API_URL}/send-message`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ sender: "English_AI", receiver: savedUsername, content: liveReply })
+                            });
+                            fetchMessages();
+                            return;
+                        }
+                    } catch (e) {
+                        console.log("Canlı API hatası, yerleşik AI motoru devreye giriyor:", e.message);
+                    }
+                }
+
+                // Yerleşik motor veya normal mesaj için otomatik kontrol
+                setTimeout(fetchMessages, 400);
+            }
+
+            sendBtn.onclick = sendMessage;
+            msgInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
+            document.getElementById("refreshBtn").onclick = fetchMessages;
+
+            // SESLİ MESAJ KAYDI
+            voiceBtn.onclick = async () => {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+                    mediaRecorder = new MediaRecorder(stream);
+                    audioChunks = [];
+                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
+                    mediaRecorder.onstop = () => {
+                        stream.getTracks().forEach(t => t.stop());
+                        const blob = new Blob(audioChunks, { type: 'audio/webm' });
+                        const reader = new FileReader();
+                        reader.readAsDataURL(blob);
+                        reader.onloadend = () => {
+                            const base64 = reader.result;
+                            fetch(`${API_URL}/send-message`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({ sender: savedUsername, receiver: currentPartner, content: `[SES:${base64}]` })
+                            }).then(() => fetchMessages());
+                        };
+                    };
+                    mediaRecorder.start();
+                    voiceBtn.style.display = "none";
+                    stopVoiceBtn.style.display = "flex";
+                } catch (err) {
+                    alert("Mikrofon erişimi sağlanamadı: " + err.message);
+                }
+            };
+
+            stopVoiceBtn.onclick = () => {
+                if (mediaRecorder) mediaRecorder.stop();
+                stopVoiceBtn.style.display = "none";
+                voiceBtn.style.display = "flex";
+            };
+
+            fetchMessages();
+            setInterval(fetchMessages, 3500);
+        });
+    </script>
 </body>
+
 </html>

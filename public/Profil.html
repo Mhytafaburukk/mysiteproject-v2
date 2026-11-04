@@ -254,11 +254,15 @@
                         const others = usersArray.filter(u => u.username !== savedUsername);
                         let html = "<table>";
                         others.forEach(u => {
-                            // Kullanıcı listesinde resim varsa ufak bir simge olarak gösterilebilir
                             const miniPic = u.profilePic ? u.profilePic : 'https://via.placeholder.com/30';
+                            const isBot = (u.username === "English_AI" || u.isAI);
+                            const badge = isBot ? `<span style="background:linear-gradient(135deg, #00d2ff, #3a7bd5); color:white; font-size:10px; padding:1px 6px; border-radius:10px; margin-left:6px; font-weight:bold;">✓ AI</span>` : '';
+                            const btnText = isBot ? "Konuş 🤖" : "Ziyaret Et";
+                            const btnColor = isBot ? "background-color: #06b6d4;" : "background-color: #6a5acd;";
+
                             html += `<tr>
-                                <td><img src="${miniPic}" style="width:30px; height:30px; border-radius:50%; vertical-align:middle; margin-right:10px;">${u.username}</td>
-                                <td align="right"><button class="visit-btn" data-user="${u.username}">Ziyaret Et</button></td>
+                                <td><img src="${miniPic}" style="width:30px; height:30px; border-radius:50%; vertical-align:middle; margin-right:10px;"><strong>${u.username}</strong>${badge}</td>
+                                <td align="right"><button class="visit-btn" data-user="${u.username}" data-isai="${isBot}" style="${btnColor}">${btnText}</button></td>
                             </tr>`;
                         });
                         html += "</table>";
@@ -266,8 +270,14 @@
 
                         document.querySelectorAll(".visit-btn").forEach(btn => {
                             btn.onclick = function() {
-                                localStorage.setItem("currentusername", this.getAttribute("data-user"));
-                                window.location.href = "Otherprofiles.html";
+                                const targetUser = this.getAttribute("data-user");
+                                const isAi = this.getAttribute("data-isai") === "true";
+                                localStorage.setItem("currentusername", targetUser);
+                                if (isAi) {
+                                    window.location.href = "Message.html";
+                                } else {
+                                    window.location.href = "Otherprofiles.html";
+                                }
                             };
                         });
                     });
