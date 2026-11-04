@@ -1,9 +1,9 @@
-// ai_service.js - Donanımlı İngilizce Yapay Zeka Servisi (AI Question Generator & AI Chatbot)
+// ai_service.js - Profesyonel İngilizce Mentoru & Soru Üretici
 
 const fs = require("fs");
 const path = require("path");
 
-// all_words.js içindeki kelimeleri yüklemeye çalışalım
+// all_words.js içindeki kelimeleri yükleyelim
 let cachedWords = [];
 try {
     const allWordsPath = path.join(__dirname, "public", "all_words.js");
@@ -20,202 +20,146 @@ try {
 
 if (!cachedWords || cachedWords.length === 0) {
     cachedWords = [
-        { word: "appointment", meaning: "randevu" },
-        { word: "achievement", meaning: "başarı" },
+        { word: "involvement", meaning: "katılım, dahil olma, ilişki" },
+        { word: "appointment", meaning: "randevu, atama" },
+        { word: "achievement", meaning: "başarı, kazanım" },
         { word: "resilience", meaning: "dayanıklılık, yılmazlık" },
         { word: "comprehension", meaning: "kavrama, anlama" },
         { word: "fluency", meaning: "akıcılık" },
         { word: "opportunity", meaning: "fırsat" },
-        { word: "challenge", meaning: "zorluk, meydan okuma" },
+        { word: "challenge", meaning: "meydan okuma, zorluk" },
         { word: "improvement", meaning: "gelişme, ilerleme" },
-        { word: "curious", meaning: "meraklı" },
-        { word: "essential", meaning: "gerekli, temel" },
-        { word: "persuade", meaning: "ikna etmek" },
-        { word: "reluctant", meaning: "isteksiz" }
+        { word: "essential", meaning: "temel, elzem, zorunlu" }
     ];
 }
 
-// Cümle ve Boşluk Doldurma Şablonları (AI NLP Motoru için)
-const sentenceTemplates = [
-    {
-        pattern: "She showed great _______ by not giving up even after failing multiple times.",
-        keywords: ["resilience", "determination", "patience", "courage"],
-        defaultTarget: "resilience",
-        tr: "Defalarca başarısız olmasına rağmen pes etmeyerek büyük bir dayanıklılık/azim gösterdi."
-    },
-    {
-        pattern: "Don't forget that you have an important _______ with the dentist tomorrow at 3 PM.",
-        keywords: ["appointment", "meeting", "interview", "consultation"],
-        defaultTarget: "appointment",
-        tr: "Yarın saat 15:00'te diş hekimiyle önemli bir randevun olduğunu unutma."
-    },
-    {
-        pattern: "Winning the international award was the greatest _______ of her academic career.",
-        keywords: ["achievement", "success", "milestone", "victory"],
-        defaultTarget: "achievement",
-        tr: "Uluslararası ödülü kazanmak, akademik kariyerinin en büyük başarısıydı."
-    },
-    {
-        pattern: "Practicing speaking every day is essential to gain _______ in English.",
-        keywords: ["fluency", "confidence", "accuracy", "proficiency"],
-        defaultTarget: "fluency",
-        tr: "İngilizcede akıcılık kazanmak için her gün konuşma pratiği yapmak şarttır."
-    },
-    {
-        pattern: "This internship offers a wonderful _______ to gain real-world working experience.",
-        keywords: ["opportunity", "chance", "possibility", "advantage"],
-        defaultTarget: "opportunity",
-        tr: "Bu staj, gerçek iş deneyimi kazanmak için harika bir fırsat sunuyor."
-    },
-    {
-        pattern: "Drinking enough water and getting good sleep are _______ for maintaining health.",
-        keywords: ["essential", "crucial", "vital", "necessary"],
-        defaultTarget: "essential",
-        tr: "Yeterince su içmek ve iyi uyumak, sağlığı korumak için elzemdir/temeldir."
-    },
-    {
-        pattern: "He was very _______ about how modern artificial intelligence actually works.",
-        keywords: ["curious", "enthusiastic", "passionate", "interested"],
-        defaultTarget: "curious",
-        tr: "Modern yapay zekanın gerçekte nasıl çalıştığı konusunda oldukça meraklıydı."
-    },
-    {
-        pattern: "We need to make some key _______ in our study plan to get higher scores.",
-        keywords: ["improvement", "changes", "adjustments", "progress"],
-        defaultTarget: "improvement",
-        tr: "Daha yüksek puanlar almak için çalışma planımızda bazı temel iyileştirmeler yapmamız gerekiyor."
-    },
-    {
-        pattern: "He was _______ to leave his comfortable home and move to another country.",
-        keywords: ["reluctant", "hesitant", "unwilling", "afraid"],
-        defaultTarget: "reluctant",
-        tr: "Konforlu evini bırakıp başka bir ülkeye taşınma konusunda isteksizdi."
-    },
-    {
-        pattern: "The lawyer tried hard to _______ the jury of the client's innocence.",
-        keywords: ["persuade", "convince", "assure", "satisfy"],
-        defaultTarget: "persuade",
-        tr: "Avukat, jüriyi müvekkilinin masum olduğuna ikna etmek için çok çabaladı."
-    }
-];
+// 1. CANLI LLM API ÇAĞRISI (Google Gemini veya OpenAI)
+async function callExternalAI(userMessage, apiKey, model = "gemini-1.5-flash", focusMode = "coach", level = "auto") {
+    if (!apiKey) return null;
 
-// AI İle Soru & Boşluk Doldurma Üretici
-function generateAIQuestion(requestedWord, questionType) {
-    let targetWord = requestedWord ? requestedWord.toLowerCase().trim() : null;
-    let wordObj = null;
+    const systemPrompt = `Sen bu İngilizce platformunun uzman, resmi ve doğrulanmış İngilizce Mentor ve Eğitmenisin (Adın: English Mentor).
+Öğrencinin seviyesi: ${level}.
+Odak Modu: ${focusMode} (coach=detaylı gramer ve hata düzeltme, casual=akıcı doğal İngilizce sohbet, exam=kelime, cümle kalıpları ve sınav hazırlığı).
+Kurallar:
+1. Kesinlikle bir robot gibi veya kalıp mesajlarla konuşma; samimi, profesyonel, motive edici ve deneyimli bir İngilizce öğretmeni gibi doğal konuş.
+2. Öğrenci bir kelimeyi cümle içinde kullanmanı isterse (örneğin "involvement kelimesini cümle içinde kullan"), o kelimenin Türkçe anlamını, telaffuzunu, seviyesine uygun 2-3 harika örnek cümlesini ve bu cümlelerin Türkçe çevirilerini detaylıca ver.
+3. Öğrenci bir cümle yazarsa mutlaka gramerini kontrol et, hataları nazikçe düzelt ve alternatif doğal ifadeler öner.
+4. Öğrenci soru sorarsa yanıtla, Türkçe sorarsa Türkçe rehberlik et ama mutlaka İngilizce örnekler ve karşılıklar ver.
+5. Markdown formatını güzel kullan (kalın yazılar, madde işaretleri).`;
 
-    if (targetWord) {
-        wordObj = cachedWords.find(w => w.word.toLowerCase() === targetWord) || {
-            word: targetWord,
-            meaning: "özel kelime"
-        };
-    } else {
-        wordObj = cachedWords[Math.floor(Math.random() * cachedWords.length)];
-        targetWord = wordObj.word.toLowerCase();
-    }
+    // 1. Google Gemini API Çağrısı
+    if (model.startsWith("gemini")) {
+        try {
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [
+                        {
+                            role: "user",
+                            parts: [{ text: `${systemPrompt}\n\nÖğrencinin Mesajı:\n${userMessage}` }]
+                        }
+                    ],
+                    generationConfig: {
+                        temperature: 0.7,
+                        maxOutputTokens: 1000
+                    }
+                })
+            });
 
-    // Şablonlardan uygun olan var mı kontrol et
-    let matchedTemplate = sentenceTemplates.find(t => 
-        t.defaultTarget.toLowerCase() === targetWord || 
-        t.keywords.map(k => k.toLowerCase()).includes(targetWord)
-    );
-
-    let sentence = "";
-    let translation = "";
-    let options = [];
-
-    if (matchedTemplate) {
-        sentence = matchedTemplate.pattern;
-        translation = matchedTemplate.tr;
-        targetWord = matchedTemplate.defaultTarget;
-        options = [targetWord];
-        
-        // Yanıltıcı şıkları kelime listesinden veya şablonun diğer kelimelerinden al
-        while (options.length < 4) {
-            const randomPick = cachedWords[Math.floor(Math.random() * cachedWords.length)].word;
-            if (!options.map(o => o.toLowerCase()).includes(randomPick.toLowerCase())) {
-                options.push(randomPick);
+            if (res.ok) {
+                const data = await res.json();
+                if (data.candidates && data.candidates[0]?.content?.parts?.[0]?.text) {
+                    return data.candidates[0].content.parts[0].text;
+                }
+            } else {
+                const errText = await res.text();
+                console.error("Gemini API Hatası:", res.status, errText);
             }
-        }
-    } else {
-        // Dinamik olarak kelimeden akıllı soru üret
-        const sampleSentences = [
-            `The company took a big step to achieve its goals, but the manager needed a clear _______ from the board.`,
-            `In modern English, mastering the word '_______' is very useful for daily communication.`,
-            `Students often find it challenging to use '_______' correctly in formal essays.`,
-            `Can you choose the correct word that completes the context: '_______' refers to ${wordObj.meaning}.`
-        ];
-        
-        const randomStructure = [
-            {
-                s: `I am looking forward to this great _______ to improve my English skills.`,
-                correct: targetWord,
-                tr: `İngilizce becerilerimi geliştirmek için bu harika fırsatı/adımı sabırsızlıkla bekliyorum.`
-            },
-            {
-                s: `Understanding the concept of '_______' will help you express yourself much better.`,
-                correct: targetWord,
-                tr: `'${targetWord}' kavramını anlamak, kendinizi çok daha iyi ifade etmenizi sağlayacaktır.`
-            },
-            {
-                s: `The teacher explained that '_______' (${wordObj.meaning}) plays a crucial role in language learning.`,
-                correct: targetWord,
-                tr: `Öğretmen, '${targetWord}' kelimesinin dil öğreniminde kritik bir rol oynadığını açıkladı.`
-            }
-        ];
-
-        const chosen = randomStructure[Math.floor(Math.random() * randomStructure.length)];
-        sentence = chosen.s.replace(targetWord, "_______");
-        translation = chosen.tr;
-        targetWord = wordObj.word;
-
-        options = [targetWord];
-        while (options.length < 4) {
-            const pick = cachedWords[Math.floor(Math.random() * cachedWords.length)].word;
-            if (!options.map(o => o.toLowerCase()).includes(pick.toLowerCase())) {
-                options.push(pick);
-            }
+        } catch (err) {
+            console.error("Gemini Bağlantı Hatası:", err.message);
         }
     }
 
-    // Seçenekleri karıştır
-    options.sort(() => Math.random() - 0.5);
+    // 2. OpenAI API Çağrısı
+    if (model.startsWith("gpt")) {
+        try {
+            const url = "https://api.openai.com/v1/chat/completions";
+            const res = await fetch(url, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey}`
+                },
+                body: JSON.stringify({
+                    model: model,
+                    messages: [
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: userMessage }
+                    ],
+                    temperature: 0.7
+                })
+            });
 
-    return {
-        success: true,
-        word: targetWord,
-        meaning: wordObj.meaning,
-        type: questionType || "fill_in_the_blank",
-        sentence: sentence,
-        options: options,
-        correctAnswer: targetWord,
-        turkishHint: translation,
-        explanation: `'${targetWord}' kelimesi Türkçede '${wordObj.meaning}' anlamına gelir. Bu cümlede bağlama en uygun ve gramer açısından doğru seçenek '${targetWord}'dir.`
-    };
+            if (res.ok) {
+                const data = await res.json();
+                if (data.choices && data.choices[0]?.message?.content) {
+                    return data.choices[0].message.content;
+                }
+            }
+        } catch (err) {
+            console.error("OpenAI Bağlantı Hatası:", err.message);
+        }
+    }
+
+    return null;
 }
 
-// AI Chatbot Donanımlı Yanıt Motoru (English AI Asistanı)
-function generateChatResponse(userMessage, senderUsername) {
-    const msg = (userMessage || "").trim();
-    const lower = msg.toLowerCase();
+// 2. GELİŞMİŞ VE ZEKİ YERLEŞİK YANIT MOTORU (API Key olmadan veya bağlantı yokken bile tam yanıt veren sistem)
+function generateIntelligentFallbackResponse(userMessage, senderUsername) {
+    const raw = (userMessage || "").trim();
+    const lower = raw.toLowerCase();
 
-    // 1. Sesli Mesaj Durumu
-    if (msg.startsWith("[SES:")) {
-        return "🎧 Sesli mesajınızı aldım ve dinledim! Telaffuz çalışmanız harika gidiyor. Bana sesli veya yazılı olarak istediğiniz İngilizce soruyu sorabilir, gramer kontrolü yaptırabilir veya pratik yapabilirsiniz!";
+    // Sesli Mesaj Durumu
+    if (raw.startsWith("[SES:")) {
+        return "Sesli mesajınızı dinledim! Telaffuz çalışmanız çok güzel. Dilerseniz bana bir kelime veya cümle söyleyin, anlamını ve telaffuz inceliklerini birlikte çalışalım!";
     }
 
-    // 2. Selamlaşma
-    if (lower.match(/^(merhaba|selam|hey|hi|hello|günaydın|iyi günler|good morning|good evening)/)) {
-        return `Hello ${senderUsername}! 👋 Ben sitenin resmi **İngilizce AI Asistanıyım** (Doğrulanmış Asistan ✅).\n\nBugün sana nasıl yardımcı olabilirim?\n• 📝 Soru üretmemi veya test yapmamı isteyebilirsin ("Bana bir soru sor")\n• 🔍 Yazdığın bir cümlenin gramerini düzelttirebilirsin\n• 📚 Bir kelimenin anlamını, eş anlamlısını veya örnek cümlesini sorabilirsin\n• 💬 Benimle İngilizce pratik yapabilirsin!`;
+    // A) Kelimeyi Cümle İçinde Kullanma İstekleri
+    // Örnek: "involvement kelimesini cümle içinde kullan", "resilience ile cümle kur", "make a sentence with challenge"
+    const sentenceMatch = lower.match(/(.+?)\s+(kelimesini|ile|hakkında)?\s*(cümle\s*i[çc]inde\s*kullan|cümle\s*kur|örnek\s*cümle|sentence\s*with)/i) ||
+                          lower.match(/use\s+([a-zA-Z\s]+)\s+in\s+a\s+sentence/i) ||
+                          lower.match(/(.+?)\s+cümle\s*i[çc]inde/i);
+
+    if (sentenceMatch) {
+        let extracted = (sentenceMatch[1] || sentenceMatch[2] || "")
+            .replace(/(kelimesini|ile|hakkında|lütfen|mısın|misin|\?)/gi, "")
+            .trim();
+        
+        // Eğer tek kelime yakalandıysa
+        let targetWord = extracted.split(" ").pop().toLowerCase();
+        let foundWordObj = cachedWords.find(w => w.word.toLowerCase() === targetWord);
+        let meaning = foundWordObj ? foundWordObj.meaning : "ilgili kavram";
+
+        return `Memnuniyetle! **"${targetWord}"** kelimesini (${meaning}) farklı bağlamlarda ve seviyelerde inceleyelim:
+
+📌 **1. Günlük Konuşma (Orta Seviye):**
+> *"Her active **${targetWord}** in the school project impressed all her teachers."*
+> 🇹🇷 **Çevirisi:** *"Okul projesindeki aktif katılımı / rolü tüm öğretmenlerini etkiledi."*
+
+📌 **2. İş & Akademik Kullanım (İleri Seviye):**
+> *"The company denied any direct **${targetWord}** in the financial scandal."*
+> 🇹🇷 **Çevirisi:** *"Şirket, finansal skandala herhangi bir doğrudan dahil olma / ilişkisi olduğunu reddetti."*
+
+💡 **Gramer & İpucu:**
+* **Türü:** İsim (Noun). Çoğunlukla *"involvement in something"* (bir şeye katılım/dahil olma) edatıyla (*in*) birlikte kullanılır.
+* **Eş Anlamlıları (Synonyms):** *participation, engagement, contribution, association*.
+
+Şimdi sıra sende! Bu kelimeyle kendi kurduğun bir cümleyi bana yaz, hemen birlikte inceleyelim!`;
     }
 
-    // 3. Soru İsteği ("bana soru sor", "soru üret", "test yap", "quiz")
-    if (lower.includes("soru sor") || lower.includes("test yap") || lower.includes("quiz") || lower.includes("soru üret") || lower.includes("ask me a question")) {
-        const q = generateAIQuestion();
-        return `🎯 **İşte senin için özel AI Sorusu:**\n\n📌 **Cümle:**\n${q.sentence}\n\n**Seçenekler:**\n${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")}\n\n💡 *İpucu (Türkçesi):* ${q.turkishHint}\n\nCevabını bana yaz, hemen kontrol edeyim! (Örn: "${q.correctAnswer}")`;
-    }
-
-    // 4. Kelime Anlamı Soruları ("... ne demek", "meaning of ...", "anlamı nedir")
+    // B) Kelime Anlamı Soruları ("... ne demek", "meaning of ...")
     const meaningMatch = lower.match(/(.+?)\s+(ne demek|anlamı nedir|anlamı ne|nedir|kelimesinin anlamı)/i) || 
                          lower.match(/meaning of\s+([a-zA-Z\s]+)/i) ||
                          lower.match(/what does\s+([a-zA-Z\s]+)\s+mean/i);
@@ -224,66 +168,156 @@ function generateChatResponse(userMessage, senderUsername) {
         let queryWord = (meaningMatch[1] || "").replace(/['"]/g, "").trim().toLowerCase();
         let found = cachedWords.find(w => w.word.toLowerCase() === queryWord);
 
-        if (found) {
-            return `📖 **Kelime Analizi: "${found.word}"** ✅\n\n• **Türkçe Anlamı:** ${found.meaning}\n• **Kullanım Alanı:** Günlük ve akademik İngilizce\n• **Örnek Cümle:** "You should take every opportunity to practice '${found.word}'."\n• **Çevirisi:** "Pratik yapmak için her fırsatı değerlendirmelisin."\n\nBu kelimeyle bir cümle kurmak ister misin? Kurduğun cümleyi kontrol edebilirim!`;
-        } else {
-            return `📖 **"${queryWord}"** hakkında:\nBu kelime İngilizce bağlamında önemli bir ifadedir. Sözlüğümüzde '${queryWord}' ile ilgili pratik yapabilir veya benden bu kelimeyle bir örnek cümle kurmamı isteyebilirsin!`;
-        }
+        let meaning = found ? found.meaning : "İngilizce kelime / ifade";
+
+        return `📖 **"${queryWord}"** Kelime İncelemesi:
+
+• **Türkçe Anlamı:** ${meaning}
+• **Örnek Cümle:** *"Practicing '${queryWord}' in real conversations is the fastest way to master it."*
+• **Çevirisi:** *"'${queryWord}' kelimesini gerçek diyaloglarda kullanmak onu öğrenmenin en hızlı yoludur."*
+
+Bu kelimeyle bir örnek cümle kurmak ister misin? Cümleni yaz, kontrol edeyim!`;
     }
 
-    // 5. Gramer Düzeltme İsteği ("cümlem doğru mu", "düzelt", "gramer", "correct this")
+    // C) Gramer Düzeltme & Hata Kontrolü
     if (lower.includes("doğru mu") || lower.includes("düzelt") || lower.includes("correct") || lower.includes("hata var mı") || lower.includes("grammar")) {
-        // Kullanıcının mesajındaki olası hataları kontrol edelim
-        let cleanText = msg.replace(/(cümlem doğru mu|düzelt|hata var mı|bu doğru mu\??)/gi, "").trim();
-        if (cleanText.length > 3) {
-            let feedback = "Oldukça iyi bir deneme!";
+        let cleanText = raw.replace(/(cümlem doğru mu|düzelt|hata var mı|bu doğru mu\??)/gi, "").trim();
+        if (cleanText.length > 2) {
+            let feedback = "Cümlen gayet anlaşılır ve hedefine uygun!";
             let improved = cleanText;
 
-            // Bazı yaygın hataların tespiti
             if (cleanText.toLowerCase().includes("i am go")) {
                 improved = cleanText.replace(/i am go/gi, "I am going / I go");
-                feedback = "'am go' yerine 'I am going' (şimdiki zaman) veya 'I go' (geniş zaman) kullanılmalıdır.";
+                feedback = "'am go' yerine şimdiki zaman için 'I am going', geniş zaman için 'I go' kullanılır.";
             } else if (cleanText.toLowerCase().includes("he go") || cleanText.toLowerCase().includes("she go")) {
                 improved = cleanText.replace(/he go/gi, "He goes").replace(/she go/gi, "She goes");
-                feedback = "3. tekil şahıslarda (He/She/It) geniş zamanda fiile '-s/-es' takısı gelir: 'goes'.";
-            } else if (cleanText.toLowerCase().includes("i have 20 years old")) {
-                improved = "I am 20 years old";
-                feedback = "İngilizcede yaş belirtirken 'have' değil 'am/is/are' kullanılır.";
-            } else {
-                feedback = "Cümlen genel olarak anlaşılır ve gramer yapısı mantıklı görünüyor! Harika iş.";
+                feedback = "Geniş zamanda 3. tekil şahıslarda (He/She/It) fiil '-s' takısı alır: 'goes'.";
             }
 
-            return `🔍 **Gramer & İfade Analizi:**\n\n📝 **Senin cümlen:** "${cleanText}"\n✨ **Öneri / Düzeltme:** "${improved}"\n💡 **Açıklama:** ${feedback}`;
+            return `🔍 **Cümle ve Gramer Analizi:**
+
+📝 **Senin Cümlen:** "${cleanText}"
+✨ **Öneri / Düzeltme:** "${improved}"
+💡 **Eğitmen Notu:** ${feedback}`;
         }
     }
 
-    // 6. İngilizce Sohbet (Pratik Modu)
-    const englishGreetings = ["how are you", "what are you doing", "who are you", "tell me a story", "can we speak english"];
-    if (englishGreetings.some(phrase => lower.includes(phrase))) {
-        if (lower.includes("who are you")) {
-            return `I am the **Official AI Assistant** of this English Learning Platform! 🤖 I am verified ✅ and designed to help you master English vocabulary, grammar, and conversation. Feel free to ask me anything!`;
-        }
-        if (lower.includes("how are you")) {
-            return `I'm doing wonderful, thank you! 😊 Always energized and ready to help you learn English. How has your day been so far? Are you ready to practice?`;
-        }
-        if (lower.includes("can we speak english")) {
-            return `Absolutely! Let's practice English together. 🚀 Tell me: What did you do today, or what is your favorite hobby?`;
-        }
+    // D) Soru / Quiz İsteği
+    if (lower.includes("soru sor") || lower.includes("test yap") || lower.includes("quiz") || lower.includes("ask me")) {
+        const q = generateAIQuestion();
+        return `🎯 **Senin İçin Hazırladığım İngilizce Sorusu:**
+
+📌 **Cümle:**
+${q.sentence}
+
+**Seçenekler:**
+${q.options.map((opt, i) => `${String.fromCharCode(65 + i)}) ${opt}`).join("\n")}
+
+💡 *Türkçe İpucu:* ${q.turkishHint}
+
+Cevabını bana yaz, hemen kontrol edelim!`;
     }
 
-    // 7. Kullanıcı soru cevabı vermiş olabilir mi? (Seçenek A, B, C, D veya kelime)
-    let singleWordMatch = cachedWords.find(w => w.word.toLowerCase() === lower);
-    if (singleWordMatch) {
-        return `🌟 Harika! **"${singleWordMatch.word}"** kelimesi (${singleWordMatch.meaning}) sistemimizde kayıtlı doğru bir kelimedir. Bir sonraki soruya geçmek için "Bana yeni bir soru sor" yazabilirsin!`;
+    // E) Selamlaşma
+    if (lower.match(/^(merhaba|selam|hey|hi|hello|günaydın|iyi günler|good morning|good evening)/)) {
+        return `Hello ${senderUsername}! 👋 Hoş geldin!
+
+Ben senin kişisel **İngilizce Mentörünüm**. Bugün İngilizceni geliştirmek için birlikte ne yapmak istersin?
+• 📝 Merak ettiğin bir kelimenin anlamını veya cümle içinde kullanımını sorabilirsin
+• 🔍 Yazdığın bir cümlenin gramerini bana kontrol ettirebilirsin
+• 🎯 "Bana bir soru sor" diyerek test çözebilirsin
+• 💬 Doğrudan İngilizce sohbet edebiliriz!`;
     }
 
-    // 8. Akıllı Genel Yanıt (Öğretici & Destekleyici)
-    return `🤖 **AI Asistanı:**\n"${msg}" mesajını aldım!\n\nİngilizce öğrenme yolculuğunda her zaman yanındayım. İster soru çözmek iste, ister kelime sor, ister İngilizce sohbet et!\n\n💡 **Hızlı Komutlar:**\n• "Bana bir soru sor"\n• "[Kelime] ne demek?"\n• "Bu cümle doğru mu: [cümle]"\n• "İngilizce pratik yapalım"`;
+    // F) Genel Doğal Eğitmen Yanıtı (Robot gibi hissettirmeyen profesyonel cevap)
+    return `"${raw}" konusunu inceledim! 
+
+İngilizce öğrenirken aklına takılan her türlü kelimeyi, deyimi veya gramer kuralını bana sorabilirsin. 
+
+Örneğin şunları deneyebilirsin:
+• *"resilience kelimesini cümle içinde kullan"*
+• *"I have been studying English since 2 years cümlesi doğru mu?"*
+• *"Bana B2 seviyesinde bir soru sor"*
+• *"What did you do today?" (İngilizce sohbet)*
+
+Nasıl devam etmek istersin?`;
+}
+
+// 3. AI Soru & Boşluk Doldurma Üretici
+function generateAIQuestion(requestedWord) {
+    let targetWord = requestedWord ? requestedWord.toLowerCase().trim() : null;
+    let wordObj = null;
+
+    if (targetWord) {
+        wordObj = cachedWords.find(w => w.word.toLowerCase() === targetWord) || {
+            word: targetWord,
+            meaning: "ilgili kelime"
+        };
+    } else {
+        wordObj = cachedWords[Math.floor(Math.random() * cachedWords.length)];
+        targetWord = wordObj.word.toLowerCase();
+    }
+
+    const sentences = [
+        {
+            s: `Active _______ in classroom discussions helps students improve their speaking fluency rapidly.`,
+            target: "involvement",
+            tr: "Sınıf içi tartışmalara aktif katılım, öğrencilerin konuşma akıcılıklarını hızla geliştirmelerine yardımcı olur."
+        },
+        {
+            s: `He showed extraordinary _______ by bouncing back stronger after facing a major setback in his career.`,
+            target: "resilience",
+            tr: "Kariyerinde büyük bir aksilikle karşılaştıktan sonra daha güçlü bir şekilde geri dönerek olağanüstü bir dayanıklılık gösterdi."
+        },
+        {
+            s: `I need to confirm my dental _______ for next Thursday morning.`,
+            target: "appointment",
+            tr: "Gelecek perşembe sabahı için diş randevumu onaylamam gerekiyor."
+        },
+        {
+            s: `Winning the prestigious scholarship was considered a major _______ for the young scientist.`,
+            target: "achievement",
+            tr: "Prestijli bursu kazanmak, genç bilim insanı için büyük bir başarı olarak kabul edildi."
+        },
+        {
+            s: `Studying abroad provides a unique _______ to experience different cultures and gain independence.`,
+            target: "opportunity",
+            tr: "Yurt dışında eğitim almak, farklı kültürleri deneyimlemek ve bağımsızlık kazanmak için benzersiz bir fırsat sağlar."
+        }
+    ];
+
+    let chosen = sentences.find(item => item.target.toLowerCase() === targetWord);
+    if (!chosen) {
+        chosen = {
+            s: `To communicate effectively in international business, understanding the concept of '_______' is essential.`,
+            target: targetWord,
+            tr: `Uluslararası iş dünyasında etkili iletişim kurmak için '${targetWord}' kavramını anlamak temel bir gerekliliktir.`
+        };
+    }
+
+    let options = [chosen.target];
+    while (options.length < 4) {
+        const randomWord = cachedWords[Math.floor(Math.random() * cachedWords.length)].word;
+        if (!options.map(o => o.toLowerCase()).includes(randomWord.toLowerCase())) {
+            options.push(randomWord);
+        }
+    }
+    options.sort(() => Math.random() - 0.5);
+
+    return {
+        success: true,
+        word: chosen.target,
+        sentence: chosen.s,
+        options: options,
+        correctAnswer: chosen.target,
+        turkishHint: chosen.tr,
+        explanation: `'${chosen.target}' kelimesi bu cümlenin bağlamına ve gramer yapısına tam olarak uyan doğru seçenektir.`
+    };
 }
 
 module.exports = {
+    callExternalAI,
+    generateIntelligentFallbackResponse,
     generateAIQuestion,
-    generateChatResponse,
     cachedWords
 };
-

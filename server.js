@@ -8,7 +8,7 @@ const aiService = require("./ai_service");
 const app = express();
 const PORT = process.env.PORT || 5001;
 
-// --- GÜNCEL SERVEO URL ---
+// --- SERVEO URL ---
 const SERVEO_URL = "https://31e174e29e114188-176-233-24-247.serveousercontent.com";
 
 function hashPassword(password) {
@@ -23,9 +23,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 
 const filePath = path.join(__dirname, "users.json");
 
-// AI Bot Sabitleri
-const AI_BOT_USERNAME = "English_AI";
-const AI_PROFILE_PIC = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='grad' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%236a5acd;stop-opacity:1'/><stop offset='100%25' style='stop-color:%2300fa9a;stop-opacity:1'/></linearGradient></defs><circle cx='50' cy='50' r='48' fill='url(%23grad)'/><rect x='28' y='32' width='44' height='36' rx='10' fill='%23ffffff'/><circle cx='40' cy='48' r='5' fill='%236a5acd'/><circle cx='60' cy='48' r='5' fill='%236a5acd'/><path d='M 42 58 Q 50 64 58 58' stroke='%236a5acd' stroke-width='3' fill='none' stroke-linecap='round'/><rect x='47' y='18' width='6' height='14' fill='%23ffffff' rx='3'/><circle cx='50' cy='16' r='5' fill='%2300fa9a'/></svg>";
+// Profesyonel Eğitmen / Mentor Sabitleri (Robotik değil, kurumsal ve şık)
+const AI_BOT_USERNAME = "English_Mentor";
+const LEGACY_AI_NAME = "English_AI";
+
+// Şık, elit bir İngilizce Mentor / Akademi Rozeti Avatarı (Lacivert zemin + Altın rengi monogram ve eğitim amblemi)
+const MENTOR_AVATAR = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><circle cx='60' cy='60' r='58' fill='%231e293b' stroke='%234f46e5' stroke-width='4'/><circle cx='60' cy='60' r='52' fill='%230f172a'/><path d='M60 28 L90 44 L60 60 L30 44 Z' fill='%236366f1'/><path d='M42 54 L42 72 Q60 84 78 72 L78 54 Q60 66 42 54 Z' fill='%23e0e7ff'/><circle cx='60' cy='92' r='4' fill='%2338bdf8'/><path d='M90 44 L90 68' stroke='%2338bdf8' stroke-width='3' stroke-linecap='round'/></svg>";
 
 let usersArray = [];
 if (fs.existsSync(filePath)) {
@@ -40,25 +43,22 @@ if (fs.existsSync(filePath)) {
 
 if (!usersArray || usersArray.length === 0) {
     usersArray = [
-        { username: "Burak", password: hashPassword("1535abcd"), favorikelimeler: ["achievement", "resilience"], messages: [], followers: [AI_BOT_USERNAME, "Alice_Bot", "David_Bot"], following: [AI_BOT_USERNAME, "Alice_Bot"], knownWords: 120, profilePic: "" },
-        { username: "Alice_Bot", password: hashPassword("alice123"), favorikelimeler: ["comprehension", "fluency"], messages: [], followers: ["Burak", "David_Bot"], following: ["Burak"], knownWords: 95, profilePic: "" },
-        { username: "David_Bot", password: hashPassword("david123"), favorikelimeler: ["pronunciation", "idiom"], messages: [], followers: ["Burak"], following: ["Burak", "Alice_Bot"], knownWords: 150, profilePic: "" },
-        { username: "Sophia_Bot", password: hashPassword("sophia123"), favorikelimeler: ["communication", "dialogue"], messages: [], followers: [], following: ["Burak"], knownWords: 75, profilePic: "" }
+        { username: "Burak", password: hashPassword("1535abcd"), favorikelimeler: ["achievement", "resilience"], messages: [], followers: [AI_BOT_USERNAME, "Alice_Bot"], following: [AI_BOT_USERNAME], knownWords: 120, profilePic: "" }
     ];
 }
 
-// English_AI Bot Kullanıcısını Doğrulama ve Entegre Etme
-let aiUser = usersArray.find(u => u.username === AI_BOT_USERNAME);
-if (!aiUser) {
-    aiUser = {
+// English_Mentor kullanıcısını kontrol et & güncelle
+let mentorUser = usersArray.find(u => u.username === AI_BOT_USERNAME || u.username === LEGACY_AI_NAME);
+if (!mentorUser) {
+    mentorUser = {
         username: AI_BOT_USERNAME,
-        password: hashPassword("official_ai_engine_secret_2026"),
-        favorikelimeler: ["comprehension", "fluency", "resilience", "vocabulary", "intelligence"],
+        password: hashPassword("mentor_secret_pass_2026"),
+        favorikelimeler: ["involvement", "comprehension", "fluency", "resilience"],
         messages: [
             {
                 sender: AI_BOT_USERNAME,
                 receiver: "Burak",
-                content: "Hello Burak! 👋 Ben sitenin resmi Yapay Zeka (AI) Asistanıyım. Doğrulanmış mavi rozetimle buradayım. Bana soru sorabilir, kelime anlamı öğrenebilir veya İngilizce sohbet edebilirsin!",
+                content: "Hello Burak! 👋 Ben senin resmi **İngilizce Mentörünüm** (Doğrulanmış Eğitmen ✓). Bana dilediğin kelimeyi, cümleyi veya gramer kuralını sorabilirsin!",
                 timestamp: new Date(),
                 isRead: true
             }
@@ -66,15 +66,16 @@ if (!aiUser) {
         followers: ["Burak"],
         following: ["Burak"],
         knownWords: 5000,
-        profilePic: AI_PROFILE_PIC,
+        profilePic: MENTOR_AVATAR,
         isAI: true,
         isVerified: true
     };
-    usersArray.unshift(aiUser);
+    usersArray.unshift(mentorUser);
 } else {
-    aiUser.isAI = true;
-    aiUser.isVerified = true;
-    if (!aiUser.profilePic) aiUser.profilePic = AI_PROFILE_PIC;
+    mentorUser.username = AI_BOT_USERNAME;
+    mentorUser.isAI = true;
+    mentorUser.isVerified = true;
+    mentorUser.profilePic = MENTOR_AVATAR;
 }
 
 function saveDataToFile() {
@@ -85,7 +86,7 @@ function saveDataToFile() {
     }
 }
 
-// Veri yapısı kontrolü (Migration & Şifre Hashleme)
+// Veri yapısı kontrolü
 usersArray.forEach(user => {
     if (!user.followers) user.followers = [];
     if (!user.following) user.following = [];
@@ -113,7 +114,7 @@ app.post("/register", (req, res) => {
             {
                 sender: AI_BOT_USERNAME,
                 receiver: username,
-                content: `Merhaba ${username}! 🤖 İngilizce platformumuza hoş geldin! Ben senin resmi Yapay Zeka asistanınım. İngilizce öğrenirken aklına takılan her şeyi bana sorabilirsin!`,
+                content: `Merhaba ${username}! 👋 Platformumuza hoş geldin. Ben senin resmi İngilizce Mentörünüm. Takıldığın her şeyi bana sorabilirsin!`,
                 timestamp: new Date(),
                 isRead: false
             }
@@ -124,12 +125,11 @@ app.post("/register", (req, res) => {
         profilePic: "" 
     };
 
-    // AI botun mesaj listesine de ekleyelim
-    if (aiUser) {
-        aiUser.messages.push({
+    if (mentorUser) {
+        mentorUser.messages.push({
             sender: AI_BOT_USERNAME,
             receiver: username,
-            content: `Merhaba ${username}! 🤖 İngilizce platformumuza hoş geldin! Ben senin resmi Yapay Zeka asistanınım.`,
+            content: `Merhaba ${username}! 👋 Hoş geldin!`,
             timestamp: new Date(),
             isRead: true
         });
@@ -157,47 +157,69 @@ app.post("/login", (req, res) => {
     }
 });
 
-// 2. Mesajlaşma
+// MESAJLAŞMA (ASENKRON & DOĞRUDAN API ENTEGRASYONLU)
 app.get("/get-messages/:username1/:username2", (req, res) => {
-    const { username1, username2 } = req.params;
+    let { username1, username2 } = req.params;
+    if (username2 === LEGACY_AI_NAME) username2 = AI_BOT_USERNAME;
+    if (username1 === LEGACY_AI_NAME) username1 = AI_BOT_USERNAME;
+
     const user = usersArray.find(u => u.username === username1);
     if (!user) return res.status(404).json({ success: false });
-    const conversation = user.messages.filter(msg => msg.receiver === username2 || msg.sender === username2);
+    
+    const conversation = user.messages.filter(msg => 
+        (msg.receiver === username2 || (username2 === AI_BOT_USERNAME && msg.receiver === LEGACY_AI_NAME)) || 
+        (msg.sender === username2 || (username2 === AI_BOT_USERNAME && msg.sender === LEGACY_AI_NAME))
+    );
     res.json({ success: true, messages: conversation });
 });
 
-app.post("/send-message", (req, res) => {
-    const { sender, receiver, content } = req.body;
+app.post("/send-message", async (req, res) => {
+    let { sender, receiver, content, apiKey, model, focusMode, englishLevel } = req.body;
+    if (receiver === LEGACY_AI_NAME) receiver = AI_BOT_USERNAME;
+    if (sender === LEGACY_AI_NAME) sender = AI_BOT_USERNAME;
+
     const sUser = usersArray.find(u => u.username === sender);
     const rUser = usersArray.find(u => u.username === receiver);
 
     if (sUser && rUser) {
-        const newMessage = { 
+        const userMsg = { 
             sender, 
             receiver, 
             content, 
             timestamp: new Date(),
             isRead: false 
         };
-        sUser.messages.push(newMessage);
-        rUser.messages.push(newMessage);
+        sUser.messages.push(userMsg);
+        rUser.messages.push(userMsg);
 
-        // EĞER ALICI YAPAY ZEKA (English_AI) İSE ANINDA DONANIMLI CEVAP ÜRET
+        // ALICI MENTOR İSE CEVAP ÜRET
+        let mentorReply = null;
         if (receiver === AI_BOT_USERNAME) {
-            const aiResponseText = aiService.generateChatResponse(content, sender);
-            const aiReply = {
+            let aiText = null;
+
+            // 1. Canlı API Anahtarı Varsa Çağır
+            if (apiKey && model && model !== "built-in") {
+                aiText = await aiService.callExternalAI(content, apiKey, model, focusMode, englishLevel);
+            }
+
+            // 2. Canlı API Yoksa veya Hata Verdiyse Gelişmiş Zeki Yerleşik Yanıtı Çağır
+            if (!aiText) {
+                aiText = aiService.generateIntelligentFallbackResponse(content, sender);
+            }
+
+            mentorReply = {
                 sender: AI_BOT_USERNAME,
                 receiver: sender,
-                content: aiResponseText,
-                timestamp: new Date(Date.now() + 300),
+                content: aiText,
+                timestamp: new Date(Date.now() + 200),
                 isRead: false
             };
-            sUser.messages.push(aiReply);
-            rUser.messages.push(aiReply);
+            sUser.messages.push(mentorReply);
+            rUser.messages.push(mentorReply);
         }
 
         saveDataToFile();
-        res.json({ success: true, newMessage });
+        res.json({ success: true, userMessage: userMsg, mentorReply });
     } else {
         res.status(404).json({ success: false, message: "Kullanıcı bulunamadı!" });
     }
@@ -211,11 +233,12 @@ app.get("/get-all-messages/:username", (req, res) => {
 
 // MESAJLARI OKUNDU YAP
 app.post("/mark-messages-read", (req, res) => {
-    const { username, chatPartner } = req.body;
+    let { username, chatPartner } = req.body;
+    if (chatPartner === LEGACY_AI_NAME) chatPartner = AI_BOT_USERNAME;
     const user = usersArray.find(u => u.username === username);
     if (user) {
         user.messages.forEach(msg => {
-            if (msg.sender === chatPartner && msg.receiver === username) {
+            if ((msg.sender === chatPartner || (chatPartner === AI_BOT_USERNAME && msg.sender === LEGACY_AI_NAME)) && msg.receiver === username) {
                 msg.isRead = true;
             }
         });
@@ -226,7 +249,7 @@ app.post("/mark-messages-read", (req, res) => {
     }
 });
 
-// 3. Sosyal Özellikler (Takip)
+// TAKİP
 app.post("/follow", (req, res) => {
     const { follower, target } = req.body;
     const fUser = usersArray.find(u => u.username === follower);
@@ -241,29 +264,10 @@ app.post("/follow", (req, res) => {
     }
 });
 
-// 4. Profil ve Kelimeler
-app.post("/update-score", (req, res) => {
-    const { username, score } = req.body;
-    const user = usersArray.find(u => u.username === username);
-    if (user) {
-        user.knownWords = score;
-        saveDataToFile();
-        res.json({ success: true, knownWords: user.knownWords });
-    }
-});
-
-app.post("/update-profile-pic", (req, res) => {
-    const { username, imageBase64 } = req.body;
-    const user = usersArray.find(u => u.username === username);
-    if (user) {
-        user.profilePic = imageBase64;
-        saveDataToFile();
-        res.json({ success: true });
-    }
-});
-
+// PROFİL VE KULLANICILAR
 app.get("/get-user-info/:username", (req, res) => {
-    const { username } = req.params;
+    let { username } = req.params;
+    if (username === LEGACY_AI_NAME) username = AI_BOT_USERNAME;
     const user = usersArray.find(u => u.username === username);
     if (!user) return res.status(404).json({ success: false });
     res.json({
@@ -280,20 +284,7 @@ app.get("/get-user-info/:username", (req, res) => {
     });
 });
 
-app.get("/get-favorites/:username", (req, res) => {
-    const user = usersArray.find(u => u.username === req.params.username);
-    res.json({ success: !!user, favorikelimeler: user ? user.favorikelimeler : [] });
-});
-
-app.delete("/delete-account", (req, res) => {
-    const { username } = req.body;
-    usersArray = usersArray.filter(u => u.username !== username);
-    saveDataToFile();
-    res.json({ success: true });
-});
-
 app.get("/users", (req, res) => {
-    // English_AI her zaman listenin başında yer alsın
     const sorted = [...usersArray].sort((a, b) => {
         if (a.username === AI_BOT_USERNAME) return -1;
         if (b.username === AI_BOT_USERNAME) return 1;
@@ -308,32 +299,16 @@ app.get("/users", (req, res) => {
     })));
 });
 
-// --- YAPAY ZEKA ENTEGRASYONU ROTLARI ---
+// AI SORU ÜRETİMİ
 app.post("/api/ai/generate-question", (req, res) => {
-    const { word, type } = req.body || {};
-    const question = aiService.generateAIQuestion(word, type);
+    const { word } = req.body || {};
+    const question = aiService.generateAIQuestion(word);
     res.json(question);
-});
-
-app.get("/api/ai/generate-question", (req, res) => {
-    const { word, type } = req.query || {};
-    const question = aiService.generateAIQuestion(word, type);
-    res.json(question);
-});
-
-// --- ADMIN ÖZEL ROTASI ---
-app.get("/admin-get-all-users/:adminUser", (req, res) => {
-    if (req.params.adminUser === "Burak") {
-        res.json({ success: true, users: usersArray });
-    } else {
-        res.status(403).json({ success: false, message: "Yetkisiz erişim!" });
-    }
 });
 
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`-----------------------------------------`);
     console.log(`1. LOCAL: http://localhost:${PORT}`);
-    console.log(`2. GLOBAL: ${SERVEO_URL}`);
-    console.log(`3. AI BOT: ${AI_BOT_USERNAME} aktif ve hazır!`);
+    console.log(`2. MENTOR: ${AI_BOT_USERNAME} aktif ve hazır!`);
     console.log(`-----------------------------------------`);
 });

@@ -2,22 +2,21 @@
 <html lang="tr">
 
 <head>
-    <title>İngilizce Mesajlaşma & AI Asistanı</title>
+    <title>İngilizce Mentorluk & Mesajlaşma</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --primary: #4f46e5;
-            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
-            --ai-accent: #06b6d4;
+            --primary-gradient: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%);
+            --accent: #38bdf8;
             --bg-dark: #0f172a;
-            --chat-bg: #1e293b;
+            --card-dark: #1e293b;
             --msg-sent: #4338ca;
-            --msg-received: #334155;
+            --msg-received: #1e293b;
             --text-light: #f8fafc;
             --text-dim: #94a3b8;
-            --verified: #00d2ff;
         }
 
         * {
@@ -29,7 +28,7 @@
         }
 
         body {
-            background: radial-gradient(circle at 50% 20%, #1e1b4b 0%, #0f172a 100%);
+            background: radial-gradient(circle at 50% 15%, #1e1b4b 0%, #0f172a 100%);
             color: var(--text-light);
             height: 100vh;
             height: 100dvh;
@@ -45,7 +44,7 @@
             max-width: 680px;
             height: 100vh;
             height: 100dvh;
-            background: rgba(15, 23, 42, 0.95);
+            background: rgba(15, 23, 42, 0.96);
             backdrop-filter: blur(20px);
             display: flex;
             flex-direction: column;
@@ -57,7 +56,7 @@
 
         @media (min-width: 768px) {
             #messagediv {
-                height: 92vh;
+                height: 94vh;
                 border-radius: 24px;
                 border: 1px solid rgba(255, 255, 255, 0.15);
             }
@@ -65,7 +64,7 @@
 
         /* Header */
         .chat-header {
-            background: rgba(30, 41, 59, 0.9);
+            background: rgba(30, 41, 59, 0.95);
             border-bottom: 1px solid rgba(255, 255, 255, 0.1);
             padding: 12px 16px;
             display: flex;
@@ -107,8 +106,8 @@
             height: 100%;
             border-radius: 50%;
             object-fit: cover;
-            border: 2px solid var(--primary);
-            background: #334155;
+            border: 2px solid #6366f1;
+            background: #1e293b;
         }
 
         .online-dot {
@@ -146,25 +145,25 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
             color: white;
             font-size: 10px;
-            width: 16px;
-            height: 16px;
+            width: 17px;
+            height: 17px;
             border-radius: 50%;
             font-weight: bold;
-            box-shadow: 0 0 8px rgba(0, 210, 255, 0.5);
+            box-shadow: 0 0 8px rgba(37, 99, 235, 0.5);
             flex-shrink: 0;
         }
 
-        .badge-ai {
-            background: rgba(6, 182, 212, 0.2);
+        .badge-mentor {
+            background: rgba(56, 189, 248, 0.15);
             color: #38bdf8;
-            border: 1px solid rgba(56, 189, 248, 0.4);
-            font-size: 0.7rem;
-            padding: 1px 7px;
-            border-radius: 10px;
-            font-weight: 600;
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            font-size: 0.72rem;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-weight: 500;
         }
 
         .user-status {
@@ -175,31 +174,31 @@
             gap: 5px;
         }
 
-        .ai-config-btn {
-            background: rgba(99, 102, 241, 0.2);
+        .config-btn {
+            background: rgba(99, 102, 241, 0.18);
             border: 1px solid rgba(99, 102, 241, 0.4);
-            color: #a5b4fc;
-            padding: 6px 12px;
+            color: #e0e7ff;
+            padding: 7px 14px;
             border-radius: 14px;
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
             transition: all 0.2s;
             white-space: nowrap;
         }
 
-        .ai-config-btn:hover {
+        .config-btn:hover {
             background: var(--primary);
             color: #ffffff;
         }
 
-        /* Hızlı Aksiyon Hapları (Quick Actions) */
+        /* Hızlı Eylemler (Quick Actions Bar) */
         .quick-actions-bar {
-            background: rgba(15, 23, 42, 0.8);
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            background: rgba(15, 23, 42, 0.85);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
             padding: 8px 12px;
             display: flex;
             gap: 8px;
@@ -210,42 +209,42 @@
         .quick-actions-bar::-webkit-scrollbar { display: none; }
 
         .quick-pill {
-            background: rgba(30, 41, 59, 0.85);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.12);
             color: #e2e8f0;
-            padding: 5px 12px;
+            padding: 6px 14px;
             border-radius: 16px;
-            font-size: 0.78rem;
+            font-size: 0.8rem;
             font-weight: 500;
             cursor: pointer;
             transition: all 0.2s;
             display: inline-flex;
             align-items: center;
-            gap: 5px;
+            gap: 6px;
         }
 
         .quick-pill:hover {
-            background: rgba(99, 102, 241, 0.35);
+            background: rgba(79, 70, 229, 0.35);
             border-color: #6366f1;
             color: #ffffff;
             transform: translateY(-1px);
         }
 
-        /* Chat Body */
+        /* Sohbet Alanı */
         .chat-body {
             flex: 1;
             overflow-y: auto;
             padding: 16px;
             display: flex;
             flex-direction: column;
-            gap: 12px;
+            gap: 14px;
             scroll-behavior: smooth;
         }
 
         .message-row {
             display: flex;
             flex-direction: column;
-            max-width: 82%;
+            max-width: 86%;
         }
 
         .message-sent {
@@ -257,12 +256,12 @@
         }
 
         .message-bubble {
-            padding: 10px 14px;
+            padding: 12px 16px;
             border-radius: 18px;
-            font-size: 0.92rem;
-            line-height: 1.5;
+            font-size: 0.94rem;
+            line-height: 1.55;
             word-wrap: break-word;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
             position: relative;
         }
 
@@ -273,24 +272,18 @@
         }
 
         .message-received .message-bubble {
-            background: #334155;
+            background: #1e293b;
             color: #f1f5f9;
             border-bottom-left-radius: 4px;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-        }
-
-        .message-received.ai-message .message-bubble {
-            background: linear-gradient(145deg, #1e293b 0%, #27354a 100%);
-            border: 1px solid rgba(6, 182, 212, 0.25);
-            box-shadow: 0 4px 15px rgba(6, 182, 212, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .message-meta {
             display: flex;
             align-items: center;
-            gap: 6px;
+            gap: 8px;
             margin-top: 4px;
-            font-size: 0.7rem;
+            font-size: 0.72rem;
             color: var(--text-dim);
             padding: 0 4px;
         }
@@ -304,13 +297,16 @@
             border: none;
             cursor: pointer;
             color: #38bdf8;
-            font-size: 0.85rem;
-            opacity: 0.8;
+            font-size: 0.8rem;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
             transition: 0.2s;
         }
-        .tts-btn:hover { opacity: 1; transform: scale(1.15); }
+        .tts-btn:hover { color: #ffffff; transform: scale(1.05); }
 
-        /* Footer & Input */
+        /* Mesaj Giriş Alanı */
         .chat-footer {
             background: rgba(30, 41, 59, 0.95);
             border-top: 1px solid rgba(255, 255, 255, 0.1);
@@ -328,12 +324,12 @@
 
         .input-box {
             flex: 1;
-            background: rgba(15, 23, 42, 0.8);
+            background: rgba(15, 23, 42, 0.85);
             border: 1px solid rgba(255, 255, 255, 0.15);
             border-radius: 24px;
-            padding: 10px 18px;
+            padding: 11px 18px;
             color: #ffffff;
-            font-size: 0.94rem;
+            font-size: 0.95rem;
             outline: none;
             transition: all 0.2s;
         }
@@ -362,7 +358,7 @@
         }
 
         .btn-send {
-            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            background: linear-gradient(135deg, #4f46e5 0%, #38bdf8 100%);
             color: white;
             box-shadow: 0 4px 12px rgba(79, 70, 229, 0.4);
         }
@@ -375,11 +371,8 @@
             color: #38bdf8;
             border: 1px solid rgba(255, 255, 255, 0.12);
         }
-        .btn-voice:hover {
-            background: rgba(255, 255, 255, 0.18);
-        }
 
-        /* MODAL (AI API KEY & MODEL AYARLARI) */
+        /* MODAL (AYARLAR) */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -453,7 +446,7 @@
         }
 
         .btn-modal-save {
-            background: linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%);
+            background: linear-gradient(135deg, #4f46e5 0%, #0284c7 100%);
             color: white;
             border: none;
             padding: 12px;
@@ -462,11 +455,6 @@
             cursor: pointer;
             transition: all 0.2s;
             margin-top: 8px;
-        }
-
-        .btn-modal-save:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 18px rgba(79, 70, 229, 0.4);
         }
 
         .api-info-text {
@@ -482,32 +470,13 @@
 
         /* MOBİL UYUM */
         @media (max-width: 600px) {
-            .chat-header {
-                padding: 10px 12px;
-                gap: 8px;
-            }
-            .header-avatar {
-                width: 38px;
-                height: 38px;
-            }
-            .user-name {
-                font-size: 0.92rem;
-            }
-            .ai-config-btn span.full-text {
-                display: none;
-            }
-            .message-bubble {
-                font-size: 0.88rem;
-                padding: 8px 12px;
-            }
-            .input-box {
-                font-size: 0.88rem;
-                padding: 8px 14px;
-            }
-            .btn-action {
-                width: 38px;
-                height: 38px;
-            }
+            .chat-header { padding: 10px 12px; gap: 8px; }
+            .header-avatar { width: 38px; height: 38px; }
+            .user-name { font-size: 0.92rem; }
+            .config-btn span.full-text { display: none; }
+            .message-bubble { font-size: 0.88rem; padding: 10px 14px; }
+            .input-box { font-size: 0.9rem; padding: 9px 14px; }
+            .btn-action { width: 38px; height: 38px; }
         }
     </style>
 </head>
@@ -520,57 +489,55 @@
             <button class="btn-icon" onclick="window.location.href='girisliindex.html'" title="Panele Dön">←</button>
             
             <div class="avatar-wrap">
-                <img id="header-pic" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%234f46e5'/><text x='50' y='60' font-size='35' text-anchor='middle' fill='white'>🤖</text></svg>" class="header-avatar" alt="Avatar">
+                <img id="header-pic" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 120'><circle cx='60' cy='60' r='58' fill='%231e293b' stroke='%234f46e5' stroke-width='4'/><circle cx='60' cy='60' r='52' fill='%230f172a'/><path d='M60 28 L90 44 L60 60 L30 44 Z' fill='%236366f1'/><path d='M42 54 L42 72 Q60 84 78 72 L78 54 Q60 66 42 54 Z' fill='%23e0e7ff'/><circle cx='60' cy='92' r='4' fill='%2338bdf8'/><path d='M90 44 L90 68' stroke='%2338bdf8' stroke-width='3' stroke-linecap='round'/></svg>" class="header-avatar" alt="Avatar">
                 <div class="online-dot" id="onlineDot"></div>
             </div>
 
             <div class="user-meta">
                 <div class="user-title-row">
-                    <span class="user-name" id="partnerName">English_AI</span>
-                    <span class="badge-verified" id="verifiedBadge" title="Doğrulanmış Resmi AI">✓</span>
-                    <span class="badge-ai" id="aiLabel">Yapay Zeka</span>
+                    <span class="user-name" id="partnerName">English Mentor</span>
+                    <span class="badge-verified" id="verifiedBadge" title="Doğrulanmış Resmi Mentor">✓</span>
+                    <span class="badge-mentor" id="mentorBadge">Eğitmen</span>
                 </div>
                 <div class="user-status" id="userStatus">
                     <span>🟢 Çevrimiçi</span> • <span id="currentModelLabel">Gemini 1.5 Flash</span>
                 </div>
             </div>
 
-            <!-- AI AYARLARI BUTONU -->
-            <button class="ai-config-btn" id="openSettingsBtn">
+            <!-- MODEL AYARLARI BUTONU -->
+            <button class="config-btn" id="openSettingsBtn">
                 ⚙️ <span class="full-text">Model & API</span>
             </button>
 
             <button class="btn-icon" id="refreshBtn" title="Sohbeti Yenile">↻</button>
         </header>
 
-        <!-- HIZLI AKSİYONLAR VE PRATİK HAPLARI -->
+        <!-- HIZLI PRATİK VE AKSİYON ÇUBUĞU -->
         <div class="quick-actions-bar" id="quickActionsBar">
-            <div class="quick-pill" onclick="sendQuickPrompt('Bana seviyeme uygun bir İngilizce test sorusu sor!')">
-                📝 <span>Soru Sor</span>
+            <div class="quick-pill" onclick="sendQuickPrompt('Bana bir kelime seç ve farklı seviyelerde örnek cümle içinde kullan!')">
+                📝 <span>Örnek Cümle İste</span>
             </div>
-            <div class="quick-pill" onclick="sendQuickPrompt('Son yazdığım İngilizce cümledeki gramer hatalarını kontrol edip düzelt!')">
-                🔍 <span>Gramerimi Düzelt</span>
+            <div class="quick-pill" onclick="sendQuickPrompt('Son yazdığım İngilizce cümledeki gramer hatalarını inceleyip düzelt!')">
+                🔍 <span>Gramerimi Kontrol Et</span>
             </div>
-            <div class="quick-pill" onclick="sendQuickPrompt('Bugün öğrenmem gereken harika bir İngilizce kelime ve örnek cümlesini açıkla!')">
+            <div class="quick-pill" onclick="sendQuickPrompt('Bugün öğrenmem gereken harika bir kelime, anlamı ve örnek cümlesi nedir?')">
                 🌟 <span>Günün Kelimesi</span>
             </div>
-            <div class="quick-pill" onclick="sendQuickPrompt('Can we have a casual conversation in English? Ask me an interesting question!')">
-                💬 <span>İngilizce Sohbet</span>
+            <div class="quick-pill" onclick="sendQuickPrompt('Can we have a casual conversation in English? Please ask me an engaging question!')">
+                💬 <span>İngilizce Konuşalım</span>
             </div>
-            <div class="quick-pill" onclick="sendQuickPrompt('Bana günlük hayatta çok kullanılan bir İngilizce deyim (idiom) öğret!')">
-                ⚡ <span>Deyim Öğret</span>
+            <div class="quick-pill" onclick="sendQuickPrompt('Günlük hayatta sık kullanılan bir İngilizce deyim (idiom) ve örneğini öğret!')">
+                ⚡ <span>Deyim Öğren</span>
             </div>
         </div>
 
-        <!-- SOHBET GÖVDESİ -->
-        <main class="chat-body" id="chatBody">
-            <!-- Mesajlar buraya yüklenecek -->
-        </main>
+        <!-- SOHBET ALANI -->
+        <main class="chat-body" id="chatBody"></main>
 
-        <!-- FOOTER & INPUT -->
+        <!-- MESAJ GİRİŞ FOOTER -->
         <footer class="chat-footer">
             <div class="input-row">
-                <input type="text" id="msgInput" class="input-box" placeholder="İngilizce bir şey yazın veya soru sorun..." autocomplete="off">
+                <input type="text" id="msgInput" class="input-box" placeholder="Bir kelime veya cümle yazın (Örn: involvement ile cümle kur)..." autocomplete="off">
                 <button id="voiceBtn" class="btn-action btn-voice" title="Sesli Mesaj">🎤</button>
                 <button id="stopVoiceBtn" class="btn-action" style="background:#ef4444; color:white; display:none;" title="Durdur">■</button>
                 <button id="sendBtn" class="btn-action btn-send" title="Gönder">➤</button>
@@ -578,7 +545,7 @@
         </footer>
     </div>
 
-    <!-- AI MODEL & API KEY AYARLARI MODALI -->
+    <!-- MODEL & API KEY AYARLARI MODALI -->
     <div class="modal-overlay" id="settingsModal">
         <div class="modal-card">
             <div class="modal-header">
@@ -587,39 +554,39 @@
             </div>
 
             <div class="form-group">
-                <label class="form-label">Yapay Zeka Sağlayıcısı & Modeli:</label>
+                <label class="form-label">Yapay Zeka Modeli:</label>
                 <select id="modelSelect" class="form-select">
                     <option value="gemini-1.5-flash">⚡ Google Gemini 1.5 Flash (Önerilen - Ücretsiz & Hızlı)</option>
                     <option value="gemini-1.5-pro">🧠 Google Gemini 1.5 Pro (Derin Gramer Analizi)</option>
                     <option value="gemini-2.0-flash">🚀 Google Gemini 2.0 Flash</option>
                     <option value="gpt-4o-mini">🤖 OpenAI GPT-4o Mini</option>
-                    <option value="gpt-4o">🌟 OpenAI GPT-4o (Gelişmiş)</option>
-                    <option value="built-in">💻 Sitenin Yerleşik AI Motoru (API Key Gerekmez)</option>
+                    <option value="gpt-4o">🌟 OpenAI GPT-4o</option>
+                    <option value="built-in">💻 Dahili Akıllı Motor (API Key Gerekmez)</option>
                 </select>
             </div>
 
-            <div class="form-group" id="apiKeyGroup">
-                <label class="form-label">Kişisel API Anahtarınız (API Key):</label>
-                <input type="password" id="apiKeyInput" class="form-input" placeholder="AI Studio veya OpenAI API Key girin...">
+            <div class="form-group">
+                <label class="form-label">API Anahtarınız (API Key):</label>
+                <input type="password" id="apiKeyInput" class="form-input" placeholder="Gemini veya OpenAI API Key girin...">
                 <div class="api-info-text">
-                    🔑 Gemini API anahtarınızı <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a> üzerinden <strong>ücretsiz</strong> alabilirsiniz. Anahtarınız tarayıcınızda güvenle saklanır.
+                    🔑 Gemini API anahtarınızı <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>'dan <strong>ücretsiz</strong> alabilirsiniz.
                 </div>
             </div>
 
             <div class="form-group">
-                <label class="form-label">İngilizce Odak Modu:</label>
+                <label class="form-label">Mentor Odak Modu:</label>
                 <select id="focusModeSelect" class="form-select">
-                    <option value="coach">🎯 Gramer Koçu (Hataları detaylı düzelt & açıkla)</option>
-                    <option value="casual">💬 Günlük Konuşma Partneri (Doğal ve samimi sohbet)</option>
-                    <option value="exam">📚 Sınav & Kelime Hazırlığı (TOEFL / IELTS / YDS / YDT)</option>
+                    <option value="coach">🎯 Gramer & Cümle Koçu (Detaylı düzeltme ve örnek cümleler)</option>
+                    <option value="casual">💬 Doğal Konuşma Partneri (Akıcı günlük diyalog)</option>
+                    <option value="exam">📚 Sınav ve Kelime Hazırlığı (TOEFL / IELTS / YDS)</option>
                 </select>
             </div>
 
             <div class="form-group">
                 <label class="form-label">İngilizce Seviyeniz:</label>
                 <select id="levelSelect" class="form-select">
-                    <option value="auto">🌐 Otomatik (Yazdıklarıma göre ayarla)</option>
-                    <option value="A1-A2">A1 - A2 (Başlangıç Düzeyi)</option>
+                    <option value="auto">🌐 Otomatik (Seviyeme göre ayarla)</option>
+                    <option value="A1-A2">A1 - A2 (Başlangıç)</option>
                     <option value="B1-B2">B1 - B2 (Orta Düzey)</option>
                     <option value="C1-C2">C1 - C2 (İleri Düzey)</option>
                 </select>
@@ -636,9 +603,8 @@
             const msgInput = document.getElementById("msgInput");
             const sendBtn = document.getElementById("sendBtn");
             const partnerNameEl = document.getElementById("partnerName");
-            const headerPic = document.getElementById("header-pic");
             const verifiedBadge = document.getElementById("verifiedBadge");
-            const aiLabel = document.getElementById("aiLabel");
+            const mentorBadge = document.getElementById("mentorBadge");
             const voiceBtn = document.getElementById("voiceBtn");
             const stopVoiceBtn = document.getElementById("stopVoiceBtn");
             const currentModelLabel = document.getElementById("currentModelLabel");
@@ -654,12 +620,15 @@
             const levelSelect = document.getElementById("levelSelect");
 
             let savedUsername = localStorage.getItem("username") || "Kullanıcı";
-            let currentPartner = localStorage.getItem("currentusername") || "English_AI";
+            let rawPartner = localStorage.getItem("currentusername") || "English_Mentor";
+            if (rawPartner === "English_AI") rawPartner = "English_Mentor";
+            let currentPartner = rawPartner;
+
             let lastMsgCount = 0;
             let mediaRecorder;
             let audioChunks = [];
 
-            // AI AYARLARINI YÜKLE
+            // AI AYARLARI
             let userApiKey = localStorage.getItem("ai_api_key") || "";
             let selectedModel = localStorage.getItem("ai_selected_model") || "gemini-1.5-flash";
             let focusMode = localStorage.getItem("ai_focus_mode") || "coach";
@@ -678,12 +647,11 @@
                     "gemini-2.0-flash": "Gemini 2.0 Flash 🚀",
                     "gpt-4o-mini": "GPT-4o Mini 🤖",
                     "gpt-4o": "GPT-4o 🌟",
-                    "built-in": "Yerleşik Motor 💻"
+                    "built-in": "Dahili Motor 💻"
                 };
                 currentModelLabel.textContent = labels[selectedModel] || selectedModel;
             }
 
-            // MODAL AÇ/KAPA
             openSettingsBtn.onclick = () => settingsModal.style.display = "flex";
             closeSettingsBtn.onclick = () => settingsModal.style.display = "none";
             settingsModal.onclick = (e) => { if (e.target === settingsModal) settingsModal.style.display = "none"; };
@@ -701,19 +669,18 @@
 
                 updateModelLabel();
                 settingsModal.style.display = "none";
-                alert("✅ AI Ayarlarınız başarıyla kaydedildi!");
+                alert("✅ Model ayarlarınız güncellendi!");
             };
 
-            // PARTNER BİLGİSİNİ AYARLA
-            partnerNameEl.textContent = currentPartner;
-            const isAI = (currentPartner === "English_AI" || currentPartner.includes("AI"));
-            if (isAI) {
+            const isMentor = (currentPartner === "English_Mentor" || currentPartner === "English_AI");
+            partnerNameEl.textContent = isMentor ? "English Mentor" : currentPartner;
+
+            if (isMentor) {
                 verifiedBadge.style.display = "inline-flex";
-                aiLabel.style.display = "inline-block";
-                headerPic.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><defs><linearGradient id='g' x1='0%25' y1='0%25' x2='100%25' y2='100%25'><stop offset='0%25' style='stop-color:%234f46e5'/><stop offset='100%25' style='stop-color:%2306b6d4'/></linearGradient></defs><circle cx='50' cy='50' r='48' fill='url(%23g)'/><rect x='28' y='32' width='44' height='36' rx='10' fill='%23ffffff'/><circle cx='40' cy='48' r='5' fill='%234f46e5'/><circle cx='60' cy='48' r='5' fill='%234f46e5'/><path d='M 42 58 Q 50 64 58 58' stroke='%234f46e5' stroke-width='3' fill='none' stroke-linecap='round'/><rect x='47' y='18' width='6' height='14' fill='%23ffffff' rx='3'/><circle cx='50' cy='16' r='5' fill='%2306b6d4'/></svg>";
+                mentorBadge.style.display = "inline-block";
             } else {
                 verifiedBadge.style.display = "none";
-                aiLabel.style.display = "none";
+                mentorBadge.style.display = "none";
                 document.getElementById("quickActionsBar").style.display = "none";
             }
 
@@ -721,7 +688,7 @@
             window.speakText = function(text) {
                 if ('speechSynthesis' in window) {
                     window.speechSynthesis.cancel();
-                    const clean = text.replace(/[*#_`]/g, "");
+                    const clean = text.replace(/[*#_`>]/g, "");
                     const utter = new SpeechSynthesisUtterance(clean);
                     utter.lang = 'en-US';
                     utter.rate = 0.95;
@@ -729,7 +696,6 @@
                 }
             };
 
-            // HIZLI PROMPT GÖNDERME
             window.sendQuickPrompt = function(promptText) {
                 msgInput.value = promptText;
                 sendMessage();
@@ -751,9 +717,8 @@
             }
 
             function renderMessages(messages) {
-                chatBody.innerHTML = messages.map((msg, index) => {
+                chatBody.innerHTML = messages.map((msg) => {
                     const isMe = msg.sender === savedUsername;
-                    const isPartnerAI = msg.sender === "English_AI";
                     const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
                     let content = msg.content;
 
@@ -761,21 +726,22 @@
                         const audioData = content.replace("[SES:", "").replace("]", "");
                         content = `<audio src="${audioData}" controls style="width:200px; height:36px;"></audio>`;
                     } else {
-                        // Markdown kalın ve madde işaretleri
+                        // Markdown Biçimlendirmeleri
                         content = content
+                            .replace(/^>\s?(.*)$/gm, '<blockquote style="border-left: 3px solid #38bdf8; padding-left: 8px; margin: 6px 0; color: #cbd5e1;">$1</blockquote>')
                             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                             .replace(/\*(.*?)\*/g, '<em>$1</em>')
                             .replace(/\n/g, '<br>');
                     }
 
                     return `
-                        <div class="message-row ${isMe ? 'message-sent' : 'message-received'} ${isPartnerAI ? 'ai-message' : ''}">
+                        <div class="message-row ${isMe ? 'message-sent' : 'message-received'}">
                             <div class="message-bubble">
                                 ${content}
                             </div>
                             <div class="message-meta">
                                 <span>${time}</span>
-                                ${!isMe && !content.includes("<audio") ? `<button class="tts-btn" onclick="speakText('${msg.content.replace(/'/g, "\\'")}')" title="Telaffuzu Dinle">🔊 Dinle</button>` : ''}
+                                ${!isMe && !content.includes("<audio") ? `<button class="tts-btn" onclick="speakText('${msg.content.replace(/'/g, "\\'")}')" title="İngilizce Telaffuzu Dinle">🔊 Dinle</button>` : ''}
                             </div>
                         </div>
                     `;
@@ -784,102 +750,63 @@
                 chatBody.scrollTop = chatBody.scrollHeight;
             }
 
-            // DOĞRUDAN CANLI LLM ÇAĞRISI (Eğer kullanıcı Gemini/OpenAI API Key girmişse)
-            async function callLiveAI(userText) {
-                const systemPrompt = `You are a world-class, verified English Language Tutor and Conversation Partner (Verified AI) named English_AI.
-Your goal is to help the student learn, master, and practice English.
-Focus Mode: ${focusMode} (coach=correct grammar thoroughly, casual=natural conversation, exam=test/vocab focus).
-Student Level: ${englishLevel}.
-Always be encouraging, insightful, and clear. If they write in Turkish, guide them kindly in Turkish while explaining English grammar, vocabulary, synonyms, and examples. If they write in English, reply in English and highlight any corrections if applicable.`;
-
-                // 1. Google Gemini API Çağrısı
-                if (selectedModel.startsWith("gemini") && userApiKey) {
-                    const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/${selectedModel}:generateContent?key=${userApiKey}`;
-                    const payload = {
-                        contents: [
-                            { role: "user", parts: [{ text: `${systemPrompt}\n\nStudent says: ${userText}` }] }
-                        ]
-                    };
-                    const res = await fetch(endpoint, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify(payload)
-                    });
-                    const data = await res.json();
-                    if (data.candidates && data.candidates[0].content.parts[0].text) {
-                        return data.candidates[0].content.parts[0].text;
-                    }
-                }
-
-                // 2. OpenAI API Çağrısı
-                if (selectedModel.startsWith("gpt") && userApiKey) {
-                    const endpoint = `https://api.openai.com/v1/chat/completions`;
-                    const res = await fetch(endpoint, {
-                        method: "POST",
-                        headers: {
-                            "Content-Type": "application/json",
-                            "Authorization": `Bearer ${userApiKey}`
-                        },
-                        body: JSON.stringify({
-                            model: selectedModel,
-                            messages: [
-                                { role: "system", content: systemPrompt },
-                                { role: "user", content: userText }
-                            ]
-                        })
-                    });
-                    const data = await res.json();
-                    if (data.choices && data.choices[0].message) {
-                        return data.choices[0].message.content;
-                    }
-                }
-
-                return null; // Fallback to server engine
-            }
-
-            // MESAJ GÖNDERME
+            // MESAJ GÖNDERME (API KEY VE MODEL PARAMETRELERİ DAHİL)
             async function sendMessage() {
                 const text = msgInput.value.trim();
                 if (!text) return;
 
                 msgInput.value = "";
 
-                // Kullanıcının mesajını sunucuya kaydet
-                await fetch(`${API_URL}/send-message`, {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ sender: savedUsername, receiver: currentPartner, content: text })
-                });
-                fetchMessages();
+                // Mesaj alanına geçici olarak kullanıcı mesajını ve "Mentor yazıyor..." gösterelim
+                const tempTime = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                chatBody.innerHTML += `
+                    <div class="message-row message-sent">
+                        <div class="message-bubble">${text}</div>
+                        <div class="message-meta"><span>${tempTime}</span></div>
+                    </div>
+                    <div class="message-row message-received" id="typingIndicator">
+                        <div class="message-bubble" style="opacity: 0.8; font-style: italic;">
+                            Mentor yanıtı hazırlıyor... ✍️
+                        </div>
+                    </div>
+                `;
+                chatBody.scrollTop = chatBody.scrollHeight;
 
-                // Eğer partner AI ise ve canlı API Key varsa
-                if (isAI && userApiKey && selectedModel !== "built-in") {
-                    try {
-                        const liveReply = await callLiveAI(text);
-                        if (liveReply) {
-                            // Canlı AI cevabını da sunucudaki mesaj geçmişine kaydet
-                            await fetch(`${API_URL}/send-message`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ sender: "English_AI", receiver: savedUsername, content: liveReply })
-                            });
-                            fetchMessages();
-                            return;
-                        }
-                    } catch (e) {
-                        console.log("Canlı API hatası, yerleşik AI motoru devreye giriyor:", e.message);
+                try {
+                    const response = await fetch(`${API_URL}/send-message`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ 
+                            sender: savedUsername, 
+                            receiver: currentPartner, 
+                            content: text,
+                            apiKey: userApiKey,
+                            model: selectedModel,
+                            focusMode: focusMode,
+                            englishLevel: englishLevel
+                        })
+                    });
+
+                    const data = await response.json();
+                    const indicator = document.getElementById("typingIndicator");
+                    if (indicator) indicator.remove();
+
+                    if (data.success) {
+                        fetchMessages();
                     }
+                } catch (e) {
+                    console.error("Mesaj gönderme hatası:", e);
+                    const indicator = document.getElementById("typingIndicator");
+                    if (indicator) indicator.remove();
+                    fetchMessages();
                 }
-
-                // Yerleşik motor veya normal mesaj için otomatik kontrol
-                setTimeout(fetchMessages, 400);
             }
 
             sendBtn.onclick = sendMessage;
             msgInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
             document.getElementById("refreshBtn").onclick = fetchMessages;
 
-            // SESLİ MESAJ KAYDI
+            // SESLİ MESAJ
             voiceBtn.onclick = async () => {
                 try {
                     const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -896,7 +823,13 @@ Always be encouraging, insightful, and clear. If they write in Turkish, guide th
                             fetch(`${API_URL}/send-message`, {
                                 method: "POST",
                                 headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ sender: savedUsername, receiver: currentPartner, content: `[SES:${base64}]` })
+                                body: JSON.stringify({ 
+                                    sender: savedUsername, 
+                                    receiver: currentPartner, 
+                                    content: `[SES:${base64}]`,
+                                    apiKey: userApiKey,
+                                    model: selectedModel
+                                })
                             }).then(() => fetchMessages());
                         };
                     };
