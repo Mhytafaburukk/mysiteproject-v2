@@ -776,6 +776,17 @@
             levelSelect.value = englishLevel;
             if (autoSpeakCheckbox) autoSpeakCheckbox.checked = autoSpeak;
 
+            apiKeyInput.addEventListener("input", () => {
+                userApiKey = apiKeyInput.value.trim();
+                localStorage.setItem("ai_api_key", userApiKey);
+                updateModelLabel();
+            });
+            modelSelect.addEventListener("change", () => {
+                selectedModel = modelSelect.value;
+                localStorage.setItem("ai_selected_model", selectedModel);
+                updateModelLabel();
+            });
+
             updateModelLabel();
             updatePracticaButtonUI();
 
@@ -786,9 +797,11 @@
                     "gemini-2.0-flash": "Gemini 2.0 Flash 🚀",
                     "gpt-4o-mini": "GPT-4o Mini 🤖",
                     "gpt-4o": "GPT-4o 🌟",
-                    "built-in": "Dahili Akıllı Motor 💻"
+                    "built-in": "Dahili Motor 💻"
                 };
-                currentModelLabel.textContent = labels[selectedModel] || selectedModel;
+                const hasKey = userApiKey && userApiKey.length > 5 && selectedModel !== "built-in";
+                const modeText = hasKey ? '<span style="color:#38bdf8; font-weight:600;">(Canlı API 🟢)</span>' : '<span style="color:#94a3b8;">(Dahili Motor)</span>';
+                currentModelLabel.innerHTML = `${labels[selectedModel] || selectedModel} ${modeText}`;
             }
 
             function updatePracticaButtonUI() {

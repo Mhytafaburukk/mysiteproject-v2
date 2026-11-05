@@ -307,9 +307,22 @@ CRITICAL INSTRUCTIONS:
             } else {
                 const errText = await res.text();
                 console.error(`Gemini API Hatası [${res.status}]:`, errText);
+                let detail = errText;
+                try {
+                    const json = JSON.parse(errText);
+                    detail = json.error?.message || errText;
+                } catch(e) {}
+                return {
+                    error: true,
+                    message: `⚠️ **Google Gemini API Hatası (HTTP ${res.status}):**\n> *${detail}*\n\n*(API anahtarınızı veya model seçimini sağ üstteki ⚙️ butonundan test edip güncelleyebilirsiniz.)*`
+                };
             }
         } catch (err) {
             console.error("Gemini Bağlantı Hatası:", err.message);
+            return {
+                error: true,
+                message: `⚠️ **Google Gemini Bağlantı Hatası:**\n> *${err.message}*`
+            };
         }
     }
 
@@ -351,9 +364,22 @@ CRITICAL INSTRUCTIONS:
             } else {
                 const errText = await res.text();
                 console.error(`OpenAI API Hatası [${res.status}]:`, errText);
+                let detail = errText;
+                try {
+                    const json = JSON.parse(errText);
+                    detail = json.error?.message || errText;
+                } catch(e) {}
+                return {
+                    error: true,
+                    message: `⚠️ **OpenAI API Hatası (HTTP ${res.status}):**\n> *${detail}*`
+                };
             }
         } catch (err) {
             console.error("OpenAI Bağlantı Hatası:", err.message);
+            return {
+                error: true,
+                message: `⚠️ **OpenAI Bağlantı Hatası:**\n> *${err.message}*`
+            };
         }
     }
 
@@ -554,6 +580,39 @@ function generateFallbackResponse(userMessage, senderUsername, dbModule) {
         return `🎯 **Günün İngilizce Sorusu Geldi!**\n\nAşağıdaki boşluğa hangi kelime gelmelidir?\n\n📝 *"${q.sentence}"*\n\n**Seçenekler:**\n${optionLetters}\n\n💡 *İpucu (Çeviri):* ${q.turkishHint}\n\nCevabını bekliyorum! (Harf olarak **A, B, C, D** veya doğrudan kelimeyi yazabilirsin)`;
     }
 
+    // --- Günün Kelimesi (Öncelikli) ---
+    if (lower.match(/(günün\s*kelimesi|gunun\s*kelimesi|word\s*of\s*the\s*day|kelime\s*öğren|kelime\s*ogren)/)) {
+        const pick = BUILTIN_VOCABULARY[Math.floor(Math.random() * BUILTIN_VOCABULARY.length)];
+        return `🌟 **Günün Kelimesi: "${pick.word.toUpperCase()}"**\n\n• **Türkçe Karşılığı:** **${pick.meaning}**\n• **Telaffuz:** *${pick.phonetic || ""}*\n• **Kelime Türü:** ${pick.pos || "İsim"}\n\n📌 **Örnek Cümleler:**\n1) *"${pick.sentences[0].en}"*\n   🇹🇷 *"${pick.sentences[0].tr}"*\n\n2) *"${pick.sentences[1].en}"*\n   🇹🇷 *"${pick.sentences[1].tr}"*\n\n💡 **Günün Görevi:** Bu kelimeyi kullanarak bana bir cümle yaz, birlikte inceleyelim!`;
+    }
+
+    // --- Günün Deyimi (Öncelikli) ---
+    if (lower.match(/(deyim|idiom|kalıp|expression)/)) {
+        const idioms = [
+            { en: "Break the ice", tr: "Buzları eritmek (ortamdaki gerginliği veya yabancılığı gidermek)", ex: "He told a funny story to break the ice at the start of the meeting.", extr: "Toplantının başında ortamı ısıtmak için komik bir hikaye anlattı." },
+            { en: "Piece of cake", tr: "Çantada keklik, çocuk oyuncağı", ex: "Don't worry about the English exam; it's going to be a piece of cake!", extr: "İngilizce sınavı için endişelenme; çocuk oyuncağı olacak!" },
+            { en: "Hit the nail on the head", tr: "Tam üstüne basmak, tam isabetli konuşmak", ex: "You hit the nail on the head when you mentioned time management.", extr: "Zaman yönetiminden bahsettiğinde tam üstüne bastın." },
+            { en: "Cost an arm and a leg", tr: "Ateş pahası olmak, çok pahalıya patlamak", ex: "That new smartphone costs an arm and a leg, but it's very powerful.", extr: "O yeni akıllı telefon ateş pahası ama çok güçlü." }
+        ];
+        const pick = idioms[Math.floor(Math.random() * idioms.length)];
+        return `🗣️ **Günün İngilizce Deyimi (Idiom):**\n\n🌟 **"${pick.en}"**\n🇹🇷 **Anlamı:** ${pick.tr}\n\n📌 **Örnek Cümle:**\n> *"${pick.ex}"*\n> 🇹🇷 *"${pick.extr}"*\n\nBu deyimi kullanarak bir cümle kurmayı denemek ister misin?`;
+    }
+
+    // --- İngilizce Selamlaşma & Sohbet (Kullanıcı İngilizce yazmışsa İNGİLİZCE yanıt ver) ---
+    if (lower.match(/^(hey|hi|hello|howdy|what's\s*up|good\s*(morning|afternoon|evening))/i) || (!isLikelyTurkish(raw) && lower.includes("how are you"))) {
+        return `Hey ${senderUsername}! 👋\n\nI'm doing fantastic, thank you for asking! 😊 It's always a pleasure to practice English with you.\n\nHow is your day going so far? What would you like to work on today — speaking practice, learning new vocabulary, or checking a sentence?`;
+    }
+
+    // --- Saf İngilizce Mesaj (Kullanıcı İngilizce konuşuyorsa İNGİLİZCE devam et) ---
+    if (!isLikelyTurkish(raw) && raw.length > 5) {
+        const englishResponses = [
+            `That's great! 👏 Your English sounds very natural.\n\nTo keep our conversation going, let me ask you:\n**What is something exciting or interesting that happened in your week so far?**\n\nTake your time and reply in English! 😊`,
+            `Well said! That sentence is clear and grammatically solid. ✨\n\n💡 **Mentor Tip:** You can also add conversational phrases like *"To be honest,"* or *"In my experience,"* to sound even more fluent.\n\nWhat other topics are you curious about today?`,
+            `I love chatting with you in English! 💪 You're making noticeable progress every day.\n\nHere is a quick question for you:\n**If you could speak English fluently overnight, what is the first thing you would do?**\n\nShare your thoughts!`
+        ];
+        return englishResponses[Math.floor(Math.random() * englishResponses.length)];
+    }
+
     // --- Kelime Anlatımı / Cümle İsteği / Ne Demek ---
     // Örnek: "bana resilience kelimesini anlatır mısın", "resilience cümle içinde kullan", "resilience ne demek"
     const wordExplanationMatch = lower.match(/(.+?)\s*(kelimesini|kelimesi|hakkında|ile)?\s*(anlat|anlatır|anlatir|açıkla|acikla|nedir|ne demek|anlamı|anlami|cümle içinde kullan|cumle icinde kullan|cümle kur|örnek cümle)/i) ||
@@ -605,8 +664,8 @@ function generateFallbackResponse(userMessage, senderUsername, dbModule) {
         }
     }
 
-    // --- Selamlaşma ---
-    if (lower.match(/^(merhaba|selam|hey|hi|hello|günaydın|gunaydin|iyi\s*günler|iyi\s*aksamlar|nasılsın|nasilsin)/)) {
+    // --- Türkçe Selamlaşma ---
+    if (lower.match(/^(merhaba|selam|günaydın|gunaydin|iyi\s*günler|iyi\s*aksamlar|nasılsın|nasilsin)/)) {
         return `Merhaba ${senderUsername}! 👋\n\nBen senin resmi **İngilizce Mentörünüm**. Bugün İngilizceni bir adım ileri taşımaya hazır mısın?\n\nBirlikte neler yapabiliriz:\n• 🎯 **Soru Çöz** → *"Bana bir soru sor"*\n• 📖 **Kelime Öğren** → *"resilience kelimesini anlatır mısın"*\n• 📝 **Cümle Kur & Kontrol Et** → *"I have 25 years old doğru mu?"*\n• 🗣️ **İngilizce Sohbet Et** → *"Let's practice English!"*\n• 🌟 **Günün Kelimesi** → *"Günün kelimesi nedir?"*\n\nNe ile başlayalım?`;
     }
 
@@ -621,35 +680,6 @@ function generateFallbackResponse(userMessage, senderUsername, dbModule) {
         const pick = topics[Math.floor(Math.random() * topics.length)];
 
         return `Harika bir fikir! İngilizce konuşarak ve yazarak gelişir. 💬\n\nİşte sohbetimizi başlatacak ilk soru:\n\n🌟 **"${pick.en}"**\n🇹🇷 *(${pick.tr})*\n\nİster 1 cümleyle, ister uzun uzun yanıtla. Hata yapmaktan asla çekinme, burası senin öğrenme alanın! Cevabını bekliyorum. 😊`;
-    }
-
-    // --- Saf İngilizce Konuşma (Kullanıcı İngilizce yazmışsa) ---
-    const isTurkish = isLikelyTurkish(raw);
-    if (!isTurkish && raw.length > 8) {
-        const englishResponses = [
-            `That's a very natural expression! 👏\n\nTo expand on that, let me ask you:\n**How often do you get the chance to practice English in your daily routine?**\n\nKeep writing in English, you're doing great!`,
-            `Well said! Your sentence structure is clear and easy to follow. ✨\n\n💡 **Quick Tutor Tip:** You can also make it sound even more conversational by adding transitional words like *"Actually,"* or *"In my opinion,"*.\n\nWhat would you like to discuss next?`,
-            `Excellent! I really enjoy chatting with you in English. 🌟\n\nHere is a thought-provoking question for you:\n**What is one personal goal you are currently working toward?**\n\nTake your time and share your thoughts!`
-        ];
-        return englishResponses[Math.floor(Math.random() * englishResponses.length)];
-    }
-
-    // --- Günün Deyimi ---
-    if (lower.match(/(deyim|idiom|kalıp|expression)/)) {
-        const idioms = [
-            { en: "Break the ice", tr: "Buzları eritmek (ortamdaki gerginliği veya yabancılığı gidermek)", ex: "He told a funny story to break the ice at the start of the meeting.", extr: "Toplantının başında ortamı ısıtmak için komik bir hikaye anlattı." },
-            { en: "Piece of cake", tr: "Çantada keklik, çocuk oyuncağı", ex: "Don't worry about the English exam; it's going to be a piece of cake!", extr: "İngilizce sınavı için endişelenme; çocuk oyuncağı olacak!" },
-            { en: "Hit the nail on the head", tr: "Tam üstüne basmak, tam isabetli konuşmak", ex: "You hit the nail on the head when you mentioned time management.", extr: "Zaman yönetiminden bahsettiğinde tam üstüne bastın." },
-            { en: "Cost an arm and a leg", tr: "Ateş pahası olmak, çok pahalıya patlamak", ex: "That new smartphone costs an arm and a leg, but it's very powerful.", extr: "O yeni akıllı telefon ateş pahası ama çok güçlü." }
-        ];
-        const pick = idioms[Math.floor(Math.random() * idioms.length)];
-        return `🗣️ **Günün İngilizce Deyimi (Idiom):**\n\n🌟 **"${pick.en}"**\n🇹🇷 **Anlamı:** ${pick.tr}\n\n📌 **Örnek Cümle:**\n> *"${pick.ex}"*\n> 🇹🇷 *"${pick.extr}"*\n\nBu deyimi kullanarak bir cümle kurmayı denemek ister misin?`;
-    }
-
-    // --- Günün Kelimesi ---
-    if (lower.match(/(günün\s*kelimesi|gunun\s*kelimesi|yeni\s*kelime|kelime\s*öğren|kelime\s*ogren)/)) {
-        const pick = BUILTIN_VOCABULARY[Math.floor(Math.random() * BUILTIN_VOCABULARY.length)];
-        return `🌟 **Günün Kelimesi: "${pick.word.toUpperCase()}"**\n\n• **Türkçe Karşılığı:** ${pick.meaning}\n• **Telaffuz:** *${pick.phonetic || ""}*\n\n📌 **Örnek Cümle:**\n> *"${pick.sentences[0].en}"*\n> 🇹🇷 *"${pick.sentences[0].tr}"*\n\nBu kelimeyi bugün bir arkadaşınla veya burada benimle paylaşarak pekiştir!`;
     }
 
     // --- Genel Anlayışlı Yanıt ---

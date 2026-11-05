@@ -91,13 +91,28 @@ app.post("/send-message", async (req, res) => {
 
     // Eğer alıcı AI ise yanıt üret
     if (receiver === AI_BOT) {
+        console.log(`[MESAJ] '${sender}' -> English Mentor | "${content.slice(0, 50)}"`);
+        console.log(`[AI AYARLARI] Model: ${model || "built-in"} | API Key: ${apiKey ? "Mevcut (" + apiKey.slice(0, 4) + "...)" : "YOK"}`);
+
         // 1. Canlı API dene (API key varsa ve built-in değilse)
         if (apiKey && model && model !== "built-in") {
             const history = DB.getConversation(sender, AI_BOT).slice(-8);
-            mentorReplyText = await aiService.callExternalAI(content, apiKey, model, focusMode, englishLevel, history);
+            try {
+                const apiRes = await aiService.callExternalAI(content, apiKey, model, focusMode, englishLevel, history);
+                if (typeof apiRes === "string") {
+                    mentorReplyText = apiRes;
+                    console.log(`[CANLI API BAŞARILI] ${model} yanıt üretti.`);
+                } else if (apiRes && apiRes.error) {
+                    console.warn(`[CANLI API HATASI]`, apiRes.message);
+                    const fallback = aiService.generateFallbackResponse(content, sender, DB);
+                    mentorReplyText = `${apiRes.message}\n\n${fallback}`;
+                }
+            } catch (err) {
+                console.error(`[CANLI API EXCEPTION]`, err.message);
+            }
         }
 
-        // 2. API başarısızsa veya built-in seçiliyse yerleşik motor
+        // 2. API çağrılmadıysa veya yanıtsız kaldıysa dahili motor
         if (!mentorReplyText) {
             mentorReplyText = aiService.generateFallbackResponse(content, sender, DB);
         }
