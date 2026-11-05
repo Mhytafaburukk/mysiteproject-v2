@@ -301,3 +301,4 @@ module.exports = {
     deactivateQuiz,
     migrateFromJSON
 };
+
