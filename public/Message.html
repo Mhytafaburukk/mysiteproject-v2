@@ -780,6 +780,11 @@
 
             apiKeyInput.addEventListener("input", () => {
                 userApiKey = apiKeyInput.value.trim();
+                if (userApiKey.startsWith("gsk_")) {
+                    selectedModel = "llama-3.3-70b-versatile";
+                    modelSelect.value = selectedModel;
+                    localStorage.setItem("ai_selected_model", selectedModel);
+                }
                 localStorage.setItem("ai_api_key", userApiKey);
                 updateModelLabel();
             });

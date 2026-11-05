@@ -331,10 +331,10 @@ CRITICAL INSTRUCTIONS:
         }
     }
 
-    // 2. Groq API (Llama 3.3 70B - %100 Ücretsiz & Işık Hızında)
+    // 2. Groq API (Llama 3.3 70B - %100 Ücretsiz & Işık Hızında, Kartsız)
     if ((model && (model.startsWith("llama") || model.startsWith("groq"))) || (apiKey && apiKey.startsWith("gsk_"))) {
         try {
-            const groqModel = model && model.startsWith("llama") ? model : "llama-3.3-70b-versatile";
+            const groqModel = (model && model.startsWith("llama")) ? model : "llama-3.3-70b-versatile";
             let groqMessages = [{ role: "system", content: systemPrompt }];
 
             if (conversationHistory && conversationHistory.length > 0) {
@@ -370,13 +370,84 @@ CRITICAL INSTRUCTIONS:
             } else {
                 const errText = await res.text();
                 console.error(`Groq API Hatası [${res.status}]:`, errText);
+                let detail = errText;
+                try {
+                    const json = JSON.parse(errText);
+                    detail = json.error?.message || errText;
+                } catch(e) {}
+                return {
+                    error: true,
+                    message: `⚠️ **Groq API Hatası (HTTP ${res.status}):**\n> *${detail}*`
+                };
             }
         } catch (err) {
             console.error("Groq Bağlantı Hatası:", err.message);
+            return {
+                error: true,
+                message: `⚠️ **Groq Bağlantı Hatası:**\n> *${err.message}*`
+            };
         }
     }
 
-    // 3. OpenAI API
+    // 3. OpenRouter API (%100 Ücretsiz Modeller: Gemini / Llama / Qwen)
+    if ((model && model.startsWith("openrouter")) || (apiKey && apiKey.startsWith("sk-or-"))) {
+        try {
+            const orModel = (model && model.includes("/")) ? model : "google/gemini-2.0-flash-exp:free";
+            let orMessages = [{ role: "system", content: systemPrompt }];
+
+            if (conversationHistory && conversationHistory.length > 0) {
+                for (const msg of conversationHistory.slice(-6)) {
+                    let text = (msg.content || "").replace(/\[SES:.*?\]/g, "[Sesli Mesaj]").trim();
+                    if (!text) continue;
+                    orMessages.push({
+                        role: (msg.sender === "English_Mentor" || msg.sender === "English_AI") ? "assistant" : "user",
+                        content: text
+                    });
+                }
+            }
+            orMessages.push({ role: "user", content: userMessage });
+
+            const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey.trim()}`
+                },
+                body: JSON.stringify({
+                    model: orModel,
+                    messages: orMessages,
+                    temperature: 0.7,
+                    max_tokens: 1500
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const text = data.choices?.[0]?.message?.content;
+                if (text) return text.trim();
+            } else {
+                const errText = await res.text();
+                console.error(`OpenRouter API Hatası [${res.status}]:`, errText);
+                let detail = errText;
+                try {
+                    const json = JSON.parse(errText);
+                    detail = json.error?.message || errText;
+                } catch(e) {}
+                return {
+                    error: true,
+                    message: `⚠️ **OpenRouter Hatası (HTTP ${res.status}):**\n> *${detail}*`
+                };
+            }
+        } catch (err) {
+            console.error("OpenRouter Bağlantı Hatası:", err.message);
+            return {
+                error: true,
+                message: `⚠️ **OpenRouter Bağlantı Hatası:**\n> *${err.message}*`
+            };
+        }
+    }
+
+    // 4. OpenAI API
     if (model && model.startsWith("gpt") && apiKey) {
         try {
             let openaiMessages = [{ role: "system", content: systemPrompt }];
@@ -470,17 +541,36 @@ async function testAPIKey(apiKey, model) {
 
     if ((model && (model.startsWith("llama") || model.startsWith("groq"))) || (apiKey && apiKey.startsWith("gsk_"))) {
         try {
-            const groqModel = model && model.startsWith("llama") ? model : "llama-3.3-70b-versatile";
+            const groqModel = (model && model.startsWith("llama")) ? model : "llama-3.3-70b-versatile";
             const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                 method: "POST",
                 headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey.trim()}` },
                 body: JSON.stringify({ model: groqModel, messages: [{ role: "user", content: "Hi" }], max_tokens: 5 })
             });
             if (res.ok) {
-                return { success: true, message: `✅ Groq (${groqModel}) bağlantısı başarılı! Model son derece hızlı ve aktif.` };
+                return { success: true, message: `✅ Groq (${groqModel}) bağlantısı başarılı! Model aktif ve çalışıyor.` };
             } else {
                 const errJson = await res.json().catch(() => null);
                 return { success: false, message: `❌ Groq Hatası: ${errJson?.error?.message || res.status}` };
+            }
+        } catch (e) {
+            return { success: false, message: `❌ Ağ Hatası: ${e.message}` };
+        }
+    }
+
+    if ((model && model.startsWith("openrouter")) || (apiKey && apiKey.startsWith("sk-or-"))) {
+        try {
+            const orModel = (model && model.includes("/")) ? model : "google/gemini-2.0-flash-exp:free";
+            const res = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey.trim()}` },
+                body: JSON.stringify({ model: orModel, messages: [{ role: "user", content: "Hi" }], max_tokens: 5 })
+            });
+            if (res.ok) {
+                return { success: true, message: `✅ OpenRouter (${orModel}) bağlantısı başarılı!` };
+            } else {
+                const errJson = await res.json().catch(() => null);
+                return { success: false, message: `❌ OpenRouter Hatası: ${errJson?.error?.message || res.status}` };
             }
         } catch (e) {
             return { success: false, message: `❌ Ağ Hatası: ${e.message}` };
