@@ -312,9 +312,14 @@ CRITICAL INSTRUCTIONS:
                     const json = JSON.parse(errText);
                     detail = json.error?.message || errText;
                 } catch(e) {}
+
+                if (detail.includes("free tier is not available for this project")) {
+                    detail = `Bu API anahtarı eski/kısıtlı bir Cloud projesine bağlı olduğu için Google ücretsiz tarifeyi engelliyor.\n\n💡 **Tamamen Ücretsiz Hızlı Çözüm:**\n1. [Google AI Studio](https://aistudio.google.com/app/apikey) sayfasına gidin.\n2. **"Create API key"** butonuna basın.\n3. Listeden **"Create API key in new project"** *(Yeni projede anahtar oluştur)* seçeneğini seçin.\n4. Oluşan yeni anahtarı Model & API menüsüne yapıştırın. Hiçbir kart veya ödeme bilgisi girmeden anında çalışacaktır!`;
+                }
+
                 return {
                     error: true,
-                    message: `⚠️ **Google Gemini API Hatası (HTTP ${res.status}):**\n> *${detail}*\n\n*(API anahtarınızı veya model seçimini sağ üstteki ⚙️ butonundan test edip güncelleyebilirsiniz.)*`
+                    message: `⚠️ **Google Gemini API Bildirimi:**\n\n${detail}`
                 };
             }
         } catch (err) {
@@ -326,7 +331,52 @@ CRITICAL INSTRUCTIONS:
         }
     }
 
-    // 2. OpenAI API
+    // 2. Groq API (Llama 3.3 70B - %100 Ücretsiz & Işık Hızında)
+    if ((model && (model.startsWith("llama") || model.startsWith("groq"))) || (apiKey && apiKey.startsWith("gsk_"))) {
+        try {
+            const groqModel = model && model.startsWith("llama") ? model : "llama-3.3-70b-versatile";
+            let groqMessages = [{ role: "system", content: systemPrompt }];
+
+            if (conversationHistory && conversationHistory.length > 0) {
+                for (const msg of conversationHistory.slice(-6)) {
+                    let text = (msg.content || "").replace(/\[SES:.*?\]/g, "[Sesli Mesaj]").trim();
+                    if (!text) continue;
+                    groqMessages.push({
+                        role: (msg.sender === "English_Mentor" || msg.sender === "English_AI") ? "assistant" : "user",
+                        content: text
+                    });
+                }
+            }
+            groqMessages.push({ role: "user", content: userMessage });
+
+            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey.trim()}`
+                },
+                body: JSON.stringify({
+                    model: groqModel,
+                    messages: groqMessages,
+                    temperature: 0.7,
+                    max_tokens: 1500
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const text = data.choices?.[0]?.message?.content;
+                if (text) return text.trim();
+            } else {
+                const errText = await res.text();
+                console.error(`Groq API Hatası [${res.status}]:`, errText);
+            }
+        } catch (err) {
+            console.error("Groq Bağlantı Hatası:", err.message);
+        }
+    }
+
+    // 3. OpenAI API
     if (model && model.startsWith("gpt") && apiKey) {
         try {
             let openaiMessages = [{ role: "system", content: systemPrompt }];
@@ -404,11 +454,36 @@ async function testAPIKey(apiKey, model) {
                 return { success: true, message: `✅ ${model} bağlantısı başarılı! API anahtarınız aktif ve çalışıyor.` };
             } else {
                 const errJson = await res.json().catch(() => null);
-                const msg = errJson?.error?.message || `HTTP ${res.status}`;
+                let msg = errJson?.error?.message || `HTTP ${res.status}`;
+                if (msg.includes("free tier is not available for this project")) {
+                    return {
+                        success: false,
+                        message: `❌ Google Uyarısı: Bu anahtar ücretsiz tarifeyi kabul etmeyen eski/kısıtlı bir Cloud projesine bağlı.\n\n💡 10 SANİYEDE ÜCRETSİZ ÇÖZÜM:\n1. https://aistudio.google.com/app/apikey adresini açın.\n2. "Create API key" butonuna tıklayın.\n3. Açılan listeden "Create API key in new project" (Yeni projede anahtar oluştur) seçeneğini seçin.\n4. Alacağınız yeni anahtarı buraya yapıştırın. Hiçbir kart veya ödeme bilgisi girmeden anında çalışacaktır!`
+                    };
+                }
                 return { success: false, message: `❌ Google Gemini Hatası: ${msg}` };
             }
         } catch (e) {
             return { success: false, message: `❌ Ağ/Bağlantı Hatası: ${e.message}` };
+        }
+    }
+
+    if ((model && (model.startsWith("llama") || model.startsWith("groq"))) || (apiKey && apiKey.startsWith("gsk_"))) {
+        try {
+            const groqModel = model && model.startsWith("llama") ? model : "llama-3.3-70b-versatile";
+            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey.trim()}` },
+                body: JSON.stringify({ model: groqModel, messages: [{ role: "user", content: "Hi" }], max_tokens: 5 })
+            });
+            if (res.ok) {
+                return { success: true, message: `✅ Groq (${groqModel}) bağlantısı başarılı! Model son derece hızlı ve aktif.` };
+            } else {
+                const errJson = await res.json().catch(() => null);
+                return { success: false, message: `❌ Groq Hatası: ${errJson?.error?.message || res.status}` };
+            }
+        } catch (e) {
+            return { success: false, message: `❌ Ağ Hatası: ${e.message}` };
         }
     }
 

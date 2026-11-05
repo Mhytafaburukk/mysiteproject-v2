@@ -676,9 +676,10 @@
             <div class="form-group">
                 <label class="form-label">Yapay Zeka Modeli:</label>
                 <select id="modelSelect" class="form-select">
-                    <option value="gemini-1.5-flash">⚡ Google Gemini 1.5 Flash (Önerilen - Ücretsiz & Hızlı)</option>
+                    <option value="gemini-1.5-flash">⚡ Google Gemini 1.5 Flash (Önerilen - Hızlı)</option>
                     <option value="gemini-1.5-pro">🧠 Google Gemini 1.5 Pro (Derin Gramer Analizi)</option>
                     <option value="gemini-2.0-flash">🚀 Google Gemini 2.0 Flash</option>
+                    <option value="llama-3.3-70b-versatile">🦙 Groq Llama 3.3 70B (Çok Hızlı & %100 Ücretsiz)</option>
                     <option value="gpt-4o-mini">🤖 OpenAI GPT-4o Mini</option>
                     <option value="gpt-4o">🌟 OpenAI GPT-4o</option>
                     <option value="built-in">💻 Dahili Akıllı Motor (API Key Gerekmez)</option>
@@ -687,12 +688,13 @@
 
             <div class="form-group">
                 <label class="form-label">API Anahtarınız (API Key):</label>
-                <input type="password" id="apiKeyInput" class="form-input" placeholder="Gemini veya OpenAI API Key girin...">
-                <div class="api-info-text">
-                    🔑 Gemini API anahtarınızı <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>'dan <strong>ücretsiz</strong> alabilirsiniz.
+                <input type="password" id="apiKeyInput" class="form-input" placeholder="Gemini, Groq veya OpenAI API Key girin...">
+                <div class="api-info-text" style="line-height: 1.5; margin-top: 4px;">
+                    🔑 <strong>Gemini için:</strong> <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>'da <em>"Create API key in new project"</em> diyerek ücretsiz alın.<br>
+                    ⚡ <strong>Alternatif Ücretsiz:</strong> <a href="https://console.groq.com/keys" target="_blank">Groq Console</a>'dan kartsız anında Llama 3.3 anahtarı alabilirsiniz.
                 </div>
                 <button type="button" class="btn-modal-test" id="testKeyBtn">🔌 Anahtar Bağlantısını Test Et</button>
-                <div id="testResultBox" class="test-result-box"></div>
+                <div id="testResultBox" class="test-result-box" style="white-space: pre-wrap;"></div>
             </div>
 
             <div class="form-group">
@@ -795,6 +797,7 @@
                     "gemini-1.5-flash": "Gemini 1.5 Flash ⚡",
                     "gemini-1.5-pro": "Gemini 1.5 Pro 🧠",
                     "gemini-2.0-flash": "Gemini 2.0 Flash 🚀",
+                    "llama-3.3-70b-versatile": "Groq Llama 3.3 🦙",
                     "gpt-4o-mini": "GPT-4o Mini 🤖",
                     "gpt-4o": "GPT-4o 🌟",
                     "built-in": "Dahili Motor 💻"
