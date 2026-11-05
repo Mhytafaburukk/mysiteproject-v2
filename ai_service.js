@@ -206,17 +206,33 @@ async function getActiveGroqModel(apiKey, preferredModel) {
         });
         if (res.ok) {
             const data = await res.json();
-            const models = (data.data || []).map(m => m.id).filter(id => 
-                !id.includes("whisper") && !id.includes("guard") && !id.includes("vision") && !id.includes("tts")
-            );
+            // Kesinlikle ses, guard, vision ve arapça/özel modelleri filtrele
+            const models = (data.data || []).map(m => m.id).filter(id => {
+                const lower = id.toLowerCase();
+                return !lower.includes("whisper") && 
+                       !lower.includes("guard") && 
+                       !lower.includes("vision") && 
+                       !lower.includes("tts") && 
+                       !lower.includes("orpheus") && 
+                       !lower.includes("arabic") && 
+                       !lower.includes("saudi") &&
+                       !lower.includes("compound");
+            });
+
             if (preferredModel && models.includes(preferredModel)) {
                 cachedGroqModel = preferredModel;
                 return preferredModel;
             }
-            const best = models.find(m => m.includes("llama-3.3-70b")) ||
+
+            // En kaliteli ve stabil İngilizce LLM modellerini öncelikle tercih et
+            const best = models.find(m => m.includes("llama-3.3-70b-versatile")) ||
+                         models.find(m => m.includes("llama-3.1-8b-instant")) ||
+                         models.find(m => m.includes("llama-3.3-70b")) ||
                          models.find(m => m.includes("llama-3.1-8b")) ||
-                         models.find(m => m.includes("llama")) ||
-                         models[0];
+                         models.find(m => m.includes("llama-3")) ||
+                         models.find(m => m.includes("mixtral-8x7b")) ||
+                         models.find(m => m.includes("gemma2-9b")) ||
+                         "llama-3.1-8b-instant";
             if (best) {
                 cachedGroqModel = best;
                 return best;
@@ -285,10 +301,12 @@ function sanitizeContentsForGemini(history, currentMessage) {
     return contents;
 }
 
-async function callExternalAI(userMessage, apiKey, model, focusMode, level, conversationHistory) {
+async function callExternalAI(userMessage, apiKey, model, focusMode, level, conversationHistory, customSystemPrompt = null) {
     if (!apiKey) return null;
 
-    const systemPrompt = `You are "English Mentor", a warm, world-class certified English language tutor and conversation partner on an English learning platform.
+    let systemPrompt = customSystemPrompt;
+    if (!systemPrompt) {
+        systemPrompt = `You are "English Mentor", a warm, world-class certified English language tutor and conversation partner on an English learning platform.
 Student English Level: ${level || "auto (adapt to student)"}.
 Focus Coaching Mode: ${focusMode || "coach"}.
 
@@ -297,6 +315,7 @@ CRITICAL INSTRUCTIONS:
    - If the student speaks or asks in Turkish (e.g. "bana resilience kelimesini anlatır mısın", "cümle kur", "bu doğru mu"):
      Answer in fluent Turkish with warm encouragement, but ALWAYS provide rich, natural English example sentences, English explanations, pronunciation hints, and Turkish translations.
    - If the student writes in English, reply in natural, engaging English and gently point out any grammar improvements.
+   - STRICT RULE: You must NEVER respond in Arabic or any unrelated language. Only English or Turkish.
 2. WORD EXPLANATIONS:
    - When asked about a specific word, provide:
      • Turkish definition and part of speech (Noun/Verb/Adj)
@@ -308,6 +327,7 @@ CRITICAL INSTRUCTIONS:
    - If asked for a question or quiz, write a clean fill-in-the-blank question with 4 clear options (A, B, C, D) and a Turkish hint.
 4. TONE:
    - Natural, lively, highly supportive, professional tutor. Never use dry robotic disclaimers. Format with clean Markdown (bolding, bullet points, blockquotes).`;
+    }
 
     // 1. Google Gemini API
     if (model && model.startsWith("gemini") && apiKey) {
@@ -582,11 +602,23 @@ async function testAPIKey(apiKey, model) {
             const modelsData = await modelsRes.json();
             const activeModels = (modelsData.data || [])
                 .map(m => m.id)
-                .filter(id => !id.includes("whisper") && !id.includes("guard") && !id.includes("vision") && !id.includes("tts"));
+                .filter(id => {
+                    const lower = id.toLowerCase();
+                    return !lower.includes("whisper") && 
+                           !lower.includes("guard") && 
+                           !lower.includes("vision") && 
+                           !lower.includes("tts") && 
+                           !lower.includes("orpheus") && 
+                           !lower.includes("arabic") && 
+                           !lower.includes("saudi") &&
+                           !lower.includes("compound");
+                });
 
             let targetModel = (model && activeModels.includes(model)) ? model : null;
             if (!targetModel) {
-                targetModel = activeModels.find(m => m.includes("llama-3.3-70b")) ||
+                targetModel = activeModels.find(m => m.includes("llama-3.3-70b-versatile")) ||
+                              activeModels.find(m => m.includes("llama-3.1-8b-instant")) ||
+                              activeModels.find(m => m.includes("llama-3.3-70b")) ||
                               activeModels.find(m => m.includes("llama-3.1-8b")) ||
                               activeModels.find(m => m.includes("llama")) ||
                               activeModels[0];
@@ -908,8 +940,192 @@ function generateFallbackResponse(userMessage, senderUsername, dbModule) {
     return `"${raw}" konusunu inceledim! 🌟\n\nİngilizce yolculuğunda sana en doğru şekilde rehberlik edebilmem için şunlardan birini deneyebilirsin:\n\n• **"resilience kelimesini anlatır mısın"** → Detaylı kelime incelemesi ve örnekler\n• **"Bana bir soru sor"** → Test sorusu ve seviye ölçümü\n• **"İngilizce sohbet edelim"** → Karşılıklı pratik konuşma\n• **"[cümlem] doğru mu?"** → Anında gramer kontrolü\n• **"Günün deyimi"** → Günlük konuşma kalıpları\n\nBirlikte ne yapmak istersin?`;
 }
 
+// =============================================
+// 7. AI TECHNICAL MOCK INTERVIEWER (ML ENGINEER $25/hr)
+// =============================================
+
+function getMockInterviewSystemPrompt(modeName, isDebrief = false) {
+    if (isDebrief) {
+        return `[ROLE & PERSONA]
+You are an expert Lead AI/ML Engineer and Technical Hiring Manager for international remote companies hiring for high-paying remote positions ($22-$25+/hr ML Engineer roles).
+
+[TASK: COMPREHENSIVE INTERVIEW DEBRIEF REPORT]
+You have conducted a technical mock interview with the candidate. Now, review the entire interview transcript and generate a structured, rigorous, and professional "Interview Debrief Report" in English.
+
+Format your response with clean Markdown:
+# 🎯 Remote ML Engineer Interview Evaluation & Debrief
+
+## 1. Executive Summary & Scores
+- **Overall Technical Depth**: [Score / 100] (Pass benchmark: 80+ for a $25/hr remote ML role)
+- **English Communication & Fluency**: [Score / 100] (Clarity, technical phrasing, concise responses)
+- **Hiring Recommendation**: [Strong Hire / Hire / Weak Hire / No Hire]
+
+## 2. Technical Strengths & Demonstrated Competencies
+- Highlight 3-4 specific concepts, architectural decisions, or tools where the candidate demonstrated solid engineering maturity.
+
+## 3. Knowledge Gaps & Critical Improvement Areas
+- Point out specific missing details, unaddressed edge cases, or shallow answers (e.g. latency bottlenecks, memory management, loss function nuances, validation metrics, quantization).
+
+## 4. English & Articulation Feedback
+- Spoken fluency, tone, concise phrasing, and advice to avoid rambling or hesitations during live international video/audio calls.
+
+## 5. Actionable Roadmap to Pass $25/hr Remote Bar
+- 3 concrete, high-leverage steps the candidate should take before their real remote interview.
+
+Be rigorous, honest, and constructive.`;
+    }
+
+    return `[ROLE & PERSONA]
+You are an expert Lead AI/ML Engineer and Technical Hiring Manager for international remote companies. Your role is to conduct high-stakes, realistic Machine Learning Engineer mock interviews and simultaneous conversational English practice. You are preparing candidates for high-paying remote positions (e.g., $22-$25+/hr ML Engineer roles).
+
+[OBJECTIVE]
+1. Help candidates practice technical AI/ML concepts, system design, and behavioral questions entirely in English.
+2. Provide seamless, real-time voice interaction to build candidate fluency and confidence.
+3. Assess candidate expertise across Computer Vision (YOLOv8/v11, OpenCV, ViT), Deep Learning (PyTorch, LeJEPA, Fine-tuning), Generative AI / Speech (Whisper WER/CER reduction), Multi-Agent LLMs (Agno Framework), and MLOps/Deployment (FastAPI, Docker, MPS/CUDA).
+4. Deliver constructive feedback on technical correctness, engineering depth, and professional English articulation.
+
+[ACTIVE INTERVIEW MODE]
+${modeName || "Mode 5: Full Remote ML Engineer Mock Interview"}
+
+Mode References:
+* Mode 1: Computer Vision & Edge AI (YOLOv8/v11, PyTorch, OpenCV, Real-time video processing, Latency optimization, TensorRT/ONNX)
+* Mode 2: Generative AI, Audio & Multi-Agent Systems (Whisper fine-tuning, WER/CER reduction, Agno Framework, FastAPI, FAISS vector search, RAG)
+* Mode 3: ML System Design & MLOps (Production deployment, Docker containerization, REST APIs, Scalability for remote SLAs, CI/CD, Monitoring)
+* Mode 4: Behavioral & STAR Method Practice (Past project presentations, TEKNOFEST wins, internship achievements in English, Remote team collaboration)
+* Mode 5: Full Remote ML Engineer Mock Interview (Comprehensive mixed multi-round simulation)
+
+[LIVE CONVERSATION RULES (VOICE-OPTIMIZED)]:
+1. Conduct 100% of the interview strictly in ENGLISH. Never use Arabic, Turkish, or any other language during the simulation.
+2. Speak clearly and concisely. Keep each turn short (2-4 sentences max) to ensure natural, fluid real-time audio interaction.
+3. Ask ONE question at a time. Wait for the user's response before proceeding.
+4. Dynamically follow up based on their answers (e.g., "Why did you choose YOLOv11 over YOLOv8 for latency?", "How did you measure WER after fine-tuning Whisper?", "What batch size and quantization did you use?").
+5. Do NOT interrupt the flow during live spoken answers for minor grammar mistakes.
+6. Tone: Professional, rigorous, encouraging, and highly technical yet accessible. Keep text audio-friendly (no tables or markdown codeblocks during conversational turns).`;
+}
+
+async function callInterviewAI(userMessage, apiKey, model, modeName, conversationHistory, isDebrief = false) {
+    const prompt = getMockInterviewSystemPrompt(modeName, isDebrief);
+    return await callExternalAI(
+        userMessage,
+        apiKey,
+        model,
+        "mock_interview",
+        "advanced_professional",
+        conversationHistory,
+        prompt
+    );
+}
+
+function generateFallbackInterviewResponse(userMessage, modeName, conversationHistory = [], isDebrief = false) {
+    const historyLength = conversationHistory.length;
+
+    if (isDebrief) {
+        // Otomatik değerlendirme raporu
+        const userWordCount = conversationHistory
+            .filter(m => m.role === "user" || m.sender !== "English_Mentor")
+            .map(m => m.content || m.text || "")
+            .join(" ").split(/\s+/).length;
+
+        const technicalScore = Math.min(94, Math.max(68, 65 + Math.floor(userWordCount / 8)));
+        const englishScore = Math.min(92, Math.max(72, 70 + Math.floor(userWordCount / 10)));
+        const rec = technicalScore >= 80 ? "Hire" : "Weak Hire (Needs 1-2 weeks of focused prep)";
+
+        return `# 🎯 Remote ML Engineer Interview Evaluation & Debrief
+
+## 1. Executive Summary & Scores
+- **Overall Technical Depth**: **${technicalScore} / 100** (Benchmark: 80+ required for $25/hr remote hiring bar)
+- **English Communication & Fluency**: **${englishScore} / 100** (Clarity, technical phrasing, concise articulation)
+- **Hiring Recommendation**: **${rec}**
+
+## 2. Technical Strengths & Demonstrated Competencies
+- Clear grasp of the fundamental problem domain and solid architectural selection.
+- Ability to articulate end-to-end workflow (data preprocessing, modeling, and deployment considerations).
+- Good awareness of production constraints such as latency bottlenecks and hardware utilization.
+
+## 3. Knowledge Gaps & Critical Improvement Areas
+- **Quantification & Trade-offs**: Emphasize exact metrics (e.g., FPS speedup from FP16 vs INT8 quantization, exact WER delta after fine-tuning).
+- **Edge Cases & Failure Modes**: Practice explaining how your system behaves when camera frames drop, audio packets jitter, or GPU VRAM reaches 95%.
+- **Scalability**: Explicitly address asynchronous concurrency (e.g., Celery/Redis queues, FastAPI connection pools).
+
+## 4. English & Articulation Feedback
+- **Structure**: Continue using the **STAR Method** (Situation, Task, Action, Result) for behavioral and architectural questions.
+- **Pacing**: Keep your spoken answers around 45 to 60 seconds per turn to maintain a crisp conversational dynamic on remote video calls.
+- **Vocabulary**: Good usage of industry terminology; keep reinforcing technical verbs like *benchmarked, profiled, orchestrated, pruned, and quantized*.
+
+## 5. Actionable Roadmap to Pass $25/hr Remote Bar
+1. **Prepare 3 Metric-Backed Stories**: Write down 3 core achievements with exact numbers (e.g. *Reduced latency by 35% using ONNX runtime and FP16*).
+2. **Practice System Design under 5 minutes**: Draw and explain end-to-end data pipelines aloud in English every morning.
+3. **Conduct 2 More Live Mock Rounds**: Retest Mode 3 (MLOps) and Mode 5 (Full Remote Simulation) to lock in your fluency.`;
+    }
+
+    // Sorular için akış
+    const modeKey = (modeName || "").toLowerCase();
+
+    if (modeKey.includes("mode 1") || modeKey.includes("vision")) {
+        const questions = [
+            "Great to meet you! To kick off our Computer Vision round, could you explain your experience with the YOLO family, specifically why you might choose YOLOv11 over YOLOv8 for edge deployment?",
+            "That's a solid point regarding feature extraction and latency. How do you approach optimizing inference speed when deploying models on edge devices with strict power and memory budgets?",
+            "Understood. When dealing with real-time video streams, how do you handle frame drops and pipeline bottlenecks using OpenCV and asynchronous worker threads?",
+            "Excellent. Have you ever worked with TensorRT or ONNX Runtime quantization, and what trade-offs did you observe between FP16 and INT8 accuracy?",
+            "Great insights! For our final technical question in this track, how do you validate your model against challenging edge cases like motion blur, occlusion, or variable lighting?"
+        ];
+        const idx = Math.min(Math.floor(historyLength / 2), questions.length - 1);
+        return questions[idx];
+    }
+
+    if (modeKey.includes("mode 2") || modeKey.includes("generative") || modeKey.includes("audio")) {
+        const questions = [
+            "Welcome! Let's dive into Generative AI and Speech. Have you fine-tuned Whisper for domain-specific audio, and how did you measure WER and CER improvements?",
+            "Impressive. When building multi-agent systems with frameworks like Agno, how do you manage state consistency and prevent hallucinations across collaborating agents?",
+            "How do you design your vector search pipeline using FAISS when latency is critical for real-time retrieval-augmented generation?",
+            "When serving LLM or ASR endpoints via FastAPI, how do you handle streaming responses and high concurrency without blocking the main event loop?",
+            "That covers the core mechanics. If a customer reports audio transcription degradation due to background industrial noise, what data cleaning or preprocessing strategy would you implement?"
+        ];
+        const idx = Math.min(Math.floor(historyLength / 2), questions.length - 1);
+        return questions[idx];
+    }
+
+    if (modeKey.includes("mode 3") || modeKey.includes("system design") || modeKey.includes("mlops")) {
+        const questions = [
+            "Welcome to the ML System Design and MLOps track. Could you walk me through your standard Docker containerization strategy for a GPU-accelerated PyTorch service?",
+            "Good approach. How do you design your REST or gRPC APIs in FastAPI to guarantee sub-100ms P99 latency under remote SLA requirements?",
+            "How do you handle model versioning, registry, and zero-downtime rollouts in production when pushing a new model checkpoint?",
+            "In production environments, how do you detect and alert on data drift or concept drift after deployment?",
+            "To wrap up this round, how do you manage GPU memory allocation and batching to avoid Out-Of-Memory errors during traffic spikes?"
+        ];
+        const idx = Math.min(Math.floor(historyLength / 2), questions.length - 1);
+        return questions[idx];
+    }
+
+    if (modeKey.includes("mode 4") || modeKey.includes("behavioral")) {
+        const questions = [
+            "Welcome! For international remote roles, communication is just as vital as code. Could you share your proudest engineering accomplishment, such as a TEKNOFEST win or key internship milestone, using the STAR method?",
+            "That's a compelling achievement. Tell me about a time you had a technical disagreement with a team member or lead regarding model architecture. How did you resolve it?",
+            "Working asynchronously across international time zones can be challenging. How do you ensure clear handoffs and self-directed productivity when your manager is 8 hours away?",
+            "Describe a high-pressure situation where a production pipeline or model failed. What immediate actions did you take to triage and fix the root cause?",
+            "Finally, where do you see your engineering growth over the next two years, and what makes you excited about remote international teams?"
+        ];
+        const idx = Math.min(Math.floor(historyLength / 2), questions.length - 1);
+        return questions[idx];
+    }
+
+    // Default: Mode 5 (Full Remote Simulation)
+    const questions = [
+        "Welcome to your Full Remote ML Engineer Mock Interview! To begin Round 1, please give me a 60-to-90 second overview of your background in machine learning and highlight one impactful project you've built recently.",
+        "Thank you for that overview. Digging into your project, what was the primary architectural bottleneck you encountered during training or inference, and how did you resolve it?",
+        "Now let's touch on MLOps and deployment. How did you package and serve this model in production, and how did you ensure low latency for client requests?",
+        "If your team needed to scale this inference workload to 1,000 requests per minute with strict budget constraints, what optimizations would you prioritize first?",
+        "To finish our interview simulation, tell me about how you communicate technical trade-offs to non-ML stakeholders and international team members."
+    ];
+    const idx = Math.min(Math.floor(historyLength / 2), questions.length - 1);
+    return questions[idx];
+}
+
 module.exports = {
     callExternalAI,
+    callInterviewAI,
+    getMockInterviewSystemPrompt,
+    generateFallbackInterviewResponse,
     testAPIKey,
     generateFallbackResponse,
     generateQuizQuestion,

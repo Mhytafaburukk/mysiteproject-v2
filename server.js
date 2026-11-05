@@ -222,6 +222,87 @@ app.post("/api/ai/generate-question", (req, res) => {
     res.json({ success: true, ...question });
 });
 
+// ==========================================
+// AI TECHNICAL MOCK INTERVIEWER ENDPOINTS
+// ==========================================
+
+app.post("/api/interview/chat", async (req, res) => {
+    try {
+        const { username, mode, message, history, apiKey, model, isDebrief } = req.body || {};
+        const safeHistory = Array.isArray(history) ? history : [];
+        const safeMode = mode || "Mode 5: Full Remote ML Engineer Mock Interview";
+
+        console.log(`[MOCK INTERVIEW] User: ${username || "Anonymous"} | Mode: ${safeMode} | Turn: ${safeHistory.length} | Debrief: ${!!isDebrief}`);
+
+        let aiReply = null;
+
+        // 1. Canlı LLM API dene (Groq, Gemini, OpenRouter)
+        if (apiKey && model && model !== "built-in") {
+            try {
+                const apiRes = await aiService.callInterviewAI(
+                    message,
+                    apiKey,
+                    model,
+                    safeMode,
+                    safeHistory,
+                    !!isDebrief
+                );
+
+                if (typeof apiRes === "string" && apiRes.trim()) {
+                    aiReply = apiRes.trim();
+                } else if (apiRes && apiRes.error) {
+                    console.warn(`[MOCK INTERVIEW API ERROR] ${apiRes.message}`);
+                }
+            } catch (err) {
+                console.error(`[MOCK INTERVIEW EXCEPTION] ${err.message}`);
+            }
+        }
+
+        // 2. Canlı API yoksa veya başarısızsa akıllı dahili simülatör
+        if (!aiReply) {
+            aiReply = aiService.generateFallbackInterviewResponse(
+                message,
+                safeMode,
+                safeHistory,
+                !!isDebrief
+            );
+        }
+
+        res.json({
+            success: true,
+            reply: aiReply,
+            isDebrief: !!isDebrief,
+            mode: safeMode
+        });
+    } catch (e) {
+        console.error("Mock Interview endpoint hatası:", e.message);
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// Oturum kaydetme
+app.post("/api/interview/save", (req, res) => {
+    const { username, mode, transcript, evaluation, technicalScore, englishScore, recommendation } = req.body || {};
+    if (!username) return res.status(400).json({ success: false, message: "Kullanıcı adı gerekli" });
+
+    DB.saveInterviewSession(
+        username,
+        mode || "Mode 5",
+        transcript || [],
+        evaluation || "",
+        technicalScore || 0,
+        englishScore || 0,
+        recommendation || ""
+    );
+    res.json({ success: true, message: "Mülakat oturumu kaydedildi" });
+});
+
+// Geçmiş oturumları getir
+app.get("/api/interview/history/:username", (req, res) => {
+    const sessions = DB.getInterviewSessions(req.params.username, 15);
+    res.json({ success: true, sessions });
+});
+
 // ADMIN
 app.get("/admin-get-all-users/:adminUser", (req, res) => {
     if (req.params.adminUser === "Burak") {

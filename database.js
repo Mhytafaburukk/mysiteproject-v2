@@ -59,11 +59,24 @@ db.exec(`
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
   );
 
+  CREATE TABLE IF NOT EXISTS interview_sessions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    username TEXT NOT NULL,
+    mode TEXT NOT NULL,
+    transcript TEXT NOT NULL,
+    evaluation TEXT DEFAULT '',
+    technical_score INTEGER DEFAULT 0,
+    english_score INTEGER DEFAULT 0,
+    recommendation TEXT DEFAULT '',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+  );
+
   CREATE INDEX IF NOT EXISTS idx_messages_sender ON messages(sender);
   CREATE INDEX IF NOT EXISTS idx_messages_receiver ON messages(receiver);
   CREATE INDEX IF NOT EXISTS idx_followers_follower ON followers(follower_username);
   CREATE INDEX IF NOT EXISTS idx_followers_following ON followers(following_username);
   CREATE INDEX IF NOT EXISTS idx_quiz_state_user ON quiz_state(username, is_active);
+  CREATE INDEX IF NOT EXISTS idx_interview_sessions_user ON interview_sessions(username);
 `);
 
 // --- YARDIMCI FONKSİYONLAR ---
@@ -277,6 +290,35 @@ function migrateFromJSON(jsonPath) {
     }
 }
 
+// --- MOCK INTERVIEW OTURUMLARI ---
+function saveInterviewSession(username, mode, transcript, evaluation, technicalScore = 0, englishScore = 0, recommendation = "") {
+    try {
+        const stmt = db.prepare(`
+            INSERT INTO interview_sessions (username, mode, transcript, evaluation, technical_score, english_score, recommendation)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `);
+        return stmt.run(username, mode, JSON.stringify(transcript), evaluation, technicalScore, englishScore, recommendation);
+    } catch (e) {
+        console.error("saveInterviewSession hatası:", e.message);
+        return null;
+    }
+}
+
+function getInterviewSessions(username, limit = 10) {
+    try {
+        return db.prepare(`
+            SELECT id, mode, evaluation, technical_score, english_score, recommendation, created_at
+            FROM interview_sessions
+            WHERE username = ?
+            ORDER BY id DESC
+            LIMIT ?
+        `).all(username, limit);
+    } catch (e) {
+        console.error("getInterviewSessions hatası:", e.message);
+        return [];
+    }
+}
+
 module.exports = {
     db,
     hashPassword,
@@ -299,6 +341,8 @@ module.exports = {
     setActiveQuiz,
     getActiveQuiz,
     deactivateQuiz,
+    saveInterviewSession,
+    getInterviewSessions,
     migrateFromJSON
 };
 
