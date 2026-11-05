@@ -123,6 +123,13 @@ app.post("/mark-messages-read", (req, res) => {
     res.json({ success: true });
 });
 
+// AI API ANAHTARI TESTİ
+app.post("/api/ai/test-key", async (req, res) => {
+    const { apiKey, model } = req.body || {};
+    const result = await aiService.testAPIKey(apiKey, model);
+    res.json(result);
+});
+
 // TAKİP
 app.post("/follow", (req, res) => {
     const { follower, target } = req.body;

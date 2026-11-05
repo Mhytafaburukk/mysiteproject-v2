@@ -371,6 +371,110 @@
             color: #38bdf8;
             border: 1px solid rgba(255, 255, 255, 0.12);
         }
+        .btn-voice.recording {
+            background: #ef4444;
+            color: #ffffff;
+            animation: pulse 1s infinite alternate;
+        }
+
+        .practica-btn {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #6ee7b7;
+            padding: 6px 10px;
+            border-radius: 12px;
+            font-size: 0.78rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+        .practica-btn.active {
+            background: #10b981;
+            color: #0f172a;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+            border-color: #10b981;
+        }
+
+        .voice-live-bar {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(6, 182, 212, 0.2) 100%);
+            border-bottom: 1px solid rgba(16, 185, 129, 0.35);
+            padding: 8px 16px;
+            display: none;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 0.84rem;
+            color: #a7f3d0;
+        }
+        .voice-live-bar.active { display: flex; }
+        .voice-pulse-dot {
+            width: 9px;
+            height: 9px;
+            border-radius: 50%;
+            background: #ef4444;
+            animation: pulse 0.9s infinite alternate;
+            display: inline-block;
+            margin-right: 6px;
+        }
+        @keyframes pulse {
+            0% { transform: scale(0.8); opacity: 0.6; }
+            100% { transform: scale(1.3); opacity: 1; }
+        }
+
+        .btn-modal-test {
+            background: rgba(56, 189, 248, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.4);
+            color: #38bdf8;
+            padding: 9px 14px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            font-weight: 600;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.2s;
+            margin-top: 5px;
+        }
+        .btn-modal-test:hover { background: rgba(56, 189, 248, 0.28); }
+
+        .test-result-box {
+            padding: 9px 12px;
+            border-radius: 10px;
+            font-size: 0.82rem;
+            display: none;
+            margin-top: 5px;
+            line-height: 1.4;
+        }
+
+        .voice-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.88rem;
+        }
+        .voice-play-btn {
+            background: #38bdf8;
+            color: #0f172a;
+            border: none;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 0.72rem;
+            font-weight: bold;
+        }
 
         /* MODAL (AYARLAR) */
         .modal-overlay {
@@ -504,18 +608,35 @@
                 </div>
             </div>
 
+            <!-- PRACTICA SESLİ SOHBET BUTONU -->
+            <button class="practica-btn" id="practicaVoiceToggle" title="Practica Sesli Konuşma Modu">
+                🎙️ <span class="full-text">Sesli Pratik</span>
+            </button>
+
             <!-- MODEL AYARLARI BUTONU -->
-            <button class="config-btn" id="openSettingsBtn">
-                ⚙️ <span class="full-text">Model & API</span>
+            <button class="config-btn" id="openSettingsBtn" title="Model ve API Ayarları">
+                ⚙️
             </button>
 
             <button class="btn-icon" id="refreshBtn" title="Sohbeti Yenile">↻</button>
         </header>
 
+        <!-- SESLİ SOHBET CANLI BİLDİRİM BARI -->
+        <div class="voice-live-bar" id="voiceLiveBar">
+            <div>
+                <span class="voice-pulse-dot"></span>
+                <span id="voiceLiveText">🎙️ Dinleniyor... İngilizce veya Türkçe konuşun</span>
+            </div>
+            <button id="cancelVoiceLiveBtn" style="background:transparent; border:none; color:#ef4444; font-weight:bold; cursor:pointer;">✕ İptal</button>
+        </div>
+
         <!-- HIZLI PRATİK VE AKSİYON ÇUBUĞU -->
         <div class="quick-actions-bar" id="quickActionsBar">
-            <div class="quick-pill" onclick="sendQuickPrompt('Bana bir kelime seç ve farklı seviyelerde örnek cümle içinde kullan!')">
-                📝 <span>Örnek Cümle İste</span>
+            <div class="quick-pill" onclick="sendQuickPrompt('Bana bir soru sor')">
+                🎯 <span>Soru Sor</span>
+            </div>
+            <div class="quick-pill" onclick="sendQuickPrompt('bana resilience kelimesini anlatır mısın')">
+                📖 <span>Kelime Anlatımı</span>
             </div>
             <div class="quick-pill" onclick="sendQuickPrompt('Son yazdığım İngilizce cümledeki gramer hatalarını inceleyip düzelt!')">
                 🔍 <span>Gramerimi Kontrol Et</span>
@@ -523,8 +644,8 @@
             <div class="quick-pill" onclick="sendQuickPrompt('Bugün öğrenmem gereken harika bir kelime, anlamı ve örnek cümlesi nedir?')">
                 🌟 <span>Günün Kelimesi</span>
             </div>
-            <div class="quick-pill" onclick="sendQuickPrompt('Can we have a casual conversation in English? Please ask me an engaging question!')">
-                💬 <span>İngilizce Konuşalım</span>
+            <div class="quick-pill" onclick="sendQuickPrompt('İngilizce sohbet edelim, bana günlük hayattan bir soru sor!')">
+                💬 <span>Sohbet Edelim</span>
             </div>
             <div class="quick-pill" onclick="sendQuickPrompt('Günlük hayatta sık kullanılan bir İngilizce deyim (idiom) ve örneğini öğret!')">
                 ⚡ <span>Deyim Öğren</span>
@@ -537,9 +658,8 @@
         <!-- MESAJ GİRİŞ FOOTER -->
         <footer class="chat-footer">
             <div class="input-row">
-                <input type="text" id="msgInput" class="input-box" placeholder="Bir kelime veya cümle yazın (Örn: involvement ile cümle kur)..." autocomplete="off">
-                <button id="voiceBtn" class="btn-action btn-voice" title="Sesli Mesaj">🎤</button>
-                <button id="stopVoiceBtn" class="btn-action" style="background:#ef4444; color:white; display:none;" title="Durdur">■</button>
+                <input type="text" id="msgInput" class="input-box" placeholder="Bir kelime veya cümle yazın (Örn: resilience ne demek)..." autocomplete="off">
+                <button id="voiceBtn" class="btn-action btn-voice" title="Sesle Konuş (Practica Tarzı)">🎤</button>
                 <button id="sendBtn" class="btn-action btn-send" title="Gönder">➤</button>
             </div>
         </footer>
@@ -571,6 +691,8 @@
                 <div class="api-info-text">
                     🔑 Gemini API anahtarınızı <a href="https://aistudio.google.com/app/apikey" target="_blank">Google AI Studio</a>'dan <strong>ücretsiz</strong> alabilirsiniz.
                 </div>
+                <button type="button" class="btn-modal-test" id="testKeyBtn">🔌 Anahtar Bağlantısını Test Et</button>
+                <div id="testResultBox" class="test-result-box"></div>
             </div>
 
             <div class="form-group">
@@ -592,6 +714,13 @@
                 </select>
             </div>
 
+            <div class="form-group">
+                <label class="form-label" style="display:flex; align-items:center; gap:8px; cursor:pointer;">
+                    <input type="checkbox" id="autoSpeakCheckbox" checked style="width:16px; height:16px;">
+                    <span>🔊 Mentor Yanıtlarını Otomatik Seslendir</span>
+                </label>
+            </div>
+
             <button class="btn-modal-save" id="saveSettingsBtn">💾 Ayarları Kaydet</button>
         </div>
     </div>
@@ -606,18 +735,24 @@
             const verifiedBadge = document.getElementById("verifiedBadge");
             const mentorBadge = document.getElementById("mentorBadge");
             const voiceBtn = document.getElementById("voiceBtn");
-            const stopVoiceBtn = document.getElementById("stopVoiceBtn");
             const currentModelLabel = document.getElementById("currentModelLabel");
+            const practicaVoiceToggle = document.getElementById("practicaVoiceToggle");
+            const voiceLiveBar = document.getElementById("voiceLiveBar");
+            const voiceLiveText = document.getElementById("voiceLiveText");
+            const cancelVoiceLiveBtn = document.getElementById("cancelVoiceLiveBtn");
 
             // Modal Elementleri
             const settingsModal = document.getElementById("settingsModal");
             const openSettingsBtn = document.getElementById("openSettingsBtn");
             const closeSettingsBtn = document.getElementById("closeSettingsBtn");
             const saveSettingsBtn = document.getElementById("saveSettingsBtn");
+            const testKeyBtn = document.getElementById("testKeyBtn");
+            const testResultBox = document.getElementById("testResultBox");
             const modelSelect = document.getElementById("modelSelect");
             const apiKeyInput = document.getElementById("apiKeyInput");
             const focusModeSelect = document.getElementById("focusModeSelect");
             const levelSelect = document.getElementById("levelSelect");
+            const autoSpeakCheckbox = document.getElementById("autoSpeakCheckbox");
 
             let savedUsername = localStorage.getItem("username") || "Kullanıcı";
             let rawPartner = localStorage.getItem("currentusername") || "English_Mentor";
@@ -625,20 +760,24 @@
             let currentPartner = rawPartner;
 
             let lastMsgCount = 0;
-            let mediaRecorder;
-            let audioChunks = [];
+            window._allChatMessages = [];
 
-            // AI AYARLARI
+            // AI VE SES AYARLARI
             let userApiKey = localStorage.getItem("ai_api_key") || "";
             let selectedModel = localStorage.getItem("ai_selected_model") || "gemini-1.5-flash";
             let focusMode = localStorage.getItem("ai_focus_mode") || "coach";
             let englishLevel = localStorage.getItem("ai_level") || "auto";
+            let autoSpeak = localStorage.getItem("ai_auto_speak") !== "false";
+            let practicaVoiceMode = localStorage.getItem("practica_voice_mode") === "true";
 
             apiKeyInput.value = userApiKey;
             modelSelect.value = selectedModel;
             focusModeSelect.value = focusMode;
             levelSelect.value = englishLevel;
+            if (autoSpeakCheckbox) autoSpeakCheckbox.checked = autoSpeak;
+
             updateModelLabel();
+            updatePracticaButtonUI();
 
             function updateModelLabel() {
                 const labels = {
@@ -647,29 +786,100 @@
                     "gemini-2.0-flash": "Gemini 2.0 Flash 🚀",
                     "gpt-4o-mini": "GPT-4o Mini 🤖",
                     "gpt-4o": "GPT-4o 🌟",
-                    "built-in": "Dahili Motor 💻"
+                    "built-in": "Dahili Akıllı Motor 💻"
                 };
                 currentModelLabel.textContent = labels[selectedModel] || selectedModel;
             }
 
-            openSettingsBtn.onclick = () => settingsModal.style.display = "flex";
+            function updatePracticaButtonUI() {
+                if (!practicaVoiceToggle) return;
+                if (practicaVoiceMode) {
+                    practicaVoiceToggle.classList.add("active");
+                    practicaVoiceToggle.innerHTML = "🎙️ <span>Sesli Pratik: Açık</span>";
+                } else {
+                    practicaVoiceToggle.classList.remove("active");
+                    practicaVoiceToggle.innerHTML = "🎙️ <span>Sesli Pratik</span>";
+                }
+            }
+
+            if (practicaVoiceToggle) {
+                practicaVoiceToggle.onclick = () => {
+                    practicaVoiceMode = !practicaVoiceMode;
+                    localStorage.setItem("practica_voice_mode", practicaVoiceMode ? "true" : "false");
+                    updatePracticaButtonUI();
+                    if (practicaVoiceMode) {
+                        startSpeechRecognition();
+                    } else {
+                        stopSpeechRecognition();
+                    }
+                };
+            }
+
+            openSettingsBtn.onclick = () => {
+                if (testResultBox) testResultBox.style.display = "none";
+                settingsModal.style.display = "flex";
+            };
             closeSettingsBtn.onclick = () => settingsModal.style.display = "none";
             settingsModal.onclick = (e) => { if (e.target === settingsModal) settingsModal.style.display = "none"; };
+
+            // API TEST BUTONU
+            if (testKeyBtn) {
+                testKeyBtn.onclick = async () => {
+                    const key = apiKeyInput.value.trim();
+                    const mod = modelSelect.value;
+                    if (!key && mod !== "built-in") {
+                        testResultBox.style.display = "block";
+                        testResultBox.style.background = "rgba(239, 68, 68, 0.2)";
+                        testResultBox.style.color = "#fca5a5";
+                        testResultBox.textContent = "Lütfen önce bir API anahtarı girin.";
+                        return;
+                    }
+
+                    testResultBox.style.display = "block";
+                    testResultBox.style.background = "rgba(56, 189, 248, 0.2)";
+                    testResultBox.style.color = "#bae6fd";
+                    testResultBox.textContent = "⏳ Bağlantı test ediliyor...";
+
+                    try {
+                        const res = await fetch(`${API_URL}/api/ai/test-key`, {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({ apiKey: key, model: mod })
+                        });
+                        const data = await res.json();
+                        if (data.success) {
+                            testResultBox.style.background = "rgba(16, 185, 129, 0.2)";
+                            testResultBox.style.color = "#a7f3d0";
+                            testResultBox.textContent = data.message;
+                        } else {
+                            testResultBox.style.background = "rgba(239, 68, 68, 0.2)";
+                            testResultBox.style.color = "#fca5a5";
+                            testResultBox.textContent = data.message;
+                        }
+                    } catch (e) {
+                        testResultBox.style.background = "rgba(239, 68, 68, 0.2)";
+                        testResultBox.style.color = "#fca5a5";
+                        testResultBox.textContent = "Bağlantı hatası: " + e.message;
+                    }
+                };
+            }
 
             saveSettingsBtn.onclick = () => {
                 userApiKey = apiKeyInput.value.trim();
                 selectedModel = modelSelect.value;
                 focusMode = focusModeSelect.value;
                 englishLevel = levelSelect.value;
+                if (autoSpeakCheckbox) autoSpeak = autoSpeakCheckbox.checked;
 
                 localStorage.setItem("ai_api_key", userApiKey);
                 localStorage.setItem("ai_selected_model", selectedModel);
                 localStorage.setItem("ai_focus_mode", focusMode);
                 localStorage.setItem("ai_level", englishLevel);
+                localStorage.setItem("ai_auto_speak", autoSpeak ? "true" : "false");
 
                 updateModelLabel();
                 settingsModal.style.display = "none";
-                alert("✅ Model ayarlarınız güncellendi!");
+                alert("✅ Yapay Zeka ayarları başarıyla kaydedildi!");
             };
 
             const isMentor = (currentPartner === "English_Mentor" || currentPartner === "English_AI");
@@ -681,18 +891,36 @@
             } else {
                 verifiedBadge.style.display = "none";
                 mentorBadge.style.display = "none";
-                document.getElementById("quickActionsBar").style.display = "none";
+                const qb = document.getElementById("quickActionsBar");
+                if (qb) qb.style.display = "none";
+                if (practicaVoiceToggle) practicaVoiceToggle.style.display = "none";
             }
 
-            // SESLİ OKUMA (TTS)
+            // SESLİ OKUMA (TTS) - GÜVENLİ VE KALİTELİ
             window.speakText = function(text) {
-                if ('speechSynthesis' in window) {
-                    window.speechSynthesis.cancel();
-                    const clean = text.replace(/[*#_`>]/g, "");
-                    const utter = new SpeechSynthesisUtterance(clean);
-                    utter.lang = 'en-US';
-                    utter.rate = 0.95;
-                    window.speechSynthesis.speak(utter);
+                if (!('speechSynthesis' in window)) return;
+                window.speechSynthesis.cancel();
+
+                // Markdown ve parantez içi açıklamaları temizle
+                let clean = text
+                    .replace(/[*#_`>]/g, "")
+                    .replace(/\[SES:.*?\]/g, "")
+                    .trim();
+
+                const utter = new SpeechSynthesisUtterance(clean);
+                utter.lang = 'en-US';
+                utter.rate = 0.95;
+
+                const voices = window.speechSynthesis.getVoices();
+                const preferredVoice = voices.find(v => v.lang.startsWith("en") && (v.name.includes("Natural") || v.name.includes("Google") || v.name.includes("Samantha")));
+                if (preferredVoice) utter.voice = preferredVoice;
+
+                window.speechSynthesis.speak(utter);
+            };
+
+            window.speakMessageIndex = function(idx) {
+                if (window._allChatMessages && window._allChatMessages[idx]) {
+                    speakText(window._allChatMessages[idx].content);
                 }
             };
 
@@ -708,26 +936,43 @@
                     .then(data => {
                         if (data.success && data.messages) {
                             if (data.messages.length !== lastMsgCount) {
+                                const isFirstLoad = lastMsgCount === 0;
+                                window._allChatMessages = data.messages;
                                 renderMessages(data.messages);
                                 lastMsgCount = data.messages.length;
+
+                                // Otomatik seslendirme
+                                if (!isFirstLoad && (autoSpeak || practicaVoiceMode)) {
+                                    const last = data.messages[data.messages.length - 1];
+                                    if (last && (last.sender === "English_Mentor" || last.sender === "English_AI")) {
+                                        speakText(last.content);
+                                    }
+                                }
                             }
                         }
                     })
                     .catch(err => console.error("Mesaj çekme hatası:", err));
             }
 
+            // MESAJLARI GÜVENLİ RENDER ET (HTML ENJEKSİYONU / KOPYA YAZI HATASINI KESİN ÇÖZER)
             function renderMessages(messages) {
-                chatBody.innerHTML = messages.map((msg) => {
+                chatBody.innerHTML = messages.map((msg, index) => {
                     const isMe = msg.sender === savedUsername;
                     const time = new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                    let content = msg.content;
+                    let rawContent = msg.content;
+                    let displayContent = "";
 
-                    if (content.includes("[SES:")) {
-                        const audioData = content.replace("[SES:", "").replace("]", "");
-                        content = `<audio src="${audioData}" controls style="width:200px; height:36px;"></audio>`;
+                    if (rawContent.startsWith("[SES:")) {
+                        const audioSrc = rawContent.replace("[SES:", "").replace("]", "");
+                        displayContent = `
+                            <div class="voice-pill">
+                                <span>🎤 Sesli Mesaj</span>
+                                <button class="voice-play-btn" onclick="playAudioBlob('${audioSrc}')">▶</button>
+                            </div>
+                        `;
                     } else {
                         // Markdown Biçimlendirmeleri
-                        content = content
+                        displayContent = rawContent
                             .replace(/^>\s?(.*)$/gm, '<blockquote style="border-left: 3px solid #38bdf8; padding-left: 8px; margin: 6px 0; color: #cbd5e1;">$1</blockquote>')
                             .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
                             .replace(/\*(.*?)\*/g, '<em>$1</em>')
@@ -737,11 +982,15 @@
                     return `
                         <div class="message-row ${isMe ? 'message-sent' : 'message-received'}">
                             <div class="message-bubble">
-                                ${content}
+                                ${displayContent}
                             </div>
                             <div class="message-meta">
                                 <span>${time}</span>
-                                ${!isMe && !content.includes("<audio") ? `<button class="tts-btn" onclick="speakText('${msg.content.replace(/'/g, "\\'")}')" title="İngilizce Telaffuzu Dinle">🔊 Dinle</button>` : ''}
+                                ${!isMe && !rawContent.startsWith("[SES:") ? `
+                                    <button class="tts-btn" onclick="speakMessageIndex(${index})" title="İngilizce Telaffuzu Dinle">
+                                        🔊 Dinle
+                                    </button>
+                                ` : ''}
                             </div>
                         </div>
                     `;
@@ -750,7 +999,16 @@
                 chatBody.scrollTop = chatBody.scrollHeight;
             }
 
-            // MESAJ GÖNDERME (API KEY VE MODEL PARAMETRELERİ DAHİL)
+            window.playAudioBlob = function(src) {
+                try {
+                    const a = new Audio(src);
+                    a.play().catch(e => alert("Ses oynatılamadı: " + e.message));
+                } catch(e) {
+                    alert("Ses oynatılamadı.");
+                }
+            };
+
+            // MESAJ GÖNDERME
             async function sendMessage() {
                 const text = msgInput.value.trim();
                 if (!text) return;
@@ -804,47 +1062,86 @@
 
             sendBtn.onclick = sendMessage;
             msgInput.addEventListener("keypress", (e) => { if (e.key === "Enter") sendMessage(); });
-            document.getElementById("refreshBtn").onclick = fetchMessages;
+            document.getElementById("refreshBtn").onclick = () => fetchMessages();
 
-            // SESLİ MESAJ
-            voiceBtn.onclick = async () => {
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-                    mediaRecorder.ondataavailable = (e) => { if (e.data.size > 0) audioChunks.push(e.data); };
-                    mediaRecorder.onstop = () => {
-                        stream.getTracks().forEach(t => t.stop());
-                        const blob = new Blob(audioChunks, { type: 'audio/webm' });
-                        const reader = new FileReader();
-                        reader.readAsDataURL(blob);
-                        reader.onloadend = () => {
-                            const base64 = reader.result;
-                            fetch(`${API_URL}/send-message`, {
-                                method: "POST",
-                                headers: { "Content-Type": "application/json" },
-                                body: JSON.stringify({ 
-                                    sender: savedUsername, 
-                                    receiver: currentPartner, 
-                                    content: `[SES:${base64}]`,
-                                    apiKey: userApiKey,
-                                    model: selectedModel
-                                })
-                            }).then(() => fetchMessages());
-                        };
-                    };
-                    mediaRecorder.start();
-                    voiceBtn.style.display = "none";
-                    stopVoiceBtn.style.display = "flex";
-                } catch (err) {
-                    alert("Mikrofon erişimi sağlanamadı: " + err.message);
+            // =============================================
+            // PRACTICA TARZI CANLI SESLİ SOHBET (Speech Recognition)
+            // =============================================
+            let recognition = null;
+            let isRecognizing = false;
+
+            const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+            function initRecognition() {
+                if (!SpeechRec) return null;
+                const rec = new SpeechRec();
+                rec.continuous = false;
+                rec.interimResults = false;
+                rec.lang = 'en-US';
+
+                rec.onstart = () => {
+                    isRecognizing = true;
+                    voiceBtn.classList.add("recording");
+                    if (voiceLiveBar) voiceLiveBar.classList.add("active");
+                    if (voiceLiveText) voiceLiveText.textContent = "🎙️ Dinleniyor... İngilizce veya Türkçe konuşun";
+                };
+
+                rec.onresult = (event) => {
+                    const transcript = event.results[0][0].transcript;
+                    if (transcript && transcript.trim()) {
+                        msgInput.value = transcript.trim();
+                        if (voiceLiveText) voiceLiveText.textContent = `🗣️ Algılandı: "${transcript.trim()}"`;
+                        setTimeout(() => {
+                            sendMessage();
+                        }, 500);
+                    }
+                };
+
+                rec.onerror = (event) => {
+                    console.warn("Ses tanıma uyarısı:", event.error);
+                    stopSpeechRecognition();
+                    if (event.error === "not-allowed") {
+                        alert("Mikrofon izni verilmedi. Lütfen tarayıcı ayarlarından mikrofona izin verin.");
+                    }
+                };
+
+                rec.onend = () => {
+                    stopSpeechRecognition();
+                };
+
+                return rec;
+            }
+
+            function startSpeechRecognition() {
+                if (!SpeechRec) {
+                    alert("Tarayıcınız canlı ses tanımayı desteklemiyor. Google Chrome, Edge veya Safari kullanabilirsiniz.");
+                    return;
                 }
-            };
+                if (!recognition) recognition = initRecognition();
+                try {
+                    recognition.start();
+                } catch(e) {}
+            }
 
-            stopVoiceBtn.onclick = () => {
-                if (mediaRecorder) mediaRecorder.stop();
-                stopVoiceBtn.style.display = "none";
-                voiceBtn.style.display = "flex";
+            function stopSpeechRecognition() {
+                isRecognizing = false;
+                voiceBtn.classList.remove("recording");
+                if (voiceLiveBar) voiceLiveBar.classList.remove("active");
+                if (recognition) {
+                    try { recognition.stop(); } catch(e) {}
+                }
+            }
+
+            if (cancelVoiceLiveBtn) {
+                cancelVoiceLiveBtn.onclick = () => stopSpeechRecognition();
+            }
+
+            voiceBtn.onclick = () => {
+                if (isRecognizing) {
+                    stopSpeechRecognition();
+                } else {
+                    startSpeechRecognition();
+                }
             };
 
             fetchMessages();

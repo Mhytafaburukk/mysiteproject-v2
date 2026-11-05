@@ -255,10 +255,10 @@
                         let html = "<table>";
                         others.forEach(u => {
                             const miniPic = u.profilePic ? u.profilePic : 'https://via.placeholder.com/30';
-                            const isBot = (u.username === "English_AI" || u.isAI);
-                            const badge = isBot ? `<span style="background:linear-gradient(135deg, #00d2ff, #3a7bd5); color:white; font-size:10px; padding:1px 6px; border-radius:10px; margin-left:6px; font-weight:bold;">✓ AI</span>` : '';
-                            const btnText = isBot ? "Konuş 🤖" : "Ziyaret Et";
-                            const btnColor = isBot ? "background-color: #06b6d4;" : "background-color: #6a5acd;";
+                            const isBot = (u.username === "English_AI" || u.username === "English_Mentor" || u.isAI);
+                            const badge = isBot ? `<span style="background:linear-gradient(135deg, #0284c7, #2563eb); color:white; font-size:10px; padding:2px 7px; border-radius:10px; margin-left:6px; font-weight:600;">✓ Eğitmen</span>` : '';
+                            const btnText = isBot ? "Konuş 🎓" : "Ziyaret Et";
+                            const btnColor = isBot ? "background-color: #4f46e5;" : "background-color: #6a5acd;";
 
                             html += `<tr>
                                 <td><img src="${miniPic}" style="width:30px; height:30px; border-radius:50%; vertical-align:middle; margin-right:10px;"><strong>${u.username}</strong>${badge}</td>
