@@ -197,8 +197,37 @@ try {
     console.error("all_words.js okunamadı:", e.message);
 }
 
+let cachedGroqModel = null;
+async function getActiveGroqModel(apiKey, preferredModel) {
+    if (cachedGroqModel) return cachedGroqModel;
+    try {
+        const res = await fetch("https://api.groq.com/openai/v1/models", {
+            headers: { "Authorization": `Bearer ${apiKey.trim()}` }
+        });
+        if (res.ok) {
+            const data = await res.json();
+            const models = (data.data || []).map(m => m.id).filter(id => 
+                !id.includes("whisper") && !id.includes("guard") && !id.includes("vision") && !id.includes("tts")
+            );
+            if (preferredModel && models.includes(preferredModel)) {
+                cachedGroqModel = preferredModel;
+                return preferredModel;
+            }
+            const best = models.find(m => m.includes("llama-3.3-70b")) ||
+                         models.find(m => m.includes("llama-3.1-8b")) ||
+                         models.find(m => m.includes("llama")) ||
+                         models[0];
+            if (best) {
+                cachedGroqModel = best;
+                return best;
+            }
+        }
+    } catch (e) {}
+    return "llama-3.1-8b-instant";
+}
+
 // =============================================
-// 1. CANLI LLM API ÇAĞRISI (Gemini / OpenAI)
+// 1. CANLI LLM API ÇAĞRISI (Gemini / OpenAI / Groq)
 // =============================================
 
 function sanitizeContentsForGemini(history, currentMessage) {
@@ -331,80 +360,59 @@ CRITICAL INSTRUCTIONS:
         }
     }
 
-    // 2. Groq API (Llama 3.1 & Llama 3 - %100 Ücretsiz & Işık Hızında, Kartsız)
+    // 2. Groq API
     if ((model && (model.startsWith("llama") || model.startsWith("groq"))) || (apiKey && apiKey.startsWith("gsk_"))) {
-        const groqCandidates = [
-            (model && (model.startsWith("llama") || model.startsWith("mixtral"))) ? model : null,
-            "llama-3.1-8b-instant",
-            "llama3-70b-8192",
-            "llama3-8b-8192",
-            "mixtral-8x7b-32768"
-        ].filter(Boolean);
-
-        let groqMessages = [{ role: "system", content: systemPrompt }];
-        if (conversationHistory && conversationHistory.length > 0) {
-            for (const msg of conversationHistory.slice(-6)) {
-                let text = (msg.content || "").replace(/\[SES:.*?\]/g, "[Sesli Mesaj]").trim();
-                if (!text) continue;
-                groqMessages.push({
-                    role: (msg.sender === "English_Mentor" || msg.sender === "English_AI") ? "assistant" : "user",
-                    content: text
-                });
-            }
-        }
-        groqMessages.push({ role: "user", content: userMessage });
-
-        let lastDetail = null;
-        for (const m of groqCandidates) {
-            try {
-                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${apiKey.trim()}`
-                    },
-                    body: JSON.stringify({
-                        model: m,
-                        messages: groqMessages,
-                        temperature: 0.7,
-                        max_tokens: 1500
-                    })
-                });
-
-                if (res.ok) {
-                    const data = await res.json();
-                    const text = data.choices?.[0]?.message?.content;
-                    if (text) return text.trim();
-                } else {
-                    const errText = await res.text();
-                    try {
-                        const json = JSON.parse(errText);
-                        lastDetail = json.error?.message || errText;
-                    } catch(e) {
-                        lastDetail = errText;
-                    }
-                    // Eğer model bulunamadıysa bir sonraki adaya geç
-                    if (lastDetail.includes("does not exist") || lastDetail.includes("access")) {
-                        continue;
-                    }
-                    return {
-                        error: true,
-                        message: `⚠️ **Groq API Hatası (HTTP ${res.status}):**\n> *${lastDetail}*`
-                    };
+        try {
+            const targetModel = await getActiveGroqModel(apiKey, model);
+            let groqMessages = [{ role: "system", content: systemPrompt }];
+            if (conversationHistory && conversationHistory.length > 0) {
+                for (const msg of conversationHistory.slice(-6)) {
+                    let text = (msg.content || "").replace(/\[SES:.*?\]/g, "[Sesli Mesaj]").trim();
+                    if (!text) continue;
+                    groqMessages.push({
+                        role: (msg.sender === "English_Mentor" || msg.sender === "English_AI") ? "assistant" : "user",
+                        content: text
+                    });
                 }
-            } catch (err) {
-                console.error("Groq Bağlantı Hatası:", err.message);
+            }
+            groqMessages.push({ role: "user", content: userMessage });
+
+            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${apiKey.trim()}`
+                },
+                body: JSON.stringify({
+                    model: targetModel,
+                    messages: groqMessages,
+                    temperature: 0.7,
+                    max_tokens: 1500
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const text = data.choices?.[0]?.message?.content;
+                if (text) return text.trim();
+            } else {
+                const errText = await res.text();
+                console.error(`Groq API Hatası [${res.status}]:`, errText);
+                let detail = errText;
+                try {
+                    const json = JSON.parse(errText);
+                    detail = json.error?.message || errText;
+                } catch(e) {}
                 return {
                     error: true,
-                    message: `⚠️ **Groq Bağlantı Hatası:**\n> *${err.message}*`
+                    message: `⚠️ **Groq API Hatası (HTTP ${res.status}):**\n> *${detail}*`
                 };
             }
-        }
-
-        if (lastDetail) {
+        } catch (err) {
+            console.error("Groq Bağlantı Hatası:", err.message);
             return {
                 error: true,
-                message: `⚠️ **Groq API Hatası:**\n> *${lastDetail}*`
+                message: `⚠️ **Groq Bağlantı Hatası:**\n> *${err.message}*`
             };
         }
     }
@@ -560,37 +568,51 @@ async function testAPIKey(apiKey, model) {
     }
 
     if ((model && (model.startsWith("llama") || model.startsWith("groq"))) || (apiKey && apiKey.startsWith("gsk_"))) {
-        const groqCandidates = [
-            (model && (model.startsWith("llama") || model.startsWith("mixtral"))) ? model : null,
-            "llama-3.1-8b-instant",
-            "llama3-70b-8192",
-            "llama3-8b-8192",
-            "mixtral-8x7b-32768"
-        ].filter(Boolean);
-
-        let lastErr = null;
-        for (const m of groqCandidates) {
-            try {
-                const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey.trim()}` },
-                    body: JSON.stringify({ model: m, messages: [{ role: "user", content: "Hi" }], max_tokens: 5 })
-                });
-                if (res.ok) {
-                    return { success: true, message: `✅ Groq (${m}) bağlantısı başarılı! Model aktif ve çalışıyor.` };
-                } else {
-                    const errJson = await res.json().catch(() => null);
-                    lastErr = errJson?.error?.message || `HTTP ${res.status}`;
-                    if (lastErr.includes("does not exist") || lastErr.includes("access")) {
-                        continue; // Bir sonraki modele geç
-                    }
-                    return { success: false, message: `❌ Groq Hatası: ${lastErr}` };
-                }
-            } catch (e) {
-                return { success: false, message: `❌ Ağ Hatası: ${e.message}` };
+        try {
+            // Önce doğrudan Groq'un aktif modeller listesini sorgulayalım
+            const modelsRes = await fetch("https://api.groq.com/openai/v1/models", {
+                headers: { "Authorization": `Bearer ${apiKey.trim()}` }
+            });
+            if (!modelsRes.ok) {
+                const errJson = await modelsRes.json().catch(() => null);
+                const msg = errJson?.error?.message || `HTTP ${modelsRes.status}`;
+                return { success: false, message: `❌ Groq API Anahtarı Doğrulanamadı: ${msg}` };
             }
+
+            const modelsData = await modelsRes.json();
+            const activeModels = (modelsData.data || [])
+                .map(m => m.id)
+                .filter(id => !id.includes("whisper") && !id.includes("guard") && !id.includes("vision") && !id.includes("tts"));
+
+            let targetModel = (model && activeModels.includes(model)) ? model : null;
+            if (!targetModel) {
+                targetModel = activeModels.find(m => m.includes("llama-3.3-70b")) ||
+                              activeModels.find(m => m.includes("llama-3.1-8b")) ||
+                              activeModels.find(m => m.includes("llama")) ||
+                              activeModels[0];
+            }
+
+            if (!targetModel) {
+                return { success: false, message: "❌ Groq hesabınızda aktif bir metin modeli bulunamadı." };
+            }
+
+            // Seçilen modelle test mesajı gönder
+            const chatRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey.trim()}` },
+                body: JSON.stringify({ model: targetModel, messages: [{ role: "user", content: "Hi" }], max_tokens: 5 })
+            });
+
+            if (chatRes.ok) {
+                cachedGroqModel = targetModel;
+                return { success: true, message: `✅ Groq (${targetModel}) bağlantısı başarılı! Canlı yapay zeka hazır ve aktif.` };
+            } else {
+                const errJson = await chatRes.json().catch(() => null);
+                return { success: false, message: `❌ Groq Hatası: ${errJson?.error?.message || chatRes.status}` };
+            }
+        } catch (e) {
+            return { success: false, message: `❌ Ağ/Bağlantı Hatası: ${e.message}` };
         }
-        return { success: false, message: `❌ Groq Hatası: ${lastErr}` };
     }
 
     if ((model && model.startsWith("openrouter")) || (apiKey && apiKey.startsWith("sk-or-"))) {
