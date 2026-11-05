@@ -821,8 +821,24 @@ function generateFallbackResponse(userMessage, senderUsername, dbModule) {
         }
     }
 
-    // --- Soru / Quiz İsteği ---
-    if (lower.match(/(soru\s*(sor|üret|ver|yaz)|test\s*yap|quiz|bana.*soru|ask\s*me|yeni\s*soru|bir\s*soru)/)) {
+    // --- Sohbet İsteği (Türkçe) - ÖNCELİKLİ: Quiz'den önce kontrol et ---
+    if (lower.match(/(sohbet\s*(etmek|edelim|yapalım|yapalim)|konuşmak\s*istiyorum|konuşalım|konusalim|ingilizce\s*(pratik|konuşalım|konusalim|sohbet)|pratik\s*yapalım|pratik\s*yapalim|muhabbet|chat\s*(edelim|let'?s)|let'?s\s*(chat|talk|practice|speak))/i)) {
+        const topics = [
+            { en: "What is your favorite hobby, and how did you get interested in it?", tr: "En sevdiğin hobi nedir ve buna nasıl ilgi duymaya başladın?" },
+            { en: "If you could travel to any country in the world tomorrow, where would you go?", tr: "Yarın dünyanın herhangi bir ülkesine seyahat edebilseydin, nereye giderdin?" },
+            { en: "What do you find most challenging when learning English: speaking, listening, or grammar?", tr: "İngilizce öğrenirken sana en zor gelen şey ne: konuşma, dinleme mi yoksa gramer mi?" },
+            { en: "Tell me about a memorable movie or book that inspired you recently.", tr: "Son zamanlarda sana ilham veren unutulmaz bir film veya kitaptan bahset." },
+            { en: "What is one goal you are working hard to achieve this year?", tr: "Bu yıl gerçekleştirmek için çok çalıştığın bir hedefin nedir?" },
+            { en: "If you could learn any skill overnight, what would it be and why?", tr: "Bir gecede herhangi bir beceriyi öğrenebilseydin, bu ne olurdu ve neden?" }
+        ];
+        const pick = topics[Math.floor(Math.random() * topics.length)];
+
+        return `Harika bir fikir! İngilizce konuşarak ve yazarak gelişir. 💬\n\nSana bir sohbet sorusuyla başlayalım:\n\n🌟 **"${pick.en}"**\n🇹🇷 *(${pick.tr})*\n\nİster 1 cümleyle, ister uzun uzun yanıtla. Hata yapmaktan asla çekinme, burası senin öğrenme alanın! Cevabını bekliyorum. 😊`;
+    }
+
+    // --- Soru / Quiz İsteği (sohbet isteği DEĞİLSE) ---
+    if (lower.match(/(test\s*yap|quiz|yeni\s*soru|^bana\s*(bir\s*)?soru\s*sor|soru\s*(üret|ver|yaz)\b)/i) ||
+        (lower.match(/\bsoru\s*sor\b/i) && !lower.match(/sohbet|konuş|pratik|chat|talk/i))) {
         const q = generateQuizQuestion();
 
         if (dbModule) {
@@ -869,16 +885,63 @@ function generateFallbackResponse(userMessage, senderUsername, dbModule) {
 
     // --- Kelime Anlatımı / Cümle İsteği / Ne Demek ---
     // Örnek: "bana resilience kelimesini anlatır mısın", "resilience cümle içinde kullan", "resilience ne demek"
-    const wordExplanationMatch = lower.match(/(.+?)\s*(kelimesini|kelimesi|hakkında|ile)?\s*(anlat|anlatır|anlatir|açıkla|acikla|nedir|ne demek|anlamı|anlami|cümle içinde kullan|cumle icinde kullan|cümle kur|örnek cümle)/i) ||
-                                 lower.match(/explain\s+(.+?)(?:\s+to\s+me)?$/i) ||
-                                 lower.match(/what\s+does\s+(.+?)\s+mean/i) ||
-                                 lower.match(/meaning\s+of\s+(.+)/i);
+    // NOT: "bugün öğrenmem gereken harika bir kelime nedir?" gibi Türkçe soru cümlelerini atla
+
+    // Türkçe meta-kelimeler — bunlar İngilizce sözcük değildir, regex'e takılmamalı
+    const TURKISH_META_WORDS = new Set([
+        "kelime", "kelimesini", "cumle", "cümle", "anlam", "anlamı", "ornek", "örnek",
+        "soru", "cevap", "bilgi", "konu", "bana", "harika", "gunun", "günün",
+        "ogren", "öğren", "öğrenmem", "ogrenmem", "gereken", "nedir", "neler",
+        "ingilizce", "türkçe", "turkce", "dilbilgisi", "pratik", "sohbet", "sana",
+        "anlat", "acikla", "açıkla", "bugün", "bugun", "deyim", "kalip", "kalıp",
+        "için", "veya", "gibi", "kadar", "daha"
+    ]);
+
+    // Eğer mesajın tamamı Türkçe içeriyorsa VE içinde belirgin bir İngilizce kelime yoksa,
+    // kelime arama regex'ini çalıştırma — kullanıcı kelime değil, rastgele öğretmen görevi istiyor
+    const hasTurkishChars = /[çğışöüÇĞİŞÖÜ]/.test(raw);
+    const hasEnglishWordCandidate = raw.split(/\s+/).some(w => {
+        const cleaned = w.toLowerCase().replace(/[,;.!?'"]/g, "");
+        return cleaned.length >= 4 && !TURKISH_META_WORDS.has(cleaned) && !/[çğışöüÇĞİŞÖÜ]/.test(cleaned) && /^[a-z]+$/.test(cleaned);
+    });
+
+    const wordExplanationMatch = hasEnglishWordCandidate && (
+        lower.match(/(.+?)\s*(kelimesini|kelimesi|hakkında|hakkinda|ile)?\s*(anlat|anlatır|anlatir|açıkla|acikla|ne demek|anlamı nedir|anlami nedir|cümle içinde kullan|cumle icinde kullan|cümle kur|örnek cümle)/i) ||
+        lower.match(/explain\s+(.+?)(?:\s+to\s+me)?$/i) ||
+        lower.match(/what\s+does\s+(.+?)\s+mean/i) ||
+        lower.match(/meaning\s+of\s+(.+)/i)
+    );
+
+    // "kelime" veya "cümle" kur isteği ama İngilizce aday yok → günün kelimesi göster
+    if (!hasEnglishWordCandidate && (lower.includes("örnek cümle") || lower.includes("cumle") || lower.includes("cümle") || lower.match(/kelime.*anlam|anlam.*kelime/))) {
+        const pick = BUILTIN_VOCABULARY[Math.floor(Math.random() * BUILTIN_VOCABULARY.length)];
+        return `🌟 **Bugünün Öğretmen Seçimi: "${pick.word.toUpperCase()}"**\n\n• **Türkçe Karşılığı:** **${pick.meaning}**\n• **Telaffuz:** *${pick.phonetic || ""}*\n• **Kelime Türü:** ${pick.pos || "İsim"}\n\n📌 **Örnek Cümleler:**\n1) *"${pick.sentences[0].en}"*\n   🇹🇷 *"${pick.sentences[0].tr}"*\n\n2) *"${pick.sentences[1].en}"*\n   🇹🇷 *"${pick.sentences[1].tr}"*\n\n💡 **Görevin:** "${pick.word}" kelimesini kullanarak kendi cümleni yaz, birlikte inceleyelim!`;
+    }
 
     if (wordExplanationMatch) {
-        // Kelimeyi yakala
-        const targetRaw = (wordExplanationMatch[1] || "").replace(/(bana|lütfen|lutfen|biraz|şunu|sunu|şu|su|kelimesini|kelimesi|hakkında|hakkinda|ile|misin|mısın|\?|'|")/gi, "").trim();
+        // Kelimeyi yakala — Türkçe çekim eklerini ve meta-kelimeleri temizle
+        const targetRaw = (wordExplanationMatch[1] || "")
+            .replace(/(bana|lütfen|lutfen|biraz|şunu|sunu|şu|su|kelimesini|kelimesi|hakkında|hakkinda|ile|misin|mısın|\?|'|")/gi, "")
+            .trim();
+
         const words = targetRaw.split(/\s+/).filter(w => w.length > 2);
-        const candidate = words[words.length - 1] || targetRaw;
+
+        // Son kelimeden başlayarak gerçek İngilizce kelime adayı bul (Türkçe meta-kelimeleri atla)
+        let candidate = null;
+        for (let i = words.length - 1; i >= 0; i--) {
+            const w = words[i].toLowerCase().replace(/[,;.!?]/g, "");
+            if (!TURKISH_META_WORDS.has(w) && !/[çğışöüÇĞİŞÖÜ]/.test(w) && /^[a-z]+$/.test(w)) {
+                candidate = w;
+                break;
+            }
+        }
+
+        // Eğer geçerli İngilizce aday kelime bulunamadıysa kelime anlatım akışına girme
+        if (!candidate || candidate.length < 3 || TURKISH_META_WORDS.has(candidate)) {
+            // Kullanıcı muhtemelen rastgele kelime istiyor
+            const pick = BUILTIN_VOCABULARY[Math.floor(Math.random() * BUILTIN_VOCABULARY.length)];
+            return `🌟 **Bugünün Kelimesi: "${pick.word.toUpperCase()}"**\n\n• **Türkçe Karşılığı:** **${pick.meaning}**\n• **Telaffuz:** *${pick.phonetic || ""}*\n• **Kelime Türü:** ${pick.pos || "İsim"}\n\n📌 **Örnek Cümleler:**\n1) *"${pick.sentences[0].en}"*\n   🇹🇷 *"${pick.sentences[0].tr}"*\n\n2) *"${pick.sentences[1].en}"*\n   🇹🇷 *"${pick.sentences[1].tr}"*\n\n💡 **Görevin:** "${pick.word}" ile kendi cümleni yaz, birlikte inceleyelim!`;
+        }
 
         const found = findWordInVocabulary(candidate) || findWordInVocabulary(raw);
 
@@ -921,19 +984,6 @@ function generateFallbackResponse(userMessage, senderUsername, dbModule) {
     // --- Türkçe Selamlaşma ---
     if (lower.match(/^(merhaba|selam|günaydın|gunaydin|iyi\s*günler|iyi\s*aksamlar|nasılsın|nasilsin)/)) {
         return `Merhaba ${senderUsername}! 👋\n\nBen senin resmi **İngilizce Mentörünüm**. Bugün İngilizceni bir adım ileri taşımaya hazır mısın?\n\nBirlikte neler yapabiliriz:\n• 🎯 **Soru Çöz** → *"Bana bir soru sor"*\n• 📖 **Kelime Öğren** → *"resilience kelimesini anlatır mısın"*\n• 📝 **Cümle Kur & Kontrol Et** → *"I have 25 years old doğru mu?"*\n• 🗣️ **İngilizce Sohbet Et** → *"Let's practice English!"*\n• 🌟 **Günün Kelimesi** → *"Günün kelimesi nedir?"*\n\nNe ile başlayalım?`;
-    }
-
-    // --- Sohbet İsteği (Türkçe) ---
-    if (lower.match(/(sohbet\s*(etmek|edelim|yapalım)|konuşmak\s*istiyorum|ingilizce\s*(pratik|konuşalım)|pratik\s*yapalım|muhabbet)/)) {
-        const topics = [
-            { en: "What is your favorite hobby, and how did you get interested in it?", tr: "En sevdiğin hobi nedir ve buna nasıl ilgi duymaya başladın?" },
-            { en: "If you could travel to any country in the world tomorrow, where would you go?", tr: "Yarın dünyanın herhangi bir ülkesine seyahat edebilseydin, nereye giderdin?" },
-            { en: "What do you find most challenging when learning English: speaking, listening, or grammar?", tr: "İngilizce öğrenirken sana en zor gelen şey ne: konuşma, dinleme mi yoksa gramer mi?" },
-            { en: "Tell me about a memorable movie or book that inspired you recently.", tr: "Son zamanlarda sana ilham veren unutulmaz bir film veya kitaptan bahset." }
-        ];
-        const pick = topics[Math.floor(Math.random() * topics.length)];
-
-        return `Harika bir fikir! İngilizce konuşarak ve yazarak gelişir. 💬\n\nİşte sohbetimizi başlatacak ilk soru:\n\n🌟 **"${pick.en}"**\n🇹🇷 *(${pick.tr})*\n\nİster 1 cümleyle, ister uzun uzun yanıtla. Hata yapmaktan asla çekinme, burası senin öğrenme alanın! Cevabını bekliyorum. 😊`;
     }
 
     // --- Genel Anlayışlı Yanıt ---
