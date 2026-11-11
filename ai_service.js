@@ -924,13 +924,8 @@ function generateFallbackResponse(userMessage, senderUsername, dbModule, convers
     }
 
     // --- Saf İngilizce Mesaj (Kullanıcı İngilizce konuşuyorsa İNGİLİZCE devam et) ---
-    if (!isLikelyTurkish(raw) && raw.length > 5) {
-        const englishResponses = [
-            `That's great! 👏 Your English sounds very natural.\n\nTo keep our conversation going, let me ask you:\n**What is something exciting or interesting that happened in your week so far?**\n\nTake your time and reply in English! 😊`,
-            `Well said! That sentence is clear and grammatically solid. ✨\n\n💡 **Mentor Tip:** You can also add conversational phrases like *"To be honest,"* or *"In my experience,"* to sound even more fluent.\n\nWhat other topics are you curious about today?`,
-            `I love chatting with you in English! 💪 You're making noticeable progress every day.\n\nHere is a quick question for you:\n**If you could speak English fluently overnight, what is the first thing you would do?**\n\nShare your thoughts!`
-        ];
-        return englishResponses[Math.floor(Math.random() * englishResponses.length)];
+    if (!isLikelyTurkish(raw) && raw.length > 3) {
+        return generateConversationalResponse(raw, "English Mentor", false);
     }
 
     // --- Kelime Anlatımı / Cümle İsteği / Ne Demek ---
@@ -1232,9 +1227,152 @@ You are ${tutorName || "Sarah"}, a friendly, warm, energetic native English teac
 CRITICAL INSTRUCTIONS FOR LIVE VIDEO CONVERSATION:
 1. SPOKEN & CONCISE: Keep your response short, natural, and expressive (strictly 2 to 3 spoken sentences per turn). This is a real-time face-to-face video call, NOT a text essay.
 2. 100% ENGLISH: Always speak in clear, natural, native English (unless student explicitly asks for Turkish help).
-3. ACTIVE LISTENER: Immediately acknowledge and react to whatever the student just said or practiced. If they made a sentence with a target word, praise them and comment on it! If they made a minor grammatical slip, gently model the natural phrasing.
+3. ACTIVE LISTENER & HUMAN-LIKE: NEVER give canned generic praise like "Your English is so good" or "I love chatting with you". ALWAYS directly answer and react to what the student actually said! 
+   - If they ask "what about you?" or "how are you?", tell them genuinely how your day is going!
+   - If they describe their day, work, school, gym, or feelings (tired, happy, busy), empathize and comment on the specific details they shared!
+   - If they practiced a sentence with a target word, give specific feedback on their word choice.
 4. ENGAGING: Always finish your turn with an open-ended conversational question to keep the video conversation flowing!
 5. CAMERA PRESENCE: Be enthusiastic, warm, encouraging, and expressive.`;
+}
+
+function generateConversationalResponse(userMessage, tutorName = "Sarah", isVideoCall = false) {
+    const raw = (userMessage || "").trim();
+    const lower = raw.toLowerCase();
+
+    // 1. Karşılıklı Soru / Hal Hatır Sorma ("what about you?", "and you?", "how about you?", "how are you?", "how was your day?")
+    const asksAboutTutor = lower.match(/(what|how)\s+about\s+you|\band\s+you\b|how\s+are\s+you|how\s+is\s+your\s+day|how\s+was\s+your\s+day|\bhbu\b|\bwbu\b/i);
+
+    // Kullanıcının ruh hali / hisleri
+    const feelingGood = lower.match(/(feel|feeling|i'?m|am)\s+(good|great|fine|happy|awesome|well|fantastic|wonderful|pretty\s*good|not\s*bad)/i) ||
+                        lower.match(/^(good|great|fine|pretty\s*good|doing\s*well|all\s*good)/i);
+    const feelingBadOrTired = lower.match(/(feel|feeling|i'?m|am)\s+(tired|exhausted|sleepy|stressed|sick|sad|bored|bad|down|rough|drained)/i) ||
+                              lower.match(/^(tired|exhausted|bored|stressed|not\s*good|bad)/i);
+    const feelingBusy = lower.match(/(feel|feeling|i'?m|am|been)\s+(busy|rushed|swamped|working\s*hard)/i) || lower.includes("busy day");
+
+    // A) Kullanıcı hem kendi durumunu söyledi hem de "what about you" sordu!
+    // Örn: "I'm feeling good what about you"
+    if (asksAboutTutor && feelingGood) {
+        if (isVideoCall) {
+            return `I'm feeling fantastic too, thank you so much for asking! It's so nice seeing you on camera. What fun things have you been up to today?`;
+        }
+        return `I'm feeling fantastic too, thank you so much for asking! 😊 Seeing you practice English with so much positive energy truly makes my day.\n\nWhat has been the most interesting part of your day so far?`;
+    }
+
+    if (asksAboutTutor && (feelingBadOrTired || feelingBusy)) {
+        if (isVideoCall) {
+            return `I'm doing well, but I completely understand being tired! Make sure you relax tonight. What kept you so busy today?`;
+        }
+        return `I'm doing well, thank you! But please make sure you take a little time to relax tonight. ☕ Demanding days can be draining.\n\nWhat kept you so busy or tired today?`;
+    }
+
+    // B) Sadece mentora hal hatır sordu ("What about you?", "How are you?")
+    if (asksAboutTutor) {
+        if (isVideoCall) {
+            return `I'm having a wonderful day, thank you for asking! I love chatting with students from around the world. How has your day been treating you?`;
+        }
+        return `I'm doing great, thank you for asking! 🌟 I'm always energized when we practice English together.\n\nHow has your day been going so far? Tell me a little about what you did!`;
+    }
+
+    // C) Kullanıcı sadece kendi hissini söyledi (Soru sormadı)
+    // Örn: "I'm feeling good" / "Today was great"
+    if (feelingGood) {
+        if (isVideoCall) {
+            return `I'm so happy to hear that! Having positive energy makes learning so much easier. Did anything special happen to make today so good?`;
+        }
+        return `I'm so glad to hear that you're feeling good! 😊 A positive mood makes speaking and practicing English feel effortless.\n\nDid anything special happen today, or are you just in high spirits?`;
+    }
+
+    if (feelingBadOrTired) {
+        if (isVideoCall) {
+            return `Oh, I'm sorry you're feeling that way! Take it easy while we chat. Did you have a really long or stressful day?`;
+        }
+        return `I'm sorry you're feeling a bit drained! 🫂 We all have those tough days. Don't worry about making mistakes right now, just relax.\n\nDid something specific happen, or was it just a really long day?`;
+    }
+
+    if (feelingBusy) {
+        if (isVideoCall) {
+            return `Sounds like you had a very packed schedule! Working hard always pays off. What was the biggest task you had to deal with today?`;
+        }
+        return `Sounds like your day was really packed! 💪 Balancing a busy schedule while practicing English shows great commitment.\n\nWhat was the main task or project that kept you on your toes today?`;
+    }
+
+    // 2. Günlük Aktiviteler (İş, Okul, Kodlama, Spor, Yemek, Dinlenme)
+    if (lower.match(/\b(work|office|job|boss|colleague|colleagues|meeting|client|shift)\b/i)) {
+        if (isVideoCall) {
+            return `Work can definitely be demanding! Did you finish everything you wanted to get done at work today?`;
+        }
+        return `Work can definitely take a lot out of you! 💼 But it's great that you're investing in your English skills after hours.\n\nDid you have a productive day, or was it mostly routine meetings and tasks?`;
+    }
+
+    if (lower.match(/\b(school|university|college|class|classes|lecture|homework|study|studying|exam|exams|test)\b/i)) {
+        if (isVideoCall) {
+            return `School and studying can be intense! What subject or topic were you focusing on the most today?`;
+        }
+        return `Balancing classes and studying takes real dedication! 📚\n\nWhat subject did you spend the most time on today? Do you feel prepared for upcoming exams?`;
+    }
+
+    if (lower.match(/\b(code|coding|program|programming|developer|software|python|javascript|bug|bugs|ai|model|dataset)\b/i)) {
+        if (isVideoCall) {
+            return `That's awesome! Coding is such a rewarding skill. What kind of project or problem were you working on?`;
+        }
+        return `That's fantastic! 💻 Software development and technology are such exciting fields.\n\nWere you building a new feature, hunting down a bug, or experimenting with something new? Tell me about it!`;
+    }
+
+    if (lower.match(/\b(gym|workout|working\s*out|exercise|fitness|running|ran|walk|walking|football|sports)\b/i)) {
+        if (isVideoCall) {
+            return `Good for you! Getting some exercise in is the best way to clear your head. Did you have an intense workout session?`;
+        }
+        return `That's awesome! 🏋️ Staying active is so good for both your body and mental clarity.\n\nWhat kind of workout did you do today? Do you go to the gym regularly?`;
+    }
+
+    if (lower.match(/\b(eat|ate|eating|food|lunch|dinner|breakfast|coffee|cook|cooked|cooking|pizza|burger|restaurant)\b/i)) {
+        if (isVideoCall) {
+            return `Yum, that sounds delicious! Good food always makes any day ten times better. What did you eat or drink?`;
+        }
+        return `Yum, that sounds delicious! 🍕 Good food or a hot cup of coffee is the best treat after a long day.\n\nWhat did you have? Are you someone who enjoys cooking or do you prefer ordering out?`;
+    }
+
+    if (lower.match(/\b(movie|movies|film|series|netflix|watch|watching|game|gaming|played|music|book|books|reading|relax|chilling)\b/i)) {
+        if (isVideoCall) {
+            return `That sounds like a great way to unwind! What were you watching or playing? I'd love a good recommendation!`;
+        }
+        return `That sounds like a wonderful way to unwind and recharge! 🎬\n\nWhat were you watching, reading, or playing? Would you recommend it?`;
+    }
+
+    if (lower.match(/\b(went\s*out|hangout|hanging\s*out|friends|friend|family|shopping|mall|park|party)\b/i)) {
+        if (isVideoCall) {
+            return `That sounds so nice! Spending quality time outside or with people you care about is always refreshing. What did you guys do?`;
+        }
+        return `That sounds so refreshing! ✨ Quality time with friends or outside is always great for the soul.\n\nWhere did you go, and what was the highlight of your outing?`;
+    }
+
+    // 3. Kısa Onay / Yanıtlar
+    if (lower.match(/^(yes|yeah|yep|sure|definitely|of\s*course|absolutely|i\s*do|i\s*did)\b/i)) {
+        if (isVideoCall) {
+            return `Nice! Could you tell me a little bit more about that? What makes you say so?`;
+        }
+        return `Awesome! 👍 Tell me a little bit more about that — why do you say so? I'd love to hear your thoughts in English!`;
+    }
+
+    if (lower.match(/^(no|nope|not\s*really|nah|i\s*don'?t|i\s*didn'?t)\b/i)) {
+        if (isVideoCall) {
+            return `Fair enough! Why not? What would you prefer instead?`;
+        }
+        return `Fair enough! 😊 Why do you think that is? What would you prefer instead?`;
+    }
+
+    if (lower.match(/^(nothing|not\s*much|nothing\s*much|idk|i\s*don'?t\s*know)\b/i)) {
+        if (isVideoCall) {
+            return `No worries at all! Let's talk about something fun — if you could travel anywhere tomorrow, where would you go?`;
+        }
+        return `No worries at all! Sometimes quiet moments are the best. 🌍\n\nLet's talk about something fun — if you could teleport to any city in the world right now, where would you go?`;
+    }
+
+    // 4. Genel Doğal Konuşma
+    if (isVideoCall) {
+        return `That's really interesting! I'm enjoying hearing your thoughts. Could you share a little bit more about that?`;
+    }
+    return `That's very interesting! 👍 I'm really enjoying chatting with you about this.\n\nCould you elaborate a bit more on what you mean? What thoughts do you have on that?`;
 }
 
 async function callVideoCallAI(userMessage, apiKey, model, tutorName = "Sarah", conversationHistory = []) {
@@ -1254,17 +1392,12 @@ function generateVideoCallFallback(userMessage, tutorName = "Sarah", conversatio
     const raw = (userMessage || "").trim();
     const lower = raw.toLowerCase();
 
-    // Selamlaşma
-    if (lower.match(/^(hello|hi|hey|good\s*(morning|afternoon|evening)|howdy)/i)) {
+    // 1. Selamlaşma
+    if (lower.match(/^(hello|hi|hey|good\s*(morning|afternoon|evening)|howdy)\b/i)) {
         return `Hello there! It is so lovely to see you on camera today! How are you feeling, and how has your day been going so far?`;
     }
 
-    // Kullanıcı hal hatır soruyorsa
-    if (lower.includes("how are you") || lower.includes("how do you do")) {
-        return `I'm doing great, thank you so much for asking! I'm really excited to practice English with you face to face. What would you like to talk about today?`;
-    }
-
-    // Önceki mesajda bir kelime veya cümle pratiği var mıydı?
+    // 2. Önceki mesajda bir kelime veya cümle pratiği var mıydı?
     if (conversationHistory && conversationHistory.length > 0) {
         let lastAIMsg = "";
         for (let i = conversationHistory.length - 1; i >= 0; i--) {
@@ -1275,19 +1408,13 @@ function generateVideoCallFallback(userMessage, tutorName = "Sarah", conversatio
                 break;
             }
         }
-        if (lastAIMsg && (lastAIMsg.includes("sentence") || lastAIMsg.includes("word") || lastAIMsg.includes("mock"))) {
+        if (lastAIMsg && (lastAIMsg.includes("sentence") || lastAIMsg.includes("using the word") || lastAIMsg.includes("practice using"))) {
             return `That was a great sentence! You used the vocabulary very naturally on camera. What inspired you to put that idea into words?`;
         }
     }
 
-    // Doğal karşılıklar
-    const responses = [
-        `That is such an interesting thought! Your English sounds very clear right now. Could you tell me a little bit more about that?`,
-        `I really love how confident you sound when speaking! If you had to describe that in another way, how would you put it?`,
-        `That makes complete sense! It's great to hear your perspective on this. What is something exciting you're looking forward to this week?`,
-        `Spot on! You are doing an amazing job articulating your thoughts. How often do you get the chance to practice speaking English out loud like this?`
-    ];
-    return responses[Math.floor(Math.random() * responses.length)];
+    // 3. Empatik, bağlamsal konuşma motoru
+    return generateConversationalResponse(raw, tutorName, true);
 }
 
 module.exports = {
