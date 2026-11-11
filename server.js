@@ -94,9 +94,10 @@ app.post("/send-message", async (req, res) => {
         console.log(`[MESAJ] '${sender}' -> English Mentor | "${content.slice(0, 50)}"`);
         console.log(`[AI AYARLARI] Model: ${model || "built-in"} | API Key: ${apiKey ? "Mevcut (" + apiKey.slice(0, 4) + "...)" : "YOK"}`);
 
+        const history = DB.getConversation(sender, AI_BOT).slice(-8);
+
         // 1. Canlı API dene (API key varsa ve built-in değilse)
         if (apiKey && model && model !== "built-in") {
-            const history = DB.getConversation(sender, AI_BOT).slice(-8);
             try {
                 const apiRes = await aiService.callExternalAI(content, apiKey, model, focusMode, englishLevel, history);
                 if (typeof apiRes === "string") {
@@ -104,7 +105,7 @@ app.post("/send-message", async (req, res) => {
                     console.log(`[CANLI API BAŞARILI] ${model} yanıt üretti.`);
                 } else if (apiRes && apiRes.error) {
                     console.warn(`[CANLI API HATASI]`, apiRes.message);
-                    const fallback = aiService.generateFallbackResponse(content, sender, DB);
+                    const fallback = aiService.generateFallbackResponse(content, sender, DB, history);
                     mentorReplyText = `${apiRes.message}\n\n${fallback}`;
                 }
             } catch (err) {
@@ -112,9 +113,9 @@ app.post("/send-message", async (req, res) => {
             }
         }
 
-        // 2. API çağrılmadıysa veya yanıtsız kaldıysa dahili motor
+        // 2. API çağrılmadıysa veya yanıtsız kaldıysa dahili motor (bağlam farkında)
         if (!mentorReplyText) {
-            mentorReplyText = aiService.generateFallbackResponse(content, sender, DB);
+            mentorReplyText = aiService.generateFallbackResponse(content, sender, DB, history);
         }
 
         // Yanıtı kaydet
@@ -301,6 +302,54 @@ app.post("/api/interview/save", (req, res) => {
 app.get("/api/interview/history/:username", (req, res) => {
     const sessions = DB.getInterviewSessions(req.params.username, 15);
     res.json({ success: true, sessions });
+});
+
+// ==========================================
+// GÖRÜNTÜLÜ İNGİLİZCE MENTOR (VIDEO CALL) ENDPOINTS
+// ==========================================
+
+app.post("/api/video-call/chat", async (req, res) => {
+    try {
+        const { username, message, history, apiKey, model, tutorName } = req.body || {};
+        const safeHistory = Array.isArray(history) ? history : [];
+        const safeTutor = tutorName || "Sarah";
+
+        console.log(`[VIDEO CALL] User: ${username || "Anonymous"} | Tutor: ${safeTutor} | Message: "${(message || '').slice(0, 40)}"`);
+
+        let replyText = null;
+
+        // 1. Canlı API dene
+        if (apiKey && model && model !== "built-in") {
+            try {
+                const apiRes = await aiService.callVideoCallAI(
+                    message,
+                    apiKey,
+                    model,
+                    safeTutor,
+                    safeHistory
+                );
+                if (typeof apiRes === "string" && apiRes.trim()) {
+                    replyText = apiRes.trim();
+                }
+            } catch (err) {
+                console.error("[VIDEO CALL API EXCEPTION]", err.message);
+            }
+        }
+
+        // 2. Canlı API yoksa veya başarısızsa akıllı video call fallback
+        if (!replyText) {
+            replyText = aiService.generateVideoCallFallback(message, safeTutor, safeHistory);
+        }
+
+        res.json({
+            success: true,
+            reply: replyText,
+            tutor: safeTutor
+        });
+    } catch (e) {
+        console.error("Video call chat error:", e.message);
+        res.status(500).json({ success: false, message: e.message });
+    }
 });
 
 // ADMIN

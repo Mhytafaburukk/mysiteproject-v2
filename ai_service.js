@@ -386,11 +386,18 @@ CRITICAL INSTRUCTIONS:
             const targetModel = await getActiveGroqModel(apiKey, model);
             let groqMessages = [{ role: "system", content: systemPrompt }];
             if (conversationHistory && conversationHistory.length > 0) {
-                for (const msg of conversationHistory.slice(-6)) {
-                    let text = (msg.content || "").replace(/\[SES:.*?\]/g, "[Sesli Mesaj]").trim();
+                // Son mesaj eğer zaten şu anki userMessage ise mükerrer olmaması için çıkar
+                const historyItems = [...conversationHistory];
+                const last = historyItems[historyItems.length - 1];
+                if (last && (last.sender !== "English_Mentor" && last.sender !== "English_AI" && last.role !== "assistant") && (last.content === userMessage || last.text === userMessage)) {
+                    historyItems.pop();
+                }
+
+                for (const msg of historyItems.slice(-6)) {
+                    let text = (msg.content || msg.text || "").replace(/\[SES:.*?\]/g, "[Sesli Mesaj]").trim();
                     if (!text) continue;
                     groqMessages.push({
-                        role: (msg.sender === "English_Mentor" || msg.sender === "English_AI") ? "assistant" : "user",
+                        role: (msg.sender === "English_Mentor" || msg.sender === "English_AI" || msg.role === "assistant") ? "assistant" : "user",
                         content: text
                     });
                 }
@@ -444,11 +451,17 @@ CRITICAL INSTRUCTIONS:
             let orMessages = [{ role: "system", content: systemPrompt }];
 
             if (conversationHistory && conversationHistory.length > 0) {
-                for (const msg of conversationHistory.slice(-6)) {
-                    let text = (msg.content || "").replace(/\[SES:.*?\]/g, "[Sesli Mesaj]").trim();
+                const historyItems = [...conversationHistory];
+                const last = historyItems[historyItems.length - 1];
+                if (last && (last.sender !== "English_Mentor" && last.sender !== "English_AI" && last.role !== "assistant") && (last.content === userMessage || last.text === userMessage)) {
+                    historyItems.pop();
+                }
+
+                for (const msg of historyItems.slice(-6)) {
+                    let text = (msg.content || msg.text || "").replace(/\[SES:.*?\]/g, "[Sesli Mesaj]").trim();
                     if (!text) continue;
                     orMessages.push({
-                        role: (msg.sender === "English_Mentor" || msg.sender === "English_AI") ? "assistant" : "user",
+                        role: (msg.sender === "English_Mentor" || msg.sender === "English_AI" || msg.role === "assistant") ? "assistant" : "user",
                         content: text
                     });
                 }
@@ -781,7 +794,7 @@ function findWordInVocabulary(text) {
     return null;
 }
 
-function generateFallbackResponse(userMessage, senderUsername, dbModule) {
+function generateFallbackResponse(userMessage, senderUsername, dbModule, conversationHistory = []) {
     const raw = (userMessage || "").trim();
     const lower = raw.toLowerCase();
 
@@ -817,6 +830,43 @@ function generateFallbackResponse(userMessage, senderUsername, dbModule) {
                 return `✅ **Tebrikler, Doğru Cevap!** 🎉\n\n📌 **Cevap:** **${activeQuiz.correct_answer}**\n\n🇹🇷 **Cümlenin Çevirisi:**\n> *"${activeQuiz.turkish_hint}"*\n\n🌟 Harika gidiyorsun! Yeni bir soru için **"Bana bir soru sor"** yazabilir veya sohbete devam edebilirsin.`;
             } else {
                 return `❌ **Bu sefer olmadı ama pes etmek yok!**\n\n• Senin cevabın: **${raw}**\n• Doğru cevap: **${activeQuiz.correct_answer}**\n\n🇹🇷 **Cümlenin Çevirisi:**\n> *"${activeQuiz.turkish_hint}"*\n\n💡 **Neden ${activeQuiz.correct_answer}?** Çünkü cümlenin bağlamı ve gramer akışı bu kelimeyi gerektiriyor.\n\nTekrar denemek için **"Yeni soru"** yazabilirsin!`;
+            }
+        }
+    }
+
+    // --- BAĞLAM TAKİBİ (Context Awareness / Önceki Mesajı Hatırlama) ---
+    if (conversationHistory && conversationHistory.length > 0) {
+        let lastAIMsg = null;
+        for (let i = conversationHistory.length - 1; i >= 0; i--) {
+            const m = conversationHistory[i];
+            const sender = m.sender || m.role;
+            if (sender === "English_Mentor" || sender === "English_AI" || sender === "assistant" || sender === "model") {
+                lastAIMsg = m.content || m.text || "";
+                break;
+            }
+        }
+
+        if (lastAIMsg) {
+            // 1. Bot kullanıcıdan bir kelimeyle cümle kurmasını istemiş miydi?
+            // "using the word mock", "mock kelimesini kullanarak", "Görevin: "mock"", "word mock"
+            const askedWordMatch = lastAIMsg.match(/using the word\s+["'*]?([a-zA-Z]+)["'*]?/i) ||
+                                   lastAIMsg.match(/["'*]?([a-zA-Z]{3,})["'*]?\s*(?:kelimesini kullanarak|kelimesiyle|ile)\s*(?:bir\s*)?cümle/i) ||
+                                   lastAIMsg.match(/Görevin:\s*["'*]?([a-zA-Z]{3,})["'*]?/i) ||
+                                   lastAIMsg.match(/Kelimesi:\s*["'*]?([a-zA-Z]{3,})["'*]?/i) ||
+                                   lastAIMsg.match(/İncelemesi.*?["'*]?\b([A-Z]{3,})\b/i);
+
+            const askedWord = askedWordMatch ? askedWordMatch[1].toLowerCase() : null;
+
+            if (askedWord && (lower.includes(askedWord) || (!isLikelyTurkish(raw) && raw.length > 6))) {
+                const usedWord = lower.includes(askedWord);
+                const title = usedWord
+                    ? `🎉 **Harika Cümle! "${askedWord}" Kelimesini Çok Başarılı Kullandın!**`
+                    : `👏 **Güzel Bir İngilizce Cümle Denemesi!**`;
+
+                let cleanSentence = raw.trim().replace(/^[a-z]/, c => c.toUpperCase());
+                if (!/[.!?]$/.test(cleanSentence)) cleanSentence += ".";
+
+                return `${title}\n\n📝 **Senin Cümlen:**\n> *"${cleanSentence}"*\n\n✨ **Mentor İncelemesi:**\n• Cümle kurgun gayet anlaşılır ve hedefe uygun! ${usedWord ? `"${askedWord}" kelimesini doğal bir bağlamda yerleştirdin.` : `Hedef kelimemiz "${askedWord}" idi.`}\n\n💡 **Daha Doğal / Akıcı Bir Alternatif:**\n> *"The system was identified as malicious because it contained a ${askedWord || "mock"} document."*\n\n💬 **Sıradaki Adım:**\nBu kelime üzerinden İngilizce sohbete devam edelim mi, yoksa yeni bir kelime mi öğrenmek istersin?`;
             }
         }
     }
@@ -1171,11 +1221,83 @@ function generateFallbackInterviewResponse(userMessage, modeName, conversationHi
     return questions[idx];
 }
 
+// =============================================
+// 8. GÖRÜNTÜLÜ İNGİLİZCE MENTOR (VIDEO CALL AVATAR TUTOR)
+// =============================================
+
+function getVideoCallSystemPrompt(tutorName = "Sarah") {
+    return `[ROLE: LIVE VIDEO CALL ENGLISH TUTOR]
+You are ${tutorName || "Sarah"}, a friendly, warm, energetic native English teacher having a face-to-face video call with an English student.
+
+CRITICAL INSTRUCTIONS FOR LIVE VIDEO CONVERSATION:
+1. SPOKEN & CONCISE: Keep your response short, natural, and expressive (strictly 2 to 3 spoken sentences per turn). This is a real-time face-to-face video call, NOT a text essay.
+2. 100% ENGLISH: Always speak in clear, natural, native English (unless student explicitly asks for Turkish help).
+3. ACTIVE LISTENER: Immediately acknowledge and react to whatever the student just said or practiced. If they made a sentence with a target word, praise them and comment on it! If they made a minor grammatical slip, gently model the natural phrasing.
+4. ENGAGING: Always finish your turn with an open-ended conversational question to keep the video conversation flowing!
+5. CAMERA PRESENCE: Be enthusiastic, warm, encouraging, and expressive.`;
+}
+
+async function callVideoCallAI(userMessage, apiKey, model, tutorName = "Sarah", conversationHistory = []) {
+    const prompt = getVideoCallSystemPrompt(tutorName);
+    return await callExternalAI(
+        userMessage,
+        apiKey,
+        model,
+        "video_call_tutor",
+        "conversational",
+        conversationHistory,
+        prompt
+    );
+}
+
+function generateVideoCallFallback(userMessage, tutorName = "Sarah", conversationHistory = []) {
+    const raw = (userMessage || "").trim();
+    const lower = raw.toLowerCase();
+
+    // Selamlaşma
+    if (lower.match(/^(hello|hi|hey|good\s*(morning|afternoon|evening)|howdy)/i)) {
+        return `Hello there! It is so lovely to see you on camera today! How are you feeling, and how has your day been going so far?`;
+    }
+
+    // Kullanıcı hal hatır soruyorsa
+    if (lower.includes("how are you") || lower.includes("how do you do")) {
+        return `I'm doing great, thank you so much for asking! I'm really excited to practice English with you face to face. What would you like to talk about today?`;
+    }
+
+    // Önceki mesajda bir kelime veya cümle pratiği var mıydı?
+    if (conversationHistory && conversationHistory.length > 0) {
+        let lastAIMsg = "";
+        for (let i = conversationHistory.length - 1; i >= 0; i--) {
+            const m = conversationHistory[i];
+            const sender = m.sender || m.role;
+            if (sender === "English_Mentor" || sender === "assistant" || sender === "model") {
+                lastAIMsg = m.content || m.text || "";
+                break;
+            }
+        }
+        if (lastAIMsg && (lastAIMsg.includes("sentence") || lastAIMsg.includes("word") || lastAIMsg.includes("mock"))) {
+            return `That was a great sentence! You used the vocabulary very naturally on camera. What inspired you to put that idea into words?`;
+        }
+    }
+
+    // Doğal karşılıklar
+    const responses = [
+        `That is such an interesting thought! Your English sounds very clear right now. Could you tell me a little bit more about that?`,
+        `I really love how confident you sound when speaking! If you had to describe that in another way, how would you put it?`,
+        `That makes complete sense! It's great to hear your perspective on this. What is something exciting you're looking forward to this week?`,
+        `Spot on! You are doing an amazing job articulating your thoughts. How often do you get the chance to practice speaking English out loud like this?`
+    ];
+    return responses[Math.floor(Math.random() * responses.length)];
+}
+
 module.exports = {
     callExternalAI,
     callInterviewAI,
     getMockInterviewSystemPrompt,
     generateFallbackInterviewResponse,
+    callVideoCallAI,
+    getVideoCallSystemPrompt,
+    generateVideoCallFallback,
     testAPIKey,
     generateFallbackResponse,
     generateQuizQuestion,

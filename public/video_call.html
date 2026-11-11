@@ -1,0 +1,1586 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Live Video Call Tutor - English Learning Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0e17;
+            --call-bg: #0f172a;
+            --accent-cyan: #38bdf8;
+            --accent-indigo: #6366f1;
+            --accent-emerald: #10b981;
+            --accent-rose: #f43f5e;
+            --text-main: #f8fafc;
+            --text-dim: #94a3b8;
+            --glass-bg: rgba(15, 23, 42, 0.75);
+            --glass-border: rgba(255, 255, 255, 0.12);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: #020617;
+            color: var(--text-main);
+            height: 100vh;
+            height: 100dvh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* --- VIDEO CALL CONTAINER --- */
+        .call-room {
+            position: relative;
+            flex: 1;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            background: radial-gradient(circle at 50% 30%, #1e1b4b 0%, #0a0e17 70%);
+            overflow: hidden;
+        }
+
+        /* --- TOP HUD (HEADER) --- */
+        .call-hud-top {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 16px 24px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 30;
+            background: linear-gradient(180deg, rgba(2, 6, 23, 0.85) 0%, rgba(2, 6, 23, 0) 100%);
+            pointer-events: none;
+        }
+
+        .hud-left, .hud-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: auto;
+        }
+
+        .live-status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(15, 23, 42, 0.7);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            padding: 6px 14px;
+            border-radius: 30px;
+            font-size: 0.82rem;
+            font-weight: 600;
+        }
+
+        .live-dot {
+            width: 9px;
+            height: 9px;
+            background: var(--accent-emerald);
+            border-radius: 50%;
+            box-shadow: 0 0 10px var(--accent-emerald);
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        @keyframes pulse-dot {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.3); opacity: 0.5; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .call-timer {
+            font-family: 'JetBrains Mono', monospace;
+            color: #e2e8f0;
+            font-size: 0.9rem;
+            letter-spacing: 0.05em;
+        }
+
+        .hud-btn {
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(12px);
+            color: white;
+            padding: 8px 14px;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            text-decoration: none;
+        }
+
+        .hud-btn:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-1px);
+        }
+
+        /* --- TUTOR STAGE (CENTRAL VIDEO FEED) --- */
+        .tutor-stage {
+            flex: 1;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 40px 20px 100px;
+        }
+
+        /* Studio lighting & backdrop glow */
+        .stage-backdrop {
+            position: absolute;
+            width: 480px;
+            height: 480px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, rgba(56, 189, 248, 0.08) 50%, transparent 75%);
+            filter: blur(50px);
+            z-index: 1;
+            pointer-events: none;
+            transition: all 0.5s ease;
+        }
+
+        .stage-backdrop.speaking {
+            background: radial-gradient(circle, rgba(16, 185, 129, 0.35) 0%, rgba(56, 189, 248, 0.2) 50%, transparent 75%);
+            transform: scale(1.15);
+        }
+
+        /* Sound waves when tutor speaks */
+        .speaking-aura {
+            position: absolute;
+            width: 320px;
+            height: 320px;
+            border-radius: 50%;
+            border: 2px solid rgba(56, 189, 248, 0.4);
+            z-index: 2;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s;
+        }
+
+        .speaking-aura.active {
+            opacity: 1;
+            animation: ring-pulse 1.8s infinite ease-out;
+        }
+
+        @keyframes ring-pulse {
+            0% { transform: scale(0.9); opacity: 0.8; }
+            100% { transform: scale(1.4); opacity: 0; }
+        }
+
+        /* --- INTERACTIVE ANIMATED HUMAN AVATAR --- */
+        .avatar-figure-box {
+            position: relative;
+            width: 320px;
+            height: 380px;
+            z-index: 10;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: transform 0.4s ease;
+            animation: subtle-sway 4s ease-in-out infinite;
+        }
+
+        @keyframes subtle-sway {
+            0%, 100% { transform: translateY(0px) rotate(0deg); }
+            50% { transform: translateY(-6px) rotate(0.4deg); }
+        }
+
+        .avatar-figure-box.listening {
+            animation: attentive-nod 2s infinite ease-in-out;
+        }
+
+        @keyframes attentive-nod {
+            0%, 100% { transform: translateY(0) scale(1.02); }
+            50% { transform: translateY(3px) scale(1.02); }
+        }
+
+        /* SVG Avatar elements */
+        .svg-avatar {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 20px 40px rgba(0, 0, 0, 0.5));
+        }
+
+        /* Eyes blinking */
+        .tutor-eyelid {
+            transform-origin: center;
+            transition: transform 0.1s;
+        }
+
+        .tutor-eyelid.blinking {
+            transform: scaleY(0.05);
+        }
+
+        /* Dynamic mouth shapes */
+        .mouth-shape {
+            transition: d 0.08s ease, transform 0.08s ease;
+            transform-origin: 160px 220px;
+        }
+
+        /* Tutor Name & Badge Overlay */
+        .tutor-name-pill {
+            position: absolute;
+            bottom: 120px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(14px);
+            padding: 8px 18px;
+            border-radius: 30px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 20;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+            animation: fadeIn 0.4s ease;
+        }
+
+        .tutor-badge-avatar {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #10b981, #0284c7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+        }
+
+        .tutor-info-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tutor-display-name {
+            font-size: 0.88rem;
+            font-weight: 700;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .tutor-role-sub {
+            font-size: 0.72rem;
+            color: var(--accent-cyan);
+            font-weight: 500;
+        }
+
+        .speech-indicator-tag {
+            background: rgba(16, 185, 129, 0.2);
+            color: #a7f3d0;
+            font-size: 0.7rem;
+            padding: 2px 8px;
+            border-radius: 10px;
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            display: none;
+        }
+
+        /* --- LIVE SUBTITLES (CC CAPTIONS) --- */
+        .subtitles-container {
+            position: absolute;
+            bottom: 90px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90%;
+            max-width: 680px;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(16px);
+            border-radius: 16px;
+            padding: 12px 20px;
+            z-index: 25;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+        }
+
+        .subtitle-speaker {
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent-cyan);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .subtitle-text {
+            font-size: 1rem;
+            line-height: 1.45;
+            color: #f8fafc;
+            min-height: 24px;
+        }
+
+        /* --- QUICK PRACTICE SCENARIOS (PILLS) --- */
+        .scenario-pills-bar {
+            position: absolute;
+            bottom: 160px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 8px;
+            z-index: 22;
+            overflow-x: auto;
+            max-width: 90%;
+            padding: 6px 10px;
+            scrollbar-width: none;
+        }
+        .scenario-pills-bar::-webkit-scrollbar { display: none; }
+
+        .scenario-pill {
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid var(--glass-border);
+            backdrop-filter: blur(10px);
+            color: #e2e8f0;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 0.78rem;
+            font-weight: 500;
+            white-space: nowrap;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .scenario-pill:hover {
+            background: rgba(99, 102, 241, 0.3);
+            border-color: #6366f1;
+            color: #ffffff;
+            transform: translateY(-2px);
+        }
+
+        /* --- USER PICTURE-IN-PICTURE (WEBCAM) --- */
+        .user-pip-window {
+            position: absolute;
+            bottom: 95px;
+            right: 24px;
+            width: 170px;
+            height: 125px;
+            border-radius: 16px;
+            background: #1e293b;
+            border: 2px solid rgba(255, 255, 255, 0.2);
+            overflow: hidden;
+            z-index: 26;
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.6);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .user-pip-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror camera */
+        }
+
+        .user-pip-fallback {
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        }
+
+        .user-pip-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #4f46e5, #06b6d4);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2rem;
+            color: white;
+            font-weight: bold;
+        }
+
+        .user-pip-label {
+            position: absolute;
+            bottom: 6px;
+            left: 8px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            background: rgba(0, 0, 0, 0.6);
+            padding: 2px 6px;
+            border-radius: 6px;
+            color: #ffffff;
+        }
+
+        .user-speaking-badge {
+            position: absolute;
+            top: 6px;
+            right: 8px;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--accent-emerald);
+            display: none;
+            box-shadow: 0 0 8px var(--accent-emerald);
+        }
+
+        /* --- BOTTOM CONTROL DOCK --- */
+        .call-dock-bottom {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 14px;
+            background: linear-gradient(0deg, rgba(2, 6, 23, 0.95) 0%, rgba(2, 6, 23, 0.6) 80%, transparent 100%);
+            z-index: 30;
+            padding: 0 20px;
+        }
+
+        .dock-btn {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            border: 1px solid var(--glass-border);
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            color: #ffffff;
+            font-size: 1.25rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+        }
+
+        .dock-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            background: rgba(255, 255, 255, 0.18);
+        }
+
+        .dock-btn.active {
+            background: var(--accent-emerald);
+            color: #0f172a;
+            border-color: var(--accent-emerald);
+            box-shadow: 0 0 20px rgba(16, 185, 129, 0.5);
+        }
+
+        .dock-btn.muted {
+            background: rgba(239, 68, 68, 0.2);
+            color: #f87171;
+            border-color: rgba(239, 68, 68, 0.4);
+        }
+
+        .btn-hangup {
+            width: 58px;
+            height: 58px;
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            border: none;
+            color: white;
+            box-shadow: 0 6px 20px rgba(239, 68, 68, 0.45);
+        }
+
+        .btn-hangup:hover {
+            background: linear-gradient(135deg, #f87171 0%, #ef4444 100%);
+            transform: scale(1.08);
+            box-shadow: 0 8px 25px rgba(239, 68, 68, 0.6);
+        }
+
+        /* --- SIDE CHAT DRAWER --- */
+        .chat-drawer {
+            position: absolute;
+            top: 0;
+            right: -360px;
+            width: 340px;
+            height: 100%;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-left: 1px solid var(--glass-border);
+            z-index: 40;
+            display: flex;
+            flex-direction: column;
+            transition: right 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+        }
+
+        .chat-drawer.open {
+            right: 0;
+        }
+
+        .drawer-header {
+            padding: 16px;
+            border-bottom: 1px solid var(--glass-border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .drawer-header h3 {
+            font-size: 1rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .drawer-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .drawer-msg {
+            padding: 10px 14px;
+            border-radius: 14px;
+            font-size: 0.88rem;
+            line-height: 1.45;
+            max-width: 85%;
+        }
+
+        .drawer-msg.ai {
+            background: rgba(30, 41, 59, 0.8);
+            align-self: flex-start;
+            border-bottom-left-radius: 4px;
+        }
+
+        .drawer-msg.user {
+            background: linear-gradient(135deg, #4f46e5, #0284c7);
+            color: white;
+            align-self: flex-end;
+            border-bottom-right-radius: 4px;
+        }
+
+        .drawer-input-row {
+            padding: 12px;
+            border-top: 1px solid var(--glass-border);
+            display: flex;
+            gap: 8px;
+        }
+
+        .drawer-input {
+            flex: 1;
+            background: rgba(30, 41, 59, 0.8);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 10px 16px;
+            color: white;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .drawer-send-btn {
+            background: var(--accent-emerald);
+            border: none;
+            color: #0f172a;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+        }
+
+        /* --- SETTINGS / SUMMARY MODAL --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            padding: 20px;
+        }
+
+        .modal-card {
+            background: #1e293b;
+            border: 1px solid var(--glass-border);
+            border-radius: 24px;
+            width: 100%;
+            max-width: 480px;
+            padding: 24px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.6);
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            animation: fadeIn 0.25s ease;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--glass-border);
+            padding-bottom: 12px;
+        }
+
+        .modal-header h3 {
+            font-size: 1.15rem;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-dim);
+            font-size: 1.4rem;
+            cursor: pointer;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .form-label {
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            font-weight: 500;
+        }
+
+        .form-select, .form-input {
+            background: #0f172a;
+            border: 1px solid var(--glass-border);
+            padding: 10px 14px;
+            border-radius: 12px;
+            color: #ffffff;
+            font-size: 0.9rem;
+            outline: none;
+        }
+
+        .btn-modal-save {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 8px;
+        }
+
+        /* Summary Stats Cards */
+        .summary-stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin: 10px 0;
+        }
+
+        .stat-box {
+            background: rgba(15, 23, 42, 0.8);
+            border: 1px solid var(--glass-border);
+            padding: 14px;
+            border-radius: 14px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.6rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            margin-bottom: 2px;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--text-dim);
+            text-transform: uppercase;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.96); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .call-hud-top { padding: 12px 16px; }
+            .avatar-figure-box { width: 260px; height: 320px; }
+            .user-pip-window { width: 120px; height: 95px; bottom: 85px; right: 14px; }
+            .subtitles-container { bottom: 85px; width: 94%; padding: 10px 14px; }
+            .subtitle-text { font-size: 0.9rem; }
+            .scenario-pills-bar { bottom: 155px; }
+            .dock-btn { width: 44px; height: 44px; font-size: 1.1rem; }
+            .btn-hangup { width: 50px; height: 50px; }
+            .tutor-name-pill { bottom: 110px; padding: 6px 14px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="call-room">
+
+        <!-- TOP BAR (HUD) -->
+        <header class="call-hud-top">
+            <div class="hud-left">
+                <div class="live-status-pill">
+                    <span class="live-dot"></span>
+                    <span>LIVE</span>
+                    <span style="color:rgba(255,255,255,0.2);">|</span>
+                    <span class="call-timer" id="callDuration">00:00</span>
+                </div>
+                <div class="live-status-pill" id="modelPill" style="font-size:0.75rem; color:#38bdf8;">
+                    🤖 Groq Llama 3.3
+                </div>
+            </div>
+
+            <div class="hud-right">
+                <button class="hud-btn" onclick="openSettingsModal()" title="Settings">
+                    ⚙️
+                </button>
+                <a href="girisliindex.html" class="hud-btn" title="Dashboard">
+                    Panel ➔
+                </a>
+            </div>
+        </header>
+
+        <!-- MAIN TUTOR STAGE -->
+        <main class="tutor-stage">
+            <!-- Studio Backlight -->
+            <div class="stage-backdrop" id="stageBackdrop"></div>
+
+            <!-- Speaking Sound Wave Rings -->
+            <div class="speaking-aura" id="speakingAura"></div>
+
+            <!-- INTERACTIVE ANIMATED HUMAN TUTOR FIGURE -->
+            <div class="avatar-figure-box" id="avatarBox">
+                <svg id="tutorSvg" class="svg-avatar" viewBox="0 0 320 380" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- DEFINITIONS & GRADIENTS -->
+                    <defs>
+                        <!-- Skin tones -->
+                        <linearGradient id="skinGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#ffd4b8"/>
+                            <stop offset="100%" stop-color="#fca882"/>
+                        </linearGradient>
+                        <linearGradient id="skinShadow" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#f59c73"/>
+                            <stop offset="100%" stop-color="#e07c50"/>
+                        </linearGradient>
+
+                        <!-- Hair - Sarah -->
+                        <linearGradient id="sarahHair" x1="0" y1="0" x2="1" y2="1">
+                            <stop offset="0%" stop-color="#8a3b14"/>
+                            <stop offset="50%" stop-color="#b85624"/>
+                            <stop offset="100%" stop-color="#6b2707"/>
+                        </linearGradient>
+
+                        <!-- Blazer / Clothes -->
+                        <linearGradient id="blazerGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#1e3a8a"/>
+                            <stop offset="100%" stop-color="#0f172a"/>
+                        </linearGradient>
+                        <linearGradient id="shirtGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stop-color="#ffffff"/>
+                            <stop offset="100%" stop-color="#cbd5e1"/>
+                        </linearGradient>
+                    </defs>
+
+                    <!-- BODY / SHOULDERS -->
+                    <g id="tutorBody">
+                        <!-- Neck -->
+                        <path d="M142 195 L178 195 L182 250 L138 250 Z" fill="url(#skinShadow)"/>
+                        <!-- White Shirt Collar -->
+                        <path d="M136 245 L160 270 L184 245 L200 290 L120 290 Z" fill="url(#shirtGrad)"/>
+                        <!-- Navy Blazer -->
+                        <path d="M80 280 C80 250 120 240 140 245 L160 290 L180 245 C200 240 240 250 240 280 L255 380 L65 380 Z" fill="url(#blazerGrad)"/>
+                        <!-- Blazer Lapels -->
+                        <path d="M138 245 L160 330 L125 380 L80 280 Z" fill="#1e293b" opacity="0.6"/>
+                        <path d="M182 245 L160 330 L195 380 L240 280 Z" fill="#1e293b" opacity="0.6"/>
+                        <!-- Teacher ID Badge -->
+                        <rect x="95" y="300" width="30" height="20" rx="4" fill="#38bdf8" opacity="0.8"/>
+                        <rect x="100" y="305" width="20" height="3" rx="1.5" fill="#ffffff"/>
+                        <rect x="100" y="311" width="14" height="2" rx="1" fill="#ffffff" opacity="0.8"/>
+                    </g>
+
+                    <!-- HEAD & HAIR -->
+                    <g id="tutorHead">
+                        <!-- Hair Back -->
+                        <path id="hairBack" d="M100 130 C100 70 220 70 220 130 C230 180 235 230 225 250 C210 210 200 170 195 160 C125 160 115 210 95 250 C85 230 90 180 100 130 Z" fill="url(#sarahHair)"/>
+
+                        <!-- Face Shape -->
+                        <path d="M115 130 C115 85 205 85 205 130 C205 175 185 215 160 220 C135 215 115 175 115 130 Z" fill="url(#skinGrad)"/>
+
+                        <!-- Ears -->
+                        <ellipse cx="114" cy="145" rx="7" ry="12" fill="url(#skinShadow)"/>
+                        <ellipse cx="206" cy="145" rx="7" ry="12" fill="url(#skinShadow)"/>
+                        <!-- Earrings -->
+                        <circle cx="114" cy="154" r="3.5" fill="#f8fafc"/>
+                        <circle cx="206" cy="154" r="3.5" fill="#f8fafc"/>
+
+                        <!-- Eyebrows -->
+                        <path d="M128 122 Q142 118 152 122" stroke="#5c260b" stroke-width="3" stroke-linecap="round" fill="none"/>
+                        <path d="M168 122 Q178 118 192 122" stroke="#5c260b" stroke-width="3" stroke-linecap="round" fill="none"/>
+
+                        <!-- EYES & BLINKING EYELIDS -->
+                        <g id="leftEye">
+                            <ellipse cx="140" cy="136" rx="9" ry="7" fill="#ffffff"/>
+                            <circle cx="140" cy="136" r="4.5" fill="#1e3a8a"/>
+                            <circle cx="142" cy="134" r="1.8" fill="#ffffff"/>
+                            <!-- Upper Eyelid for Blinking -->
+                            <ellipse id="leftEyelid" class="tutor-eyelid" cx="140" cy="136" rx="10" ry="7.5" fill="url(#skinShadow)" opacity="0"/>
+                        </g>
+
+                        <g id="rightEye">
+                            <ellipse cx="180" cy="136" rx="9" ry="7" fill="#ffffff"/>
+                            <circle cx="180" cy="136" r="4.5" fill="#1e3a8a"/>
+                            <circle cx="182" cy="134" r="1.8" fill="#ffffff"/>
+                            <!-- Upper Eyelid for Blinking -->
+                            <ellipse id="rightEyelid" class="tutor-eyelid" cx="180" cy="136" rx="10" ry="7.5" fill="url(#skinShadow)" opacity="0"/>
+                        </g>
+
+                        <!-- Glasses (Professional Stylish Frames) -->
+                        <g id="glasses">
+                            <rect x="126" y="125" width="28" height="22" rx="7" stroke="#38bdf8" stroke-width="2.5" fill="none" opacity="0.85"/>
+                            <rect x="166" y="125" width="28" height="22" rx="7" stroke="#38bdf8" stroke-width="2.5" fill="none" opacity="0.85"/>
+                            <path d="M154 134 Q160 131 166 134" stroke="#38bdf8" stroke-width="2.5" fill="none"/>
+                            <!-- Glass Glare -->
+                            <path d="M129 130 L137 142" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+                            <path d="M169 130 L177 142" stroke="#ffffff" stroke-width="1.5" stroke-linecap="round" opacity="0.6"/>
+                        </g>
+
+                        <!-- Nose -->
+                        <path d="M160 142 Q163 162 156 166 Q161 168 165 166" stroke="#e07c50" stroke-width="2" stroke-linecap="round" fill="none"/>
+
+                        <!-- Blush -->
+                        <ellipse cx="130" cy="160" rx="9" ry="5" fill="#f43f5e" opacity="0.18"/>
+                        <ellipse cx="190" cy="160" rx="9" ry="5" fill="#f43f5e" opacity="0.18"/>
+
+                        <!-- DYNAMIC ANIMATED MOUTH (LIP-SYNC VISEMES) -->
+                        <g id="tutorMouthGroup">
+                            <!-- Lips base / outline -->
+                            <path id="tutorMouth" class="mouth-shape" 
+                                  d="M144 186 Q160 193 176 186 Q160 189 144 186 Z" 
+                                  fill="#be185d" stroke="#9d174d" stroke-width="1.5"/>
+                            <!-- Teeth / Tongue detail when open -->
+                            <ellipse id="mouthInner" cx="160" cy="189" rx="6" ry="2" fill="#881337" opacity="0"/>
+                        </g>
+
+                        <!-- Hair Front (Bangs & Flow) -->
+                        <path id="hairFront" d="M106 120 C115 65 205 65 214 120 C200 95 170 95 155 105 C140 95 120 95 106 120 Z" fill="url(#sarahHair)"/>
+                    </g>
+                </svg>
+            </div>
+
+            <!-- Tutor Info Pill -->
+            <div class="tutor-name-pill">
+                <div class="tutor-badge-avatar">👩‍🏫</div>
+                <div class="tutor-info-text">
+                    <span class="tutor-display-name" id="tutorDisplayName">
+                        Sarah Jenkins <span style="font-size:0.75rem; color:#10b981;">✓</span>
+                    </span>
+                    <span class="tutor-role-sub" id="tutorRoleSub">Senior English Instructor</span>
+                </div>
+                <span class="speech-indicator-tag" id="speechTag">Speaking...</span>
+            </div>
+
+            <!-- SCENARIO SUGGESTION PILLS -->
+            <div class="scenario-pills-bar">
+                <button class="scenario-pill" onclick="sendPromptPreset('Let\'s roleplay ordering coffee at a cafe in New York!')">☕ Coffee Shop</button>
+                <button class="scenario-pill" onclick="sendPromptPreset('Can you ask me a realistic job interview question?')">💼 Job Interview</button>
+                <button class="scenario-pill" onclick="sendPromptPreset('Let\'s roleplay checking in for a flight at an airport!')">✈️ Airport Check-in</button>
+                <button class="scenario-pill" onclick="sendPromptPreset('Teach me an impressive vocabulary word and ask me to use it!')">📖 Learn a Word</button>
+                <button class="scenario-pill" onclick="sendPromptPreset('How is your day going? Let\'s have a casual conversation!')">🗣️ Casual Chat</button>
+            </div>
+
+            <!-- LIVE SUBTITLES (CLOSED CAPTIONS) -->
+            <div class="subtitles-container" id="subtitlesBox">
+                <div class="subtitle-speaker" id="subtitleSpeaker">
+                    <span>👩‍🏫 Sarah:</span>
+                </div>
+                <div class="subtitle-text" id="subtitleText">
+                    "Hello! Welcome to our 1-on-1 English video call. Can you hear me clearly?"
+                </div>
+            </div>
+
+            <!-- USER PICTURE-IN-PICTURE (WEBCAM) -->
+            <div class="user-pip-window" id="userPipWindow">
+                <video id="userWebcam" class="user-pip-video" autoplay playsinline muted></video>
+                <div class="user-pip-fallback" id="userPipFallback">
+                    <div class="user-pip-avatar" id="userAvatarText">U</div>
+                    <span style="font-size:0.65rem; color:#94a3b8;">Camera Off</span>
+                </div>
+                <span class="user-pip-label" id="userPipLabel">You (Burak)</span>
+                <span class="user-speaking-badge" id="userSpeakingBadge"></span>
+            </div>
+        </main>
+
+        <!-- BOTTOM CONTROLS DOCK -->
+        <footer class="call-dock-bottom">
+            <!-- Mute/Unmute Mic -->
+            <button class="dock-btn" id="micBtn" onclick="toggleMic()" title="Mute/Unmute Mic (Spacebar)">
+                🎤
+            </button>
+
+            <!-- Video Camera Toggle -->
+            <button class="dock-btn active" id="cameraBtn" onclick="toggleWebcam()" title="Turn Camera On/Off">
+                📹
+            </button>
+
+            <!-- Tutor Avatar Switcher (Sarah / David) -->
+            <button class="dock-btn" onclick="toggleTutorPersona()" title="Switch Tutor (Sarah / David)">
+                🎭
+            </button>
+
+            <!-- Live Text Transcript Drawer -->
+            <button class="dock-btn" id="chatDrawerBtn" onclick="toggleChatDrawer()" title="Live Chat & Transcript">
+                💬
+            </button>
+
+            <!-- End Call (Hang up) -->
+            <button class="dock-btn btn-hangup" onclick="endCall()" title="End Video Call">
+                📞
+            </button>
+        </footer>
+
+        <!-- SLIDE-OUT CHAT TRANSCRIPT DRAWER -->
+        <aside class="chat-drawer" id="chatDrawer">
+            <div class="drawer-header">
+                <h3>💬 Live Chat & Transcript</h3>
+                <button class="close-btn" onclick="toggleChatDrawer()">✕</button>
+            </div>
+            <div class="drawer-messages" id="drawerMessages">
+                <div class="drawer-msg ai">
+                    <strong>Sarah:</strong> Hello! Welcome to our video call. Let's practice speaking English together!
+                </div>
+            </div>
+            <div class="drawer-input-row">
+                <input type="text" id="drawerInput" class="drawer-input" placeholder="Type a message..." onkeydown="handleDrawerKey(event)">
+                <button class="drawer-send-btn" onclick="sendDrawerMessage()">➤</button>
+            </div>
+        </aside>
+    </div>
+
+    <!-- CALL END SUMMARY MODAL -->
+    <div id="summaryModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>🎉 Video Call Completed!</h3>
+                <button class="close-btn" onclick="closeSummaryModal()">✕</button>
+            </div>
+
+            <p style="color:#94a3b8; font-size:0.9rem;">
+                Great work practicing English face-to-face today! Speaking out loud on camera is the fastest way to build conversational confidence.
+            </p>
+
+            <div class="summary-stats-grid">
+                <div class="stat-box">
+                    <div class="stat-value" id="summaryDuration">00:00</div>
+                    <div class="stat-label">Call Duration</div>
+                </div>
+                <div class="stat-box">
+                    <div class="stat-value" id="summarySentences">0</div>
+                    <div class="stat-label">Turns Exchanged</div>
+                </div>
+            </div>
+
+            <div style="background:rgba(15,23,42,0.8); border:1px solid var(--glass-border); padding:14px; border-radius:14px; font-size:0.85rem; line-height:1.5;">
+                <strong style="color:#10b981;">💡 Teacher Sarah's Feedback:</strong><br>
+                Your willingness to speak and experiment with new sentence structures is fantastic! Keep doing 5-minute video calls daily to master fluency.
+            </div>
+
+            <div style="display:flex; gap:10px; margin-top:8px;">
+                <button class="btn-modal-save" style="flex:1;" onclick="restartCall()">🔄 Call Again</button>
+                <a href="girisliindex.html" class="btn-modal-save" style="flex:1; text-align:center; text-decoration:none; background:linear-gradient(135deg, #4f46e5, #0284c7);">Panel ➔</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3>⚙️ Video Call Settings</h3>
+                <button class="close-btn" onclick="closeSettingsModal()">✕</button>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Tutor Selection</label>
+                <select id="modalTutorSelect" class="form-select" onchange="applyTutorFromModal()">
+                    <option value="Sarah">👩‍🏫 Teacher Sarah (British/American Voice)</option>
+                    <option value="David">👨‍🏫 Teacher David (American Voice)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Yapay Zeka Modeli</label>
+                <select id="modalModelSelect" class="form-select">
+                    <option value="llama-3.1-8b-instant">🦙 Groq Llama 3.3 / 3.1 (Işık Hızında & %100 Ücretsiz)</option>
+                    <option value="gemini-1.5-flash">⚡ Google Gemini 1.5 Flash</option>
+                    <option value="built-in">💻 Dahili Akıllı Eğitici (API Key Gerekmez)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">API Anahtarınız (API Key)</label>
+                <input type="password" id="modalApiKeyInput" class="form-input" placeholder="Groq (gsk_...) veya Gemini anahtarı...">
+                <small style="color:#94a3b8; font-size:0.75rem;">Key girilmezse sistem dahili akıllı eğitici ile çalışır.</small>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">Konuşma Hızı (Speech Rate)</label>
+                <select id="modalRateSelect" class="form-select">
+                    <option value="1.0">1.0x (Normal Doğal Hız)</option>
+                    <option value="0.9">0.9x (Daha Net & Anlaşılır)</option>
+                    <option value="1.1">1.1x (Hızlı Konuşma)</option>
+                </select>
+            </div>
+
+            <button class="btn-modal-save" onclick="saveSettings()">Save & Continue Call</button>
+        </div>
+    </div>
+
+    <!-- SCRIPT LOGIC -->
+    <script>
+        const API_URL = window.location.origin;
+        const currentUsername = localStorage.getItem("username") || "Student";
+
+        // Call State
+        let callSeconds = 0;
+        let callTimerInterval = null;
+        let turnCount = 0;
+        let conversationHistory = []; // { role: "assistant"|"user", content: string }
+        let currentTutor = "Sarah"; // "Sarah" or "David"
+        let isTutorSpeaking = false;
+        let isUserSpeaking = false;
+        let isMicEnabled = true;
+        let isCameraEnabled = true;
+        let userMediaStream = null;
+
+        // Speech Synthesis & Recognition
+        const synth = window.speechSynthesis;
+        let englishVoice = null;
+        let recognition = null;
+        let lipSyncInterval = null;
+
+        // Initialize Call upon load
+        window.addEventListener("DOMContentLoaded", () => {
+            initVoices();
+            initSpeechRecognition();
+            initWebcam();
+            startCallTimer();
+
+            // Load shared API Key & model from localStorage
+            const savedKey = localStorage.getItem("ai_api_key") || localStorage.getItem("mentor_api_key") || "";
+            const savedModel = localStorage.getItem("ai_selected_model") || localStorage.getItem("mentor_model") || "llama-3.1-8b-instant";
+            document.getElementById("modalApiKeyInput").value = savedKey;
+            document.getElementById("modalModelSelect").value = savedModel;
+            updateModelBadge();
+
+            // Welcome greeting from tutor
+            setTimeout(() => {
+                const welcomeMsg = `Hello ${currentUsername}! Welcome to our 1-on-1 English video call! It is great to see you on camera. How are you feeling today?`;
+                tutorSpeak(welcomeMsg);
+            }, 800);
+        });
+
+        // --- TIMER & CALL HUD ---
+        function startCallTimer() {
+            if (callTimerInterval) clearInterval(callTimerInterval);
+            callSeconds = 0;
+            const timerEl = document.getElementById("callDuration");
+            callTimerInterval = setInterval(() => {
+                callSeconds++;
+                const mins = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+                const secs = String(callSeconds % 60).padStart(2, '0');
+                timerEl.textContent = `${mins}:${secs}`;
+            }, 1000);
+        }
+
+        function updateModelBadge() {
+            const mod = localStorage.getItem("ai_selected_model") || "llama-3.1-8b-instant";
+            const pill = document.getElementById("modelPill");
+            if (mod.includes("llama") || mod.includes("groq")) {
+                pill.textContent = "🦙 Groq Llama 3.3";
+            } else if (mod.includes("gemini")) {
+                pill.textContent = "⚡ Gemini 1.5 Flash";
+            } else {
+                pill.textContent = "💻 Built-in Tutor";
+            }
+        }
+
+        // --- USER WEBCAM (PICTURE-IN-PICTURE) ---
+        async function initWebcam() {
+            const videoEl = document.getElementById("userWebcam");
+            const fallbackEl = document.getElementById("userPipFallback");
+            const labelEl = document.getElementById("userPipLabel");
+            const avatarText = document.getElementById("userAvatarText");
+
+            labelEl.textContent = `You (${currentUsername})`;
+            avatarText.textContent = currentUsername.charAt(0).toUpperCase();
+
+            try {
+                userMediaStream = await navigator.mediaDevices.getUserMedia({
+                    video: { width: 320, height: 240, facingMode: "user" },
+                    audio: true
+                });
+                videoEl.srcObject = userMediaStream;
+                videoEl.style.display = "block";
+                fallbackEl.style.display = "none";
+                isCameraEnabled = true;
+            } catch (err) {
+                console.warn("Webcam not accessible, using fallback avatar:", err.message);
+                videoEl.style.display = "none";
+                fallbackEl.style.display = "flex";
+                isCameraEnabled = false;
+                document.getElementById("cameraBtn").classList.remove("active");
+                document.getElementById("cameraBtn").classList.add("muted");
+            }
+        }
+
+        function toggleWebcam() {
+            const videoEl = document.getElementById("userWebcam");
+            const fallbackEl = document.getElementById("userPipFallback");
+            const btn = document.getElementById("cameraBtn");
+
+            if (userMediaStream && userMediaStream.getVideoTracks().length > 0) {
+                const track = userMediaStream.getVideoTracks()[0];
+                track.enabled = !track.enabled;
+                isCameraEnabled = track.enabled;
+
+                if (isCameraEnabled) {
+                    videoEl.style.display = "block";
+                    fallbackEl.style.display = "none";
+                    btn.classList.add("active");
+                    btn.classList.remove("muted");
+                } else {
+                    videoEl.style.display = "none";
+                    fallbackEl.style.display = "flex";
+                    btn.classList.remove("active");
+                    btn.classList.add("muted");
+                }
+            } else {
+                // If stream didn't start earlier, try requesting now
+                initWebcam();
+            }
+        }
+
+        function toggleMic() {
+            const btn = document.getElementById("micBtn");
+            isMicEnabled = !isMicEnabled;
+
+            if (userMediaStream && userMediaStream.getAudioTracks().length > 0) {
+                userMediaStream.getAudioTracks()[0].enabled = isMicEnabled;
+            }
+
+            if (isMicEnabled) {
+                btn.classList.remove("muted");
+                btn.textContent = "🎤";
+                if (recognition) {
+                    try { recognition.start(); } catch(e){}
+                }
+            } else {
+                btn.classList.add("muted");
+                btn.textContent = "🔇";
+                if (recognition) {
+                    try { recognition.stop(); } catch(e){}
+                }
+            }
+        }
+
+        // Spacebar shortcut to mute/unmute
+        window.addEventListener("keydown", (e) => {
+            if (e.code === "Space" && e.target.tagName !== "INPUT" && e.target.tagName !== "TEXTAREA") {
+                e.preventDefault();
+                toggleMic();
+            }
+        });
+
+        // --- SPEECH RECOGNITION (STT) ---
+        function initSpeechRecognition() {
+            const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+            if (!SpeechRecognition) return;
+
+            recognition = new SpeechRecognition();
+            recognition.continuous = true;
+            recognition.interimResults = true;
+            recognition.lang = 'en-US';
+
+            let silenceTimer = null;
+            let currentFinalTranscript = "";
+
+            recognition.onresult = (event) => {
+                if (isTutorSpeaking) return; // Don't transcribe when tutor is talking
+
+                let interim = "";
+                for (let i = event.resultIndex; i < event.results.length; ++i) {
+                    if (event.results[i].isFinal) {
+                        currentFinalTranscript += " " + event.results[i][0].transcript;
+                    } else {
+                        interim += event.results[i][0].transcript;
+                    }
+                }
+
+                const liveText = (currentFinalTranscript + " " + interim).trim();
+
+                if (liveText.length > 0) {
+                    // Update user speaking state
+                    setListeningMode(true);
+                    updateSubtitles("You", liveText);
+
+                    // Auto-detect end of speech with 1.6s pause
+                    clearTimeout(silenceTimer);
+                    silenceTimer = setTimeout(() => {
+                        if (liveText.trim().length > 2 && !isTutorSpeaking) {
+                            sendUserUtterance(liveText.trim());
+                            currentFinalTranscript = "";
+                        }
+                    }, 1600);
+                }
+            };
+
+            recognition.onerror = (e) => {
+                if (e.error !== "no-speech") console.warn("Recognition error:", e.error);
+            };
+
+            recognition.onend = () => {
+                // Keep listening if mic enabled and tutor not speaking
+                if (isMicEnabled && !isTutorSpeaking) {
+                    try { recognition.start(); } catch(e){}
+                }
+            };
+
+            try { recognition.start(); } catch(e){}
+        }
+
+        // --- SPEECH SYNTHESIS & LIP-SYNC ANIMATION ---
+        function initVoices() {
+            if (!synth) return;
+            const updateVoice = () => {
+                const voices = synth.getVoices();
+                if (currentTutor === "Sarah") {
+                    englishVoice = voices.find(v => (v.name.includes("Samantha") || v.name.includes("Victoria") || v.name.includes("Zira") || v.name.includes("Google UK English Female") || v.name.includes("Natural")) && v.lang.startsWith("en")) ||
+                                   voices.find(v => v.lang.startsWith("en"));
+                } else {
+                    englishVoice = voices.find(v => (v.name.includes("Daniel") || v.name.includes("David") || v.name.includes("Alex") || v.name.includes("Google US English")) && v.lang.startsWith("en")) ||
+                                   voices.find(v => v.lang.startsWith("en"));
+                }
+            };
+            if (synth.onvoiceschanged !== undefined) synth.onvoiceschanged = updateVoice;
+            updateVoice();
+        }
+
+        // Lip-Sync Viseme Shapes (SVG path definitions)
+        const VISEMES = {
+            // Closed / rest smile
+            closed: "M144 186 Q160 191 176 186 Q160 188 144 186 Z",
+            // Slight open
+            slightOpen: "M144 185 Q160 183 176 185 Q160 193 144 185 Z",
+            // Wide open (A/E)
+            wideOpen: "M144 184 Q160 180 176 184 Q160 200 144 184 Z",
+            // Rounded (O/U)
+            round: "M150 184 Q160 181 170 184 Q160 197 150 184 Z",
+            // Happy smile
+            smile: "M142 185 Q160 195 178 185 Q160 189 142 185 Z"
+        };
+
+        function startLipSync() {
+            if (lipSyncInterval) clearInterval(lipSyncInterval);
+            const mouth = document.getElementById("tutorMouth");
+            const mouthInner = document.getElementById("mouthInner");
+            const aura = document.getElementById("speakingAura");
+            const backdrop = document.getElementById("stageBackdrop");
+            const speechTag = document.getElementById("speechTag");
+
+            aura.classList.add("active");
+            backdrop.classList.add("speaking");
+            speechTag.style.display = "inline-block";
+
+            const shapes = [VISEMES.slightOpen, VISEMES.wideOpen, VISEMES.round, VISEMES.slightOpen];
+            let idx = 0;
+
+            lipSyncInterval = setInterval(() => {
+                if (!isTutorSpeaking) {
+                    stopLipSync();
+                    return;
+                }
+                idx = (idx + 1) % shapes.length;
+                mouth.setAttribute("d", shapes[idx]);
+                mouthInner.setAttribute("opacity", (idx % 2 === 1) ? "0.8" : "0");
+            }, 130);
+        }
+
+        function stopLipSync() {
+            if (lipSyncInterval) clearInterval(lipSyncInterval);
+            const mouth = document.getElementById("tutorMouth");
+            const mouthInner = document.getElementById("mouthInner");
+            const aura = document.getElementById("speakingAura");
+            const backdrop = document.getElementById("stageBackdrop");
+            const speechTag = document.getElementById("speechTag");
+
+            mouth.setAttribute("d", VISEMES.smile);
+            mouthInner.setAttribute("opacity", "0");
+            aura.classList.remove("active");
+            backdrop.classList.remove("speaking");
+            speechTag.style.display = "none";
+        }
+
+        // Natural eye blinking
+        setInterval(() => {
+            const leftLid = document.getElementById("leftEyelid");
+            const rightLid = document.getElementById("rightEyelid");
+            leftLid.setAttribute("opacity", "1");
+            rightLid.setAttribute("opacity", "1");
+            setTimeout(() => {
+                leftLid.setAttribute("opacity", "0");
+                rightLid.setAttribute("opacity", "0");
+            }, 160);
+        }, 3400);
+
+        function setListeningMode(isListening) {
+            isUserSpeaking = isListening;
+            const avatarBox = document.getElementById("avatarBox");
+            const userBadge = document.getElementById("userSpeakingBadge");
+
+            if (isListening) {
+                avatarBox.classList.add("listening");
+                userBadge.style.display = "block";
+            } else {
+                avatarBox.classList.remove("listening");
+                userBadge.style.display = "none";
+            }
+        }
+
+        function tutorSpeak(text) {
+            if (!synth) return;
+            synth.cancel();
+
+            // Temporarily pause recognition so it doesn't hear the tutor
+            if (recognition) {
+                try { recognition.stop(); } catch(e){}
+            }
+
+            isTutorSpeaking = true;
+            setListeningMode(false);
+            startLipSync();
+            updateSubtitles(currentTutor, text);
+            addDrawerMessage("ai", `${currentTutor}: ${text}`);
+
+            // Clean speech text
+            const clean = text
+                .replace(/#+\s+/g, '')
+                .replace(/\*\*/g, '')
+                .replace(/\*/g, '')
+                .replace(/`{1,3}[\s\S]*?`{1,3}/g, '')
+                .replace(/\[.*?\]\(.*?\)/g, '')
+                .trim();
+
+            const utterance = new SpeechSynthesisUtterance(clean);
+            utterance.lang = "en-US";
+            if (englishVoice) utterance.voice = englishVoice;
+            const rate = parseFloat(document.getElementById("modalRateSelect")?.value || "1.0");
+            utterance.rate = rate;
+
+            utterance.onend = () => {
+                isTutorSpeaking = false;
+                stopLipSync();
+                // Resume listening for student response
+                if (isMicEnabled && recognition) {
+                    try { recognition.start(); } catch(e){}
+                }
+            };
+
+            utterance.onerror = () => {
+                isTutorSpeaking = false;
+                stopLipSync();
+                if (isMicEnabled && recognition) {
+                    try { recognition.start(); } catch(e){}
+                }
+            };
+
+            synth.speak(utterance);
+        }
+
+        function updateSubtitles(speaker, text) {
+            document.getElementById("subtitleSpeaker").innerHTML = (speaker === "You") ? "👤 You:" : `👩‍🏫 ${speaker}:`;
+            document.getElementById("subtitleText").textContent = `"${text}"`;
+        }
+
+        // --- BACKEND AI INTERACTION ---
+        async function sendUserUtterance(messageText) {
+            if (!messageText || isTutorSpeaking) return;
+
+            turnCount++;
+            setListeningMode(false);
+            addDrawerMessage("user", messageText);
+            conversationHistory.push({ role: "user", content: messageText });
+
+            // Display thinking state on subtitles
+            updateSubtitles(currentTutor, "Thinking...");
+
+            const apiKey = localStorage.getItem("ai_api_key") || localStorage.getItem("mentor_api_key") || "";
+            const model = localStorage.getItem("ai_selected_model") || localStorage.getItem("mentor_model") || "llama-3.1-8b-instant";
+
+            try {
+                const res = await fetch(`${API_URL}/api/video-call/chat`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        username: currentUsername,
+                        message: messageText,
+                        history: conversationHistory,
+                        apiKey: apiKey,
+                        model: model,
+                        tutorName: currentTutor
+                    })
+                });
+
+                const data = await res.json();
+                if (data.success && data.reply) {
+                    conversationHistory.push({ role: "assistant", content: data.reply });
+                    tutorSpeak(data.reply);
+                } else {
+                    tutorSpeak("That's very interesting! Can you tell me a little bit more about that?");
+                }
+            } catch (err) {
+                console.error("Video call API error:", err);
+                tutorSpeak("I heard you clearly! Let's keep practicing. What else is on your mind?");
+            }
+        }
+
+        function sendPromptPreset(presetText) {
+            sendUserUtterance(presetText);
+        }
+
+        // --- SWITCH TUTOR PERSONA (SARAH / DAVID) ---
+        function toggleTutorPersona() {
+            if (currentTutor === "Sarah") {
+                currentTutor = "David";
+                document.getElementById("tutorDisplayName").innerHTML = 'David Miller <span style="font-size:0.75rem; color:#10b981;">✓</span>';
+                document.getElementById("tutorRoleSub").textContent = "Conversational English Coach";
+                // Hair recolor to Brown
+                document.getElementById("sarahHair").children[0].setAttribute("stop-color", "#3e2723");
+                document.getElementById("sarahHair").children[1].setAttribute("stop-color", "#5d4037");
+                document.getElementById("sarahHair").children[2].setAttribute("stop-color", "#27160c");
+            } else {
+                currentTutor = "Sarah";
+                document.getElementById("tutorDisplayName").innerHTML = 'Sarah Jenkins <span style="font-size:0.75rem; color:#10b981;">✓</span>';
+                document.getElementById("tutorRoleSub").textContent = "Senior English Instructor";
+                document.getElementById("sarahHair").children[0].setAttribute("stop-color", "#8a3b14");
+                document.getElementById("sarahHair").children[1].setAttribute("stop-color", "#b85624");
+                document.getElementById("sarahHair").children[2].setAttribute("stop-color", "#6b2707");
+            }
+            initVoices();
+            tutorSpeak(`Hello! I'm ${currentTutor}. Great to connect with you! What shall we talk about?`);
+        }
+
+        // --- CHAT DRAWER ---
+        function toggleChatDrawer() {
+            const drawer = document.getElementById("chatDrawer");
+            drawer.classList.toggle("open");
+        }
+
+        function addDrawerMessage(sender, text) {
+            const container = document.getElementById("drawerMessages");
+            const div = document.createElement("div");
+            div.className = `drawer-msg ${sender}`;
+            div.textContent = text;
+            container.appendChild(div);
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function handleDrawerKey(e) {
+            if (e.key === "Enter") {
+                sendDrawerMessage();
+            }
+        }
+
+        function sendDrawerMessage() {
+            const input = document.getElementById("drawerInput");
+            const text = input.value.trim();
+            if (!text) return;
+            input.value = "";
+            sendUserUtterance(text);
+        }
+
+        // --- CALL END & SUMMARY ---
+        function endCall() {
+            if (synth) synth.cancel();
+            if (recognition) {
+                try { recognition.stop(); } catch(e){}
+            }
+            if (lipSyncInterval) clearInterval(lipSyncInterval);
+            if (callTimerInterval) clearInterval(callTimerInterval);
+
+            // Populate summary modal
+            const mins = String(Math.floor(callSeconds / 60)).padStart(2, '0');
+            const secs = String(callSeconds % 60).padStart(2, '0');
+            document.getElementById("summaryDuration").textContent = `${mins}:${secs}`;
+            document.getElementById("summarySentences").textContent = turnCount;
+
+            document.getElementById("summaryModal").style.display = "flex";
+        }
+
+        function closeSummaryModal() {
+            document.getElementById("summaryModal").style.display = "none";
+        }
+
+        function restartCall() {
+            closeSummaryModal();
+            conversationHistory = [];
+            turnCount = 0;
+            startCallTimer();
+            tutorSpeak(`Welcome back! Ready for another conversation round? Let's go!`);
+        }
+
+        // --- SETTINGS MODAL ---
+        function openSettingsModal() {
+            document.getElementById("settingsModal").style.display = "flex";
+        }
+
+        function closeSettingsModal() {
+            document.getElementById("settingsModal").style.display = "none";
+        }
+
+        function applyTutorFromModal() {
+            const sel = document.getElementById("modalTutorSelect").value;
+            if (sel !== currentTutor) {
+                toggleTutorPersona();
+            }
+        }
+
+        function saveSettings() {
+            const key = document.getElementById("modalApiKeyInput").value.trim();
+            const model = document.getElementById("modalModelSelect").value;
+            localStorage.setItem("ai_api_key", key);
+            localStorage.setItem("mentor_api_key", key);
+            localStorage.setItem("ai_selected_model", model);
+            localStorage.setItem("mentor_model", model);
+            updateModelBadge();
+            closeSettingsModal();
+            tutorSpeak("Settings updated! Let's continue our conversation.");
+        }
+    </script>
+</body>
+</html>
