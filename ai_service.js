@@ -253,15 +253,18 @@ function sanitizeContentsForGemini(history, currentMessage) {
         // En son mesaj eğer veritabanına yeni kaydedilen bu mesajsa tekrarlamamak için çıkaralım
         const items = [...history];
         const last = items[items.length - 1];
-        if (last && last.sender !== "English_Mentor" && last.content === currentMessage) {
+        const isLastModel = last && (last.sender === "English_Mentor" || last.sender === "English_AI" || last.role === "assistant" || last.role === "model");
+        const lastContent = (last?.content || last?.text || "");
+        if (last && !isLastModel && lastContent === currentMessage) {
             items.pop();
         }
 
         // Son 8 mesajı alalım
         const recent = items.slice(-8);
         for (const msg of recent) {
-            const role = (msg.sender === "English_Mentor" || msg.sender === "English_AI") ? "model" : "user";
-            let text = msg.content || "";
+            const isModel = (msg.sender === "English_Mentor" || msg.sender === "English_AI" || msg.role === "assistant" || msg.role === "model");
+            const role = isModel ? "model" : "user";
+            let text = msg.content || msg.text || "";
             // Base64 ses verilerini temizle
             if (text.startsWith("[SES:")) text = "[Kullanıcı sesli pratik yaptı]";
             text = text.trim();
@@ -329,12 +332,82 @@ CRITICAL INSTRUCTIONS:
    - Natural, lively, highly supportive, professional tutor. Never use dry robotic disclaimers. Format with clean Markdown (bolding, bullet points, blockquotes).`;
     }
 
-    // 1. Google Gemini API
-    if (model && model.startsWith("gemini") && apiKey) {
+    // Sağlayıcı Anahtar Tipi Otomatik Tespiti
+    const trimmedKey = (apiKey || "").trim();
+    const isGroq = trimmedKey.startsWith("gsk_") || (model && (model.startsWith("llama") || model.startsWith("groq")));
+    const isGemini = (trimmedKey.startsWith("AIza") || (model && model.startsWith("gemini"))) && !trimmedKey.startsWith("gsk_");
+    const isOpenRouter = trimmedKey.startsWith("sk-or-") || (model && model.startsWith("openrouter"));
+
+    // 1. Groq API (gsk_ anahtarları doğrudan Groq Llama'ya gider)
+    if (isGroq && trimmedKey) {
+        try {
+            const targetModel = await getActiveGroqModel(trimmedKey, model);
+            let groqMessages = [{ role: "system", content: systemPrompt }];
+            if (conversationHistory && conversationHistory.length > 0) {
+                // Son mesaj eğer zaten şu anki userMessage ise mükerrer olmaması için çıkar
+                const historyItems = [...conversationHistory];
+                const last = historyItems[historyItems.length - 1];
+                if (last && (last.sender !== "English_Mentor" && last.sender !== "English_AI" && last.role !== "assistant") && (last.content === userMessage || last.text === userMessage)) {
+                    historyItems.pop();
+                }
+
+                for (const msg of historyItems.slice(-6)) {
+                    let text = (msg.content || msg.text || "").replace(/\[SES:.*?\]/g, "[Sesli Mesaj]").trim();
+                    if (!text) continue;
+                    groqMessages.push({
+                        role: (msg.sender === "English_Mentor" || msg.sender === "English_AI" || msg.role === "assistant") ? "assistant" : "user",
+                        content: text
+                    });
+                }
+            }
+            groqMessages.push({ role: "user", content: userMessage });
+
+            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${trimmedKey}`
+                },
+                body: JSON.stringify({
+                    model: targetModel,
+                    messages: groqMessages,
+                    temperature: 0.7,
+                    max_tokens: 1500
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const text = data.choices?.[0]?.message?.content;
+                if (text) return text.trim();
+            } else {
+                const errText = await res.text();
+                console.error(`Groq API Hatası [${res.status}]:`, errText);
+                let detail = errText;
+                try {
+                    const json = JSON.parse(errText);
+                    detail = json.error?.message || errText;
+                } catch(e) {}
+                return {
+                    error: true,
+                    message: `⚠️ **Groq API Hatası (HTTP ${res.status}):**\n> *${detail}*`
+                };
+            }
+        } catch (err) {
+            console.error("Groq Bağlantı Hatası:", err.message);
+            return {
+                error: true,
+                message: `⚠️ **Groq Bağlantı Hatası:**\n> *${err.message}*`
+            };
+        }
+    }
+
+    // 2. Google Gemini API
+    if (isGemini && trimmedKey) {
         try {
             const contents = sanitizeContentsForGemini(conversationHistory, userMessage);
-            const geminiModel = model || "gemini-1.5-flash";
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${apiKey.trim()}`;
+            const geminiModel = (model && model.startsWith("gemini")) ? model : "gemini-1.5-flash";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${trimmedKey}`;
 
             const res = await fetch(url, {
                 method: "POST",
@@ -376,70 +449,6 @@ CRITICAL INSTRUCTIONS:
             return {
                 error: true,
                 message: `⚠️ **Google Gemini Bağlantı Hatası:**\n> *${err.message}*`
-            };
-        }
-    }
-
-    // 2. Groq API
-    if ((model && (model.startsWith("llama") || model.startsWith("groq"))) || (apiKey && apiKey.startsWith("gsk_"))) {
-        try {
-            const targetModel = await getActiveGroqModel(apiKey, model);
-            let groqMessages = [{ role: "system", content: systemPrompt }];
-            if (conversationHistory && conversationHistory.length > 0) {
-                // Son mesaj eğer zaten şu anki userMessage ise mükerrer olmaması için çıkar
-                const historyItems = [...conversationHistory];
-                const last = historyItems[historyItems.length - 1];
-                if (last && (last.sender !== "English_Mentor" && last.sender !== "English_AI" && last.role !== "assistant") && (last.content === userMessage || last.text === userMessage)) {
-                    historyItems.pop();
-                }
-
-                for (const msg of historyItems.slice(-6)) {
-                    let text = (msg.content || msg.text || "").replace(/\[SES:.*?\]/g, "[Sesli Mesaj]").trim();
-                    if (!text) continue;
-                    groqMessages.push({
-                        role: (msg.sender === "English_Mentor" || msg.sender === "English_AI" || msg.role === "assistant") ? "assistant" : "user",
-                        content: text
-                    });
-                }
-            }
-            groqMessages.push({ role: "user", content: userMessage });
-
-            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${apiKey.trim()}`
-                },
-                body: JSON.stringify({
-                    model: targetModel,
-                    messages: groqMessages,
-                    temperature: 0.7,
-                    max_tokens: 1500
-                })
-            });
-
-            if (res.ok) {
-                const data = await res.json();
-                const text = data.choices?.[0]?.message?.content;
-                if (text) return text.trim();
-            } else {
-                const errText = await res.text();
-                console.error(`Groq API Hatası [${res.status}]:`, errText);
-                let detail = errText;
-                try {
-                    const json = JSON.parse(errText);
-                    detail = json.error?.message || errText;
-                } catch(e) {}
-                return {
-                    error: true,
-                    message: `⚠️ **Groq API Hatası (HTTP ${res.status}):**\n> *${detail}*`
-                };
-            }
-        } catch (err) {
-            console.error("Groq Bağlantı Hatası:", err.message);
-            return {
-                error: true,
-                message: `⚠️ **Groq Bağlantı Hatası:**\n> *${err.message}*`
             };
         }
     }
@@ -570,41 +579,19 @@ CRITICAL INSTRUCTIONS:
 
 // API Anahtarı Test Fonksiyonu (Model & API modalı için)
 async function testAPIKey(apiKey, model) {
-    if (!apiKey) return { success: false, message: "Lütfen bir API anahtarı girin." };
+    const rawKey = (apiKey || "").replace(/^["']|["']$/g, "").trim();
+    if (!rawKey) return { success: false, message: "Lütfen bir API anahtarı girin." };
 
-    if (model && model.startsWith("gemini")) {
-        try {
-            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey.trim()}`;
-            const res = await fetch(url, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    contents: [{ role: "user", parts: [{ text: "Say 'OK' if you can read this." }] }]
-                })
-            });
-            if (res.ok) {
-                return { success: true, message: `✅ ${model} bağlantısı başarılı! API anahtarınız aktif ve çalışıyor.` };
-            } else {
-                const errJson = await res.json().catch(() => null);
-                let msg = errJson?.error?.message || `HTTP ${res.status}`;
-                if (msg.includes("free tier is not available for this project")) {
-                    return {
-                        success: false,
-                        message: `❌ Google Uyarısı: Bu anahtar ücretsiz tarifeyi kabul etmeyen eski/kısıtlı bir Cloud projesine bağlı.\n\n💡 10 SANİYEDE ÜCRETSİZ ÇÖZÜM:\n1. https://aistudio.google.com/app/apikey adresini açın.\n2. "Create API key" butonuna tıklayın.\n3. Açılan listeden "Create API key in new project" (Yeni projede anahtar oluştur) seçeneğini seçin.\n4. Alacağınız yeni anahtarı buraya yapıştırın. Hiçbir kart veya ödeme bilgisi girmeden anında çalışacaktır!`
-                    };
-                }
-                return { success: false, message: `❌ Google Gemini Hatası: ${msg}` };
-            }
-        } catch (e) {
-            return { success: false, message: `❌ Ağ/Bağlantı Hatası: ${e.message}` };
-        }
-    }
+    const isGroq = rawKey.startsWith("gsk_") || (model && (model.startsWith("llama") || model.startsWith("groq")));
+    const isGemini = (rawKey.startsWith("AIza") || (model && model.startsWith("gemini"))) && !rawKey.startsWith("gsk_");
+    const isOpenRouter = rawKey.startsWith("sk-or-") || (model && model.startsWith("openrouter"));
 
-    if ((model && (model.startsWith("llama") || model.startsWith("groq"))) || (apiKey && apiKey.startsWith("gsk_"))) {
+    // 1. Groq Testi
+    if (isGroq) {
         try {
             // Önce doğrudan Groq'un aktif modeller listesini sorgulayalım
             const modelsRes = await fetch("https://api.groq.com/openai/v1/models", {
-                headers: { "Authorization": `Bearer ${apiKey.trim()}` }
+                headers: { "Authorization": `Bearer ${rawKey}` }
             });
             if (!modelsRes.ok) {
                 const errJson = await modelsRes.json().catch(() => null);
@@ -644,16 +631,52 @@ async function testAPIKey(apiKey, model) {
             // Seçilen modelle test mesajı gönder
             const chatRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
                 method: "POST",
-                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey.trim()}` },
+                headers: { "Content-Type": "application/json", "Authorization": `Bearer ${rawKey}` },
                 body: JSON.stringify({ model: targetModel, messages: [{ role: "user", content: "Hi" }], max_tokens: 5 })
             });
 
             if (chatRes.ok) {
-                cachedGroqModel = targetModel;
-                return { success: true, message: `✅ Groq (${targetModel}) bağlantısı başarılı! Canlı yapay zeka hazır ve aktif.` };
+                return { success: true, message: `✅ Groq (${targetModel}) bağlantısı başarılı! Canlı yapay zeka aktif ve hazır.` };
             } else {
                 const errJson = await chatRes.json().catch(() => null);
-                return { success: false, message: `❌ Groq Hatası: ${errJson?.error?.message || chatRes.status}` };
+                const msg = errJson?.error?.message || `HTTP ${chatRes.status}`;
+                return { success: false, message: `❌ Groq Hatası: ${msg}` };
+            }
+        } catch (e) {
+            return { success: false, message: `❌ Groq Bağlantı Hatası: ${e.message}` };
+        }
+    }
+
+    // 2. Gemini Testi
+    if (isGemini) {
+        try {
+            const geminiModel = (model && model.startsWith("gemini")) ? model : "gemini-1.5-flash";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${rawKey}`;
+            const res = await fetch(url, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    contents: [{ role: "user", parts: [{ text: "Say 'OK' if you can read this." }] }]
+                })
+            });
+            if (res.ok) {
+                return { success: true, message: `✅ ${geminiModel} bağlantısı başarılı! API anahtarınız aktif ve çalışıyor.` };
+            } else {
+                const errJson = await res.json().catch(() => null);
+                let msg = errJson?.error?.message || `HTTP ${res.status}`;
+                if (msg.includes("free tier is not available for this project")) {
+                    return {
+                        success: false,
+                        message: `❌ Google Uyarısı: Bu anahtar ücretsiz tarifeyi kabul etmeyen eski/kısıtlı bir Cloud projesine bağlı.\n\n💡 10 SANİYEDE ÜCRETSİZ ÇÖZÜM:\n1. https://aistudio.google.com/app/apikey adresini açın.\n2. "Create API key" butonuna tıklayın.\n3. Açılan listeden "Create API key in new project" (Yeni projede anahtar oluştur) seçeneğini seçin.\n4. Alacağınız yeni anahtarı buraya yapıştırın. Hiçbir kart veya ödeme bilgisi girmeden anında çalışacaktır!\n\n⚡ VEYA https://console.groq.com/keys adresinden kartsız Groq anahtarı (gsk_...) alarak anında başlayabilirsiniz.`
+                    };
+                }
+                if (msg.includes("API key not valid")) {
+                    return {
+                        success: false,
+                        message: `❌ Google Uyarısı: Girilen anahtar geçersiz (API key not valid).\n\n💡 Lütfen https://aistudio.google.com/app/apikey adresinden "Create API key in new project" diyerek anahtarınızı kopyalayın,\nVEYA tamamen ücretsiz ve kartsız https://console.groq.com/keys adresinden Groq Llama anahtarı (gsk_...) alabilirsiniz.`
+                    };
+                }
+                return { success: false, message: `❌ Google Gemini Hatası: ${msg}` };
             }
         } catch (e) {
             return { success: false, message: `❌ Ağ/Bağlantı Hatası: ${e.message}` };
@@ -1296,7 +1319,25 @@ function generateConversationalResponse(userMessage, tutorName = "Sarah", isVide
         return `Sounds like your day was really packed! 💪 Balancing a busy schedule while practicing English shows great commitment.\n\nWhat was the main task or project that kept you on your toes today?`;
     }
 
-    // 2. Günlük Aktiviteler (İş, Okul, Kodlama, Spor, Yemek, Dinlenme)
+    // 2. Günlük Aktiviteler & Özel Durumlar
+
+    // Banka, Telefon Görüşmesi, Stres, Müşteri Hizmetleri
+    if (lower.match(/\b(bank|banking|phone\s*call|calling|customer\s*service|account|money|financial|bureaucracy)\b/i) ||
+        (lower.match(/\b(stress|stressing|stressful|stressed|anxious|nervous|headache)\b/i) && !feelingGood)) {
+        if (isVideoCall) {
+            return `Dealing with banks and customer service phone calls can be so stressful and frustrating! Did you manage to resolve everything with them, or was it a complete headache?`;
+        }
+        return `Dealing with bank calls or official customer service can be so stressful and exhausting! 🏦 It really tests anyone's patience.\n\nDid you manage to get everything sorted out with them, or do you have to follow up later?`;
+    }
+
+    // Çekingenlik, Utangaçlık, Konuşma Korkusu & Özgüven Kazanma
+    if (lower.match(/\b(shy|shyness|nervous|afraid|fear|hesitant|embarrassed|handle\s*that|scared|speak\s*to\s*people|talking\s*to\s*you|confidence|introvert)\b/i)) {
+        if (isVideoCall) {
+            return `I completely understand! Feeling shy when speaking English is so common, but taking the step to talk here on camera takes real courage. This is a 100% judgment-free space. You are doing fantastic! How does it feel talking with me so far?`;
+        }
+        return `It takes genuine courage to practice when you feel shy! 🌟 Most language learners experience speaking anxiety, so you're not alone at all. Practicing one-on-one here is the absolute best way to build confidence with zero pressure.\n\nHow do you feel right now? Are you starting to feel a little more relaxed?`;
+    }
+
     if (lower.match(/\b(work|office|job|boss|colleague|colleagues|meeting|client|shift)\b/i)) {
         if (isVideoCall) {
             return `Work can definitely be demanding! Did you finish everything you wanted to get done at work today?`;
@@ -1346,22 +1387,23 @@ function generateConversationalResponse(userMessage, tutorName = "Sarah", isVide
         return `That sounds so refreshing! ✨ Quality time with friends or outside is always great for the soul.\n\nWhere did you go, and what was the highlight of your outing?`;
     }
 
-    // 3. Kısa Onay / Yanıtlar
-    if (lower.match(/^(yes|yeah|yep|sure|definitely|of\s*course|absolutely|i\s*do|i\s*did)\b/i)) {
+    // 3. Kısa Onay / Yanıtlar (Sadece kısa cümleler için, uzun anlatımları engelleme)
+    const wordCount = raw.trim().split(/\s+/).length;
+    if (wordCount <= 4 && lower.match(/^(yes|yeah|yep|sure|definitely|of\s*course|absolutely|i\s*do|i\s*did)\b/i)) {
         if (isVideoCall) {
             return `Nice! Could you tell me a little bit more about that? What makes you say so?`;
         }
         return `Awesome! 👍 Tell me a little bit more about that — why do you say so? I'd love to hear your thoughts in English!`;
     }
 
-    if (lower.match(/^(no|nope|not\s*really|nah|i\s*don'?t|i\s*didn'?t)\b/i)) {
+    if (wordCount <= 4 && lower.match(/^(no|nope|not\s*really|nah|i\s*don'?t|i\s*didn'?t)\b/i)) {
         if (isVideoCall) {
             return `Fair enough! Why not? What would you prefer instead?`;
         }
         return `Fair enough! 😊 Why do you think that is? What would you prefer instead?`;
     }
 
-    if (lower.match(/^(nothing|not\s*much|nothing\s*much|idk|i\s*don'?t\s*know)\b/i)) {
+    if (wordCount <= 4 && lower.match(/^(nothing|not\s*much|nothing\s*much|idk|i\s*don'?t\s*know)\b/i)) {
         if (isVideoCall) {
             return `No worries at all! Let's talk about something fun — if you could travel anywhere tomorrow, where would you go?`;
         }

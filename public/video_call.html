@@ -1045,7 +1045,11 @@
             <div class="form-group">
                 <label class="form-label">API Anahtarınız (API Key)</label>
                 <input type="password" id="modalApiKeyInput" class="form-input" placeholder="Groq (gsk_...) veya Gemini anahtarı...">
-                <small style="color:#94a3b8; font-size:0.75rem;">Key girilmezse sistem dahili akıllı eğitici ile çalışır.</small>
+                <div style="font-size:0.75rem; color:#94a3b8; line-height:1.4; margin-top:4px;">
+                    ⚡ <strong>Önerilen & %100 Ücretsiz:</strong> <a href="https://console.groq.com/keys" target="_blank" style="color:#38bdf8;">Groq Console</a>'dan kartsız anında Llama 3.3 anahtarı (<code>gsk_...</code>) alabilirsiniz. Canlı yapay zeka ile her cümleni eksiksiz anlar.
+                </div>
+                <button type="button" id="modalTestKeyBtn" style="background:rgba(56,189,248,0.15); border:1px solid rgba(56,189,248,0.35); color:#38bdf8; padding:8px; border-radius:10px; font-size:0.8rem; cursor:pointer; margin-top:6px; font-weight:600;" onclick="testKeyFromVideoCall()">🔌 Anahtar Bağlantısını Test Et</button>
+                <div id="modalTestResultBox" style="display:none; font-size:0.8rem; padding:8px 12px; border-radius:10px; margin-top:6px; white-space:pre-wrap;"></div>
             </div>
 
             <div class="form-group">
@@ -1118,15 +1122,35 @@
             }, 1000);
         }
 
-        function updateModelBadge() {
+        function updateModelBadge(errorStatus = null) {
+            const key = (localStorage.getItem("ai_api_key") || localStorage.getItem("mentor_api_key") || "").trim();
             const mod = localStorage.getItem("ai_selected_model") || "llama-3.1-8b-instant";
             const pill = document.getElementById("modelPill");
-            if (mod.includes("llama") || mod.includes("groq")) {
-                pill.textContent = "🦙 Groq Llama 3.3";
-            } else if (mod.includes("gemini")) {
-                pill.textContent = "⚡ Gemini 1.5 Flash";
+            if (!pill) return;
+
+            if (errorStatus) {
+                pill.style.background = "rgba(239, 68, 68, 0.25)";
+                pill.style.borderColor = "rgba(239, 68, 68, 0.5)";
+                pill.style.color = "#fca5a5";
+                pill.innerHTML = `⚠️ API Hatası (Dahili Motor)`;
+                pill.title = errorStatus;
+                return;
+            }
+
+            const hasKey = key && key.length > 5 && mod !== "built-in";
+            pill.style.background = "";
+            pill.style.borderColor = "";
+            pill.style.color = "";
+
+            if (mod.includes("llama") || mod.includes("groq") || key.startsWith("gsk_")) {
+                pill.innerHTML = hasKey ? "🟢 🦙 Groq Llama 3.3" : "⚠️ Groq (Key Eksik)";
+                pill.title = hasKey ? "Groq Canlı Yapay Zeka Aktif" : "API anahtarı eksik, dahili motor çalışıyor";
+            } else if (mod.includes("gemini") || key.startsWith("AIza")) {
+                pill.innerHTML = hasKey ? "🟢 ⚡ Gemini 1.5 Flash" : "⚠️ Gemini (Key Eksik)";
+                pill.title = hasKey ? "Google Gemini Canlı Yapay Zeka Aktif" : "API anahtarı eksik, dahili motor çalışıyor";
             } else {
-                pill.textContent = "💻 Built-in Tutor";
+                pill.innerHTML = "💻 Dahili Akıllı Motor";
+                pill.title = "Dahili kural ve içerik motoru aktif";
             }
         }
 
@@ -1460,6 +1484,11 @@
                 if (data.success && data.reply) {
                     conversationHistory.push({ role: "assistant", content: data.reply });
                     tutorSpeak(data.reply);
+                    if (data.apiError) {
+                        updateModelBadge(data.apiError);
+                    } else {
+                        updateModelBadge();
+                    }
                 } else {
                     tutorSpeak("That's very interesting! Can you tell me a little bit more about that?");
                 }
@@ -1570,13 +1599,79 @@
             }
         }
 
+        async function testKeyFromVideoCall() {
+            const rawKey = document.getElementById("modalApiKeyInput").value.replace(/^["']|["']$/g, "").trim();
+            let model = document.getElementById("modalModelSelect").value;
+            const resBox = document.getElementById("modalTestResultBox");
+            const testBtn = document.getElementById("modalTestKeyBtn");
+
+            if (!rawKey) {
+                resBox.style.display = "block";
+                resBox.style.background = "rgba(239, 68, 68, 0.15)";
+                resBox.style.color = "#f87171";
+                resBox.textContent = "Lütfen bir API anahtarı girin.";
+                return;
+            }
+
+            if (rawKey.startsWith("gsk_")) {
+                model = "llama-3.1-8b-instant";
+                document.getElementById("modalModelSelect").value = model;
+            } else if (rawKey.startsWith("AIza")) {
+                model = "gemini-1.5-flash";
+                document.getElementById("modalModelSelect").value = model;
+            }
+
+            testBtn.disabled = true;
+            testBtn.textContent = "⏳ Test Ediliyor...";
+            resBox.style.display = "block";
+            resBox.style.background = "rgba(56, 189, 248, 0.15)";
+            resBox.style.color = "#38bdf8";
+            resBox.textContent = "Bağlantı kontrol ediliyor...";
+
+            try {
+                const res = await fetch(`${API_URL}/api/ai/test-key`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ apiKey: rawKey, model: model })
+                });
+                const data = await res.json();
+                if (data.success) {
+                    resBox.style.background = "rgba(16, 185, 129, 0.15)";
+                    resBox.style.color = "#34d399";
+                    resBox.textContent = data.message || "✅ Bağlantı başarılı! Canlı yapay zeka hazır.";
+                } else {
+                    resBox.style.background = "rgba(239, 68, 68, 0.15)";
+                    resBox.style.color = "#f87171";
+                    resBox.textContent = data.message || "❌ API anahtarı doğrulanamadı.";
+                }
+            } catch (e) {
+                resBox.style.background = "rgba(239, 68, 68, 0.15)";
+                resBox.style.color = "#f87171";
+                resBox.textContent = "Bağlantı hatası: " + e.message;
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = "🔌 Anahtar Bağlantısını Test Et";
+            }
+        }
+
         function saveSettings() {
-            const key = document.getElementById("modalApiKeyInput").value.trim();
-            const model = document.getElementById("modalModelSelect").value;
+            let key = document.getElementById("modalApiKeyInput").value.replace(/^["']|["']$/g, "").trim();
+            let model = document.getElementById("modalModelSelect").value;
+
+            // Otomatik sağlayıcı tespiti
+            if (key.startsWith("gsk_")) {
+                model = "llama-3.1-8b-instant";
+                document.getElementById("modalModelSelect").value = model;
+            } else if (key.startsWith("AIza")) {
+                model = "gemini-1.5-flash";
+                document.getElementById("modalModelSelect").value = model;
+            }
+
             localStorage.setItem("ai_api_key", key);
             localStorage.setItem("mentor_api_key", key);
             localStorage.setItem("ai_selected_model", model);
             localStorage.setItem("mentor_model", model);
+
             updateModelBadge();
             closeSettingsModal();
             tutorSpeak("Settings updated! Let's continue our conversation.");

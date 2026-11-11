@@ -124,26 +124,30 @@
         }
 
         .user-meta {
-            flex: 1;
-            min-width: 0;
+            flex: 1 1 auto;
+            min-width: 120px;
             overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
         }
 
         .user-title-row {
             display: flex;
             align-items: center;
-            gap: 5px;
-            flex-wrap: nowrap;
+            gap: 6px;
+            white-space: nowrap;
+            overflow: hidden;
         }
 
         .user-name {
             font-size: 0.95rem;
-            font-weight: 600;
+            font-weight: 700;
             color: #ffffff;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 100px;
+            max-width: 130px;
         }
 
         .badge-verified {
@@ -169,6 +173,7 @@
             padding: 2px 8px;
             border-radius: 12px;
             font-weight: 500;
+            flex-shrink: 0;
         }
 
         .user-status {
@@ -176,10 +181,29 @@
             color: #94a3b8;
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
+            line-height: 1.2;
+            margin-top: 3px;
+        }
+
+        #currentModelLabel {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            display: inline-block;
+            max-width: 130px;
+            vertical-align: middle;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+            margin-left: auto;
         }
 
         .config-btn {
@@ -583,16 +607,18 @@
         }
 
         /* MOBİL UYUM */
-        @media (max-width: 600px) {
+        @media (max-width: 860px) {
             .chat-header { padding: 8px 10px; gap: 6px; }
-            .avatar-wrap { width: 36px; height: 36px; }
-            .header-avatar { width: 36px; height: 36px; }
-            .user-name { font-size: 0.85rem; max-width: 70px; }
+            .avatar-wrap { width: 38px; height: 38px; }
+            .header-avatar { width: 38px; height: 38px; }
+            .user-name { font-size: 0.9rem; max-width: 100px; }
             .badge-mentor { display: none; }
             .user-status { font-size: 0.68rem; }
+            .header-actions { gap: 4px; }
             .practica-btn .full-text { display: none; }
-            .practica-btn { padding: 5px 7px; font-size: 0.85rem; }
-            .config-btn { padding: 6px 10px; font-size: 0.85rem; }
+            .practica-btn { width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; border-radius: 50%; }
+            .config-btn { width: 34px; height: 34px; padding: 0; display: inline-flex; align-items: center; justify-content: center; font-size: 0.95rem; border-radius: 50%; }
+            .btn-icon { width: 34px; height: 34px; font-size: 0.95rem; }
             .message-bubble { font-size: 0.88rem; padding: 10px 14px; }
             .input-box { font-size: 0.9rem; padding: 9px 14px; }
             .btn-action { width: 38px; height: 38px; }
@@ -619,31 +645,34 @@
                     <span class="badge-mentor" id="mentorBadge">Eğitmen</span>
                 </div>
                 <div class="user-status" id="userStatus">
-                    <span>🟢 Çevrimiçi</span> • <span id="currentModelLabel">Gemini 1.5 Flash</span>
+                    <span>🟢 Çevrimiçi</span> • <span id="currentModelLabel">Llama 3.1</span>
                 </div>
             </div>
 
-            <!-- PRACTICA SESLİ SOHBET BUTONU -->
-            <button class="practica-btn" id="practicaVoiceToggle" title="Practica Sesli Konuşma Modu">
-                🎙️ <span class="full-text">Sesli Pratik</span>
-            </button>
+            <!-- AKSİYON BUTONLARI GRUBU -->
+            <div class="header-actions">
+                <!-- PRACTICA SESLİ SOHBET BUTONU -->
+                <button class="practica-btn" id="practicaVoiceToggle" title="Practica Sesli Konuşma Modu">
+                    🎙️ <span class="full-text">Sesli Pratik</span>
+                </button>
 
-            <!-- MOCK INTERVIEW BUTONU -->
-            <button class="practica-btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-color: rgba(16,185,129,0.4);" onclick="window.location.href='mock_interview.html'" title="AI Technical Mock Interviewer ($25/hr Remote ML Engineer)">
-                🎯 <span class="full-text">Mock Interview</span>
-            </button>
+                <!-- MOCK INTERVIEW BUTONU -->
+                <button class="practica-btn" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%); border-color: rgba(16,185,129,0.4);" onclick="window.location.href='mock_interview.html'" title="AI Technical Mock Interviewer ($25/hr Remote ML Engineer)">
+                    🎯 <span class="full-text">Mock Interview</span>
+                </button>
 
-            <!-- GÖRÜNTÜLÜ ARAMA BUTONU -->
-            <button class="practica-btn" style="background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%); border-color: rgba(56,189,248,0.4);" onclick="window.location.href='video_call.html'" title="Canlı Eğitici Figür ile Görüntülü Arama">
-                📹 <span class="full-text">Görüntülü</span>
-            </button>
+                <!-- GÖRÜNTÜLÜ ARAMA BUTONU -->
+                <button class="practica-btn" style="background: linear-gradient(135deg, #0284c7 0%, #4f46e5 100%); border-color: rgba(56,189,248,0.4);" onclick="window.location.href='video_call.html'" title="Canlı Eğitici Figür ile Görüntülü Arama">
+                    📹 <span class="full-text">Görüntülü</span>
+                </button>
 
-            <!-- MODEL AYARLARI BUTONU -->
-            <button class="config-btn" id="openSettingsBtn" title="Model ve API Ayarları">
-                ⚙️
-            </button>
+                <!-- MODEL AYARLARI BUTONU -->
+                <button class="config-btn" id="openSettingsBtn" title="Model ve API Ayarları">
+                    ⚙️
+                </button>
 
-            <button class="btn-icon" id="refreshBtn" title="Sohbeti Yenile">↻</button>
+                <button class="btn-icon" id="refreshBtn" title="Sohbeti Yenile">↻</button>
+            </div>
         </header>
 
         <!-- SESLİ SOHBET CANLI BİLDİRİM BARI -->
@@ -824,16 +853,16 @@
 
             function updateModelLabel() {
                 const labels = {
-                    "gemini-1.5-flash": "Gemini 1.5 Flash ⚡",
-                    "gemini-1.5-pro": "Gemini 1.5 Pro 🧠",
-                    "gemini-2.0-flash": "Gemini 2.0 Flash 🚀",
-                    "llama-3.1-8b-instant": "Groq Llama 3.1 🦙",
-                    "gpt-4o-mini": "GPT-4o Mini 🤖",
-                    "gpt-4o": "GPT-4o 🌟",
-                    "built-in": "Dahili Motor 💻"
+                    "gemini-1.5-flash": "Gemini 1.5",
+                    "gemini-1.5-pro": "Gemini Pro",
+                    "gemini-2.0-flash": "Gemini 2.0",
+                    "llama-3.1-8b-instant": "Llama 3.1",
+                    "gpt-4o-mini": "GPT-4o Mini",
+                    "gpt-4o": "GPT-4o",
+                    "built-in": "Dahili"
                 };
                 const hasKey = userApiKey && userApiKey.length > 5 && selectedModel !== "built-in";
-                const modeText = hasKey ? '<span style="color:#38bdf8; font-weight:600;">(Canlı API 🟢)</span>' : '<span style="color:#94a3b8;">(Dahili Motor)</span>';
+                const modeText = hasKey ? '<span style="color:#38bdf8; font-weight:600;">(Canlı 🟢)</span>' : '<span style="color:#94a3b8;">(Dahili)</span>';
                 currentModelLabel.innerHTML = `${labels[selectedModel] || selectedModel} ${modeText}`;
             }
 
@@ -911,14 +940,24 @@
             }
 
             saveSettingsBtn.onclick = () => {
-                userApiKey = apiKeyInput.value.trim();
+                userApiKey = apiKeyInput.value.replace(/^["']|["']$/g, "").trim();
                 selectedModel = modelSelect.value;
+                if (userApiKey.startsWith("gsk_")) {
+                    selectedModel = "llama-3.1-8b-instant";
+                    modelSelect.value = selectedModel;
+                } else if (userApiKey.startsWith("AIza")) {
+                    selectedModel = "gemini-1.5-flash";
+                    modelSelect.value = selectedModel;
+                }
+
                 focusMode = focusModeSelect.value;
                 englishLevel = levelSelect.value;
                 if (autoSpeakCheckbox) autoSpeak = autoSpeakCheckbox.checked;
 
                 localStorage.setItem("ai_api_key", userApiKey);
+                localStorage.setItem("mentor_api_key", userApiKey);
                 localStorage.setItem("ai_selected_model", selectedModel);
+                localStorage.setItem("mentor_model", selectedModel);
                 localStorage.setItem("ai_focus_mode", focusMode);
                 localStorage.setItem("ai_level", englishLevel);
                 localStorage.setItem("ai_auto_speak", autoSpeak ? "true" : "false");

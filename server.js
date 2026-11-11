@@ -317,6 +317,7 @@ app.post("/api/video-call/chat", async (req, res) => {
         console.log(`[VIDEO CALL] User: ${username || "Anonymous"} | Tutor: ${safeTutor} | Message: "${(message || '').slice(0, 40)}"`);
 
         let replyText = null;
+        let apiError = null;
 
         // 1. Canlı API dene
         if (apiKey && model && model !== "built-in") {
@@ -330,9 +331,13 @@ app.post("/api/video-call/chat", async (req, res) => {
                 );
                 if (typeof apiRes === "string" && apiRes.trim()) {
                     replyText = apiRes.trim();
+                } else if (apiRes && apiRes.error) {
+                    apiError = apiRes.message;
+                    console.warn("[VIDEO CALL API WARNING]", apiRes.message);
                 }
             } catch (err) {
                 console.error("[VIDEO CALL API EXCEPTION]", err.message);
+                apiError = err.message;
             }
         }
 
@@ -344,7 +349,8 @@ app.post("/api/video-call/chat", async (req, res) => {
         res.json({
             success: true,
             reply: replyText,
-            tutor: safeTutor
+            tutor: safeTutor,
+            apiError: apiError
         });
     } catch (e) {
         console.error("Video call chat error:", e.message);
