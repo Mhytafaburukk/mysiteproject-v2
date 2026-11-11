@@ -133,7 +133,7 @@
             background: white;
             width: 260px;
             border-radius: 12px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
             display: none;
             z-index: 2000;
             color: #333;
@@ -195,9 +195,14 @@
         </div>
 
         <a href="girisliindex.html" class="nav-link" style="background:white; color:#6482AD; font-weight:600;">Panel</a>
-        <a href="video_call.html" class="nav-link" style="background:linear-gradient(135deg, #0284c7, #4f46e5); color:white; font-weight:600;">📹 Görüntülü Arama</a>
-        <a href="mock_interview.html" class="nav-link" style="background:linear-gradient(135deg, #10b981, #059669); color:white; font-weight:600;">🎯 Mock Interview</a>
-        <button id="logoutBtn" class="nav-link" style="background:rgba(255,0,0,0.2); border:none; color:white; cursor:pointer;">Çıkış Yap</button>
+        <a href="video_call.html" class="nav-link"
+            style="background:linear-gradient(135deg, #0284c7, #4f46e5); color:white; font-weight:600;">📹 Görüntülü
+            Arama</a>
+        <a href="mock_interview.html" class="nav-link"
+            style="background:linear-gradient(135deg, #10b981, #059669); color:white; font-weight:600;">🎯 Mock
+            Interview</a>
+        <button id="logoutBtn" class="nav-link"
+            style="background:rgba(255,0,0,0.2); border:none; color:white; cursor:pointer;">Çıkış Yap</button>
     </div>
 
     <div class="dashboard-container">
@@ -210,21 +215,19 @@
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
-            <p id="totalWords">Yükleniyor...</p> 
+            <p id="totalWords">Yükleniyor...</p>
         </div>
 
         <div class="menu-grid" id="menuGrid">
-            <a href="video_call.html" class="menu-card" style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #4338ca 100%); color: white; border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 10px 25px rgba(56, 189, 248, 0.25);">
+            <a href="video_call.html" class="menu-card"
+                style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #4338ca 100%); color: white; border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 10px 25px rgba(56, 189, 248, 0.25);">
                 <div class="menu-icon">📹</div>
                 <h3 style="color:#38bdf8; font-weight:700;">Görüntülü Mentor</h3>
                 <p style="color:#e0e7ff;">Canlı Eğitici Figür ile Yüz Yüze Konuşma</p>
             </a>
-            <a href="mock_interview.html" class="menu-card" style="background: linear-gradient(135deg, #090d16 0%, #1e1b4b 50%, #064e3b 100%); color: white; border: 1px solid rgba(52, 211, 153, 0.4); box-shadow: 0 10px 25px rgba(16, 185, 129, 0.2);">
-                <div class="menu-icon">🎙️</div>
-                <h3 style="color:#34d399; font-weight:700;">AI Mock Interview</h3>
-                <p style="color:#e2e8f0;">$25/hr Remote ML Engineer Simülatörü</p>
-            </a>
-            <a href="Message.html" class="menu-card" onclick="localStorage.setItem('currentusername', 'English_Mentor');" style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.95), rgba(56, 189, 248, 0.95)); color: white;">
+            <a href="Message.html" class="menu-card"
+                onclick="localStorage.setItem('currentusername', 'English_Mentor');"
+                style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.95), rgba(56, 189, 248, 0.95)); color: white;">
                 <div class="menu-icon">🎓</div>
                 <h3>English Mentor ✓</h3>
                 <p>Canlı Soru, Cümle & Pratik</p>
@@ -262,11 +265,11 @@
     </div>
 
     <script src="all_words.js"></script>
-<script>
+    <script>
         document.addEventListener("DOMContentLoaded", async () => {
             const API_URL = window.location.origin;
             const username = localStorage.getItem("username");
-            
+
             let originalTitle = document.title;
             let titleInterval = null;
 
@@ -323,8 +326,8 @@
 
                         if (distinctSenders.length > 0) {
                             notifCount.style.display = "block";
-                            notifCount.textContent = distinctSenders.length; 
-                            
+                            notifCount.textContent = distinctSenders.length;
+
                             notifList.innerHTML = distinctSenders.map(sender => `
                                 <div class="notif-item" onclick="location.href='Profil.html?action=users'">
                                     <strong>${sender}</strong> kullanıcısından yeni mesajınız var.
@@ -339,7 +342,7 @@
                         } else {
                             notifCount.style.display = "none";
                             notifList.innerHTML = `<div style="padding:15px; text-align:center; color:#999; font-size:12px;">Yeni mesaj yok</div>`;
-                            
+
                             clearInterval(titleInterval);
                             titleInterval = null;
                             document.title = originalTitle;
@@ -351,7 +354,7 @@
             }
 
             checkNotifications();
-            setInterval(checkNotifications, 10000); 
+            setInterval(checkNotifications, 10000);
 
             let total = 0;
             if (typeof comprehensiveWordList !== 'undefined') {
@@ -378,4 +381,5 @@
         });
     </script>
 </body>
+
 </html>
