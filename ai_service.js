@@ -333,13 +333,39 @@ CRITICAL INSTRUCTIONS:
     }
 
     // Sağlayıcı Anahtar Tipi Otomatik Tespiti
-    const trimmedKey = (apiKey || "").trim();
-    const isGroq = trimmedKey.startsWith("gsk_") || (model && (model.startsWith("llama") || model.startsWith("groq")));
-    const isGemini = (trimmedKey.startsWith("AIza") || (model && model.startsWith("gemini"))) && !trimmedKey.startsWith("gsk_");
-    const isOpenRouter = trimmedKey.startsWith("sk-or-") || (model && model.startsWith("openrouter"));
+    const trimmedKey = (apiKey || "").replace(/^[“"'`\s]+|[”"'`\s]+$/g, "").trim();
+    if (!trimmedKey) return null;
 
-    // 1. Groq API (gsk_ anahtarları doğrudan Groq Llama'ya gider)
-    if (isGroq && trimmedKey) {
+    // Model seçimi birincil belirleyicidir
+    let provider = "groq";
+    if (model && model.startsWith("gemini")) {
+        provider = "gemini";
+    } else if (model && (model.startsWith("llama") || model.startsWith("groq"))) {
+        provider = "groq";
+    } else if (model && model.startsWith("openrouter")) {
+        provider = "openrouter";
+    } else if (trimmedKey.startsWith("AIza")) {
+        provider = "gemini";
+    } else if (trimmedKey.startsWith("gsk_")) {
+        provider = "groq";
+    }
+
+    // Anahtar ve Model Uyumsuzluğu Kontrolü
+    if (provider === "gemini" && trimmedKey.startsWith("gsk_")) {
+        return {
+            error: true,
+            message: `⚠️ **Sağlayıcı & Anahtar Uyumsuzluğu:**\n\nSeçili model **Google Gemini**, ancak girdiğiniz API anahtarı bir **Groq** anahtarıdır (\`gsk_...\` ile başlar).\n\n💡 **Çözüm:** Model ve API ayarlarından modeli **"Groq Llama 3.3 / 3.1"** olarak seçin veya geçerli bir **Google Gemini API** anahtarı (\`AIza...\`) girin.`
+        };
+    }
+    if (provider === "groq" && trimmedKey.startsWith("AIza")) {
+        return {
+            error: true,
+            message: `⚠️ **Sağlayıcı & Anahtar Uyumsuzluğu:**\n\nSeçili model **Groq Llama**, ancak girdiğiniz API anahtarı bir **Google Gemini** anahtarıdır (\`AIza...\` ile başlar).\n\n💡 **Çözüm:** Model ve API ayarlarından modeli **"Google Gemini"** olarak seçin veya geçerli bir **Groq API** anahtarı (\`gsk_...\`) girin.`
+        };
+    }
+
+    // 1. Groq API
+    if (provider === "groq") {
         try {
             const targetModel = await getActiveGroqModel(trimmedKey, model);
             let groqMessages = [{ role: "system", content: systemPrompt }];
@@ -403,7 +429,7 @@ CRITICAL INSTRUCTIONS:
     }
 
     // 2. Google Gemini API
-    if (isGemini && trimmedKey) {
+    if (provider === "gemini") {
         try {
             const contents = sanitizeContentsForGemini(conversationHistory, userMessage);
             const geminiModel = (model && model.startsWith("gemini")) ? model : "gemini-1.5-flash";
@@ -436,7 +462,9 @@ CRITICAL INSTRUCTIONS:
                 } catch(e) {}
 
                 if (detail.includes("free tier is not available for this project")) {
-                    detail = `Bu API anahtarı eski/kısıtlı bir Cloud projesine bağlı olduğu için Google ücretsiz tarifeyi engelliyor.\n\n💡 **Tamamen Ücretsiz Hızlı Çözüm:**\n1. [Google AI Studio](https://aistudio.google.com/app/apikey) sayfasına gidin.\n2. **"Create API key"** butonuna basın.\n3. Listeden **"Create API key in new project"** *(Yeni projede anahtar oluştur)* seçeneğini seçin.\n4. Oluşan yeni anahtarı Model & API menüsüne yapıştırın. Hiçbir kart veya ödeme bilgisi girmeden anında çalışacaktır!`;
+                    detail = `Bu API anahtarı eski/kısıtlı bir Cloud projesine bağlı olduğu için Google ücretsiz tarifeyi engelliyor.\n\n💡 **Tamamen Ücretsiz Hızlı Çözüm:**\n1. [Google AI Studio](https://aistudio.google.com/app/apikey) sayfasına gidin.\n2. **"Create API key"** butonuna basın.\n3. Listeden **"Create API key in new project"** *(Yeni projede anahtar oluştur)* seçeneğini seçin.\n4. Oluşan yeni anahtarı Model & API menüsüne yapıştırın. Hiçbir kart veya ödeme bilgisi girmeden anında çalışacaktır!\n\n⚡ **VEYA:** [Groq Console](https://console.groq.com/keys) adresinden kartsız Groq anahtarı (\`gsk_...\`) alıp modeli Llama seçerek anında kesintisiz kullanabilirsiniz!`;
+                } else if (detail.includes("API key not valid")) {
+                    detail = `Google Gemini bu anahtarı geçersiz buldu (\`API key not valid\`).\n\n💡 **Çözüm:**\n1. [Google AI Studio](https://aistudio.google.com/app/apikey) adresini açıp **"Create API key in new project"** diyerek yeni bir anahtar kopyalayın.\n2. **VEYA:** [Groq Console](https://console.groq.com/keys) adresinden kartsız 10 saniyede bir anahtar (\`gsk_...\`) alıp modeli **"Groq Llama"** yaparak anında canlı yapay zekaya geçin!`;
                 }
 
                 return {
@@ -579,15 +607,38 @@ CRITICAL INSTRUCTIONS:
 
 // API Anahtarı Test Fonksiyonu (Model & API modalı için)
 async function testAPIKey(apiKey, model) {
-    const rawKey = (apiKey || "").replace(/^["']|["']$/g, "").trim();
+    const rawKey = (apiKey || "").replace(/^[“"'`\s]+|[”"'`\s]+$/g, "").trim();
     if (!rawKey) return { success: false, message: "Lütfen bir API anahtarı girin." };
 
-    const isGroq = rawKey.startsWith("gsk_") || (model && (model.startsWith("llama") || model.startsWith("groq")));
-    const isGemini = (rawKey.startsWith("AIza") || (model && model.startsWith("gemini"))) && !rawKey.startsWith("gsk_");
-    const isOpenRouter = rawKey.startsWith("sk-or-") || (model && model.startsWith("openrouter"));
+    let provider = "groq";
+    if (model && model.startsWith("gemini")) {
+        provider = "gemini";
+    } else if (model && (model.startsWith("llama") || model.startsWith("groq"))) {
+        provider = "groq";
+    } else if (model && model.startsWith("openrouter")) {
+        provider = "openrouter";
+    } else if (rawKey.startsWith("AIza")) {
+        provider = "gemini";
+    } else if (rawKey.startsWith("gsk_")) {
+        provider = "groq";
+    }
+
+    // Anahtar & Model Uyumsuzluğu Kontrolü
+    if (provider === "gemini" && rawKey.startsWith("gsk_")) {
+        return {
+            success: false,
+            message: `⚠️ UYUMSUZLUK: Seçtiğiniz model 'Google Gemini' fakat girdiğiniz anahtar bir Groq anahtarı ('gsk_...' ile başlıyor).\n\n💡 Modeli 'Groq Llama 3.3 / 3.1' olarak seçip tekrar test edin, veya geçerli bir Google Gemini anahtarı girin.`
+        };
+    }
+    if (provider === "groq" && rawKey.startsWith("AIza")) {
+        return {
+            success: false,
+            message: `⚠️ UYUMSUZLUK: Seçtiğiniz model 'Groq Llama' fakat girdiğiniz anahtar bir Google Gemini anahtarı ('AIza...' ile başlıyor).\n\n💡 Modeli 'Google Gemini' olarak seçip tekrar test edin, veya geçerli bir Groq anahtarı girin.`
+        };
+    }
 
     // 1. Groq Testi
-    if (isGroq) {
+    if (provider === "groq") {
         try {
             // Önce doğrudan Groq'un aktif modeller listesini sorgulayalım
             const modelsRes = await fetch("https://api.groq.com/openai/v1/models", {
@@ -648,7 +699,7 @@ async function testAPIKey(apiKey, model) {
     }
 
     // 2. Gemini Testi
-    if (isGemini) {
+    if (provider === "gemini") {
         try {
             const geminiModel = (model && model.startsWith("gemini")) ? model : "gemini-1.5-flash";
             const url = `https://generativelanguage.googleapis.com/v1beta/models/${geminiModel}:generateContent?key=${rawKey}`;
@@ -1373,6 +1424,13 @@ function generateConversationalResponse(userMessage, tutorName = "Sarah", isVide
         return `Yum, that sounds delicious! 🍕 Good food or a hot cup of coffee is the best treat after a long day.\n\nWhat did you have? Are you someone who enjoys cooking or do you prefer ordering out?`;
     }
 
+    if (lower.match(/\b(enjoy|enjoyed|enjoying|enjoyable|had\s*fun|great\s*day|good\s*day|nice\s*day|loved\s*it|wonderful\s*day)\b/i)) {
+        if (isVideoCall) {
+            return `I'm so glad your day was enjoyable! Having a fun day puts you in the best mood. What was the most enjoyable thing you did today?`;
+        }
+        return `I'm so glad to hear you had an enjoyable day! 😊 Having positive experiences gives you the best energy to speak English.\n\nWhat was the most fun or memorable thing you did today?`;
+    }
+
     if (lower.match(/\b(movie|movies|film|series|netflix|watch|watching|game|gaming|played|music|book|books|reading|relax|chilling)\b/i)) {
         if (isVideoCall) {
             return `That sounds like a great way to unwind! What were you watching or playing? I'd love a good recommendation!`;
@@ -1410,11 +1468,26 @@ function generateConversationalResponse(userMessage, tutorName = "Sarah", isVide
         return `No worries at all! Sometimes quiet moments are the best. 🌍\n\nLet's talk about something fun — if you could teleport to any city in the world right now, where would you go?`;
     }
 
-    // 4. Genel Doğal Konuşma
+    // 4. Dinamik & Yaratıcı Doğal Konuşma Havuzu (Asla tek bir cümleyi tekrarlamaz)
+    const dynamicVideoReplies = [
+        `I love hearing your thoughts on that! It sounds like quite an interesting experience. What was the most memorable part about it?`,
+        `That's really cool! You expressed that clearly. How did that make you feel overall?`,
+        `You're doing fantastic sharing that with me! It's so nice getting to know more about you. What happened next?`,
+        `I really appreciate you telling me about that! If you had to describe it in one word, what would you choose?`,
+        `That sounds like a great topic! I'm really enjoying chatting with you. What are your plans for the rest of the day?`
+    ];
+
+    const dynamicChatReplies = [
+        `I really love chatting with you about this! 🌟 You're expressing yourself with great clarity.\n\nCould you tell me a little bit more about what that was like?`,
+        `That sounds like a memorable moment! ✨ Learning a language is all about connecting through stories like this.\n\nWhat was the highlight of that experience for you?`,
+        `That really catches my attention! 😊 You're making real progress in putting your thoughts into English.\n\nHow did that turn out in the end?`,
+        `That's wonderful to hear! 💬 I'm really enjoying our practice session today.\n\nWhat other interesting things have you been up to recently?`
+    ];
+
     if (isVideoCall) {
-        return `That's really interesting! I'm enjoying hearing your thoughts. Could you share a little bit more about that?`;
+        return dynamicVideoReplies[Math.floor(Math.random() * dynamicVideoReplies.length)];
     }
-    return `That's very interesting! 👍 I'm really enjoying chatting with you about this.\n\nCould you elaborate a bit more on what you mean? What thoughts do you have on that?`;
+    return dynamicChatReplies[Math.floor(Math.random() * dynamicChatReplies.length)];
 }
 
 async function callVideoCallAI(userMessage, apiKey, model, tutorName = "Sarah", conversationHistory = []) {

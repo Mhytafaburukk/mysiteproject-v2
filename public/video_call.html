@@ -1124,7 +1124,7 @@
 
         function updateModelBadge(errorStatus = null) {
             const key = (localStorage.getItem("ai_api_key") || localStorage.getItem("mentor_api_key") || "").trim();
-            const mod = localStorage.getItem("ai_selected_model") || "llama-3.1-8b-instant";
+            const mod = localStorage.getItem("ai_selected_model") || "gemini-1.5-flash";
             const pill = document.getElementById("modelPill");
             if (!pill) return;
 
@@ -1142,12 +1142,12 @@
             pill.style.borderColor = "";
             pill.style.color = "";
 
-            if (mod.includes("llama") || mod.includes("groq") || key.startsWith("gsk_")) {
-                pill.innerHTML = hasKey ? "🟢 🦙 Groq Llama 3.3" : "⚠️ Groq (Key Eksik)";
-                pill.title = hasKey ? "Groq Canlı Yapay Zeka Aktif" : "API anahtarı eksik, dahili motor çalışıyor";
-            } else if (mod.includes("gemini") || key.startsWith("AIza")) {
+            if (mod.includes("gemini")) {
                 pill.innerHTML = hasKey ? "🟢 ⚡ Gemini 1.5 Flash" : "⚠️ Gemini (Key Eksik)";
                 pill.title = hasKey ? "Google Gemini Canlı Yapay Zeka Aktif" : "API anahtarı eksik, dahili motor çalışıyor";
+            } else if (mod.includes("llama") || mod.includes("groq")) {
+                pill.innerHTML = hasKey ? "🟢 🦙 Groq Llama 3.3" : "⚠️ Groq (Key Eksik)";
+                pill.title = hasKey ? "Groq Canlı Yapay Zeka Aktif" : "API anahtarı eksik, dahili motor çalışıyor";
             } else {
                 pill.innerHTML = "💻 Dahili Akıllı Motor";
                 pill.title = "Dahili kural ve içerik motoru aktif";
@@ -1600,8 +1600,8 @@
         }
 
         async function testKeyFromVideoCall() {
-            const rawKey = document.getElementById("modalApiKeyInput").value.replace(/^["']|["']$/g, "").trim();
-            let model = document.getElementById("modalModelSelect").value;
+            const rawKey = document.getElementById("modalApiKeyInput").value.replace(/^[“"'`\s]+|[”"'`\s]+$/g, "").trim();
+            const model = document.getElementById("modalModelSelect").value;
             const resBox = document.getElementById("modalTestResultBox");
             const testBtn = document.getElementById("modalTestKeyBtn");
 
@@ -1611,14 +1611,6 @@
                 resBox.style.color = "#f87171";
                 resBox.textContent = "Lütfen bir API anahtarı girin.";
                 return;
-            }
-
-            if (rawKey.startsWith("gsk_")) {
-                model = "llama-3.1-8b-instant";
-                document.getElementById("modalModelSelect").value = model;
-            } else if (rawKey.startsWith("AIza")) {
-                model = "gemini-1.5-flash";
-                document.getElementById("modalModelSelect").value = model;
             }
 
             testBtn.disabled = true;
@@ -1655,18 +1647,10 @@
         }
 
         function saveSettings() {
-            let key = document.getElementById("modalApiKeyInput").value.replace(/^["']|["']$/g, "").trim();
-            let model = document.getElementById("modalModelSelect").value;
+            const key = document.getElementById("modalApiKeyInput").value.replace(/^[“"'`\s]+|[”"'`\s]+$/g, "").trim();
+            const model = document.getElementById("modalModelSelect").value;
 
-            // Otomatik sağlayıcı tespiti
-            if (key.startsWith("gsk_")) {
-                model = "llama-3.1-8b-instant";
-                document.getElementById("modalModelSelect").value = model;
-            } else if (key.startsWith("AIza")) {
-                model = "gemini-1.5-flash";
-                document.getElementById("modalModelSelect").value = model;
-            }
-
+            // Kullanıcının seçtiği model daima korunur!
             localStorage.setItem("ai_api_key", key);
             localStorage.setItem("mentor_api_key", key);
             localStorage.setItem("ai_selected_model", model);

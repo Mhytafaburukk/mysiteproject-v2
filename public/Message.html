@@ -833,12 +833,7 @@
             if (autoSpeakCheckbox) autoSpeakCheckbox.checked = autoSpeak;
 
             apiKeyInput.addEventListener("input", () => {
-                userApiKey = apiKeyInput.value.trim();
-                if (userApiKey.startsWith("gsk_")) {
-                    selectedModel = "llama-3.1-8b-instant";
-                    modelSelect.value = selectedModel;
-                    localStorage.setItem("ai_selected_model", selectedModel);
-                }
+                userApiKey = apiKeyInput.value.replace(/^[“"'`\s]+|[”"'`\s]+$/g, "").trim();
                 localStorage.setItem("ai_api_key", userApiKey);
                 updateModelLabel();
             });
@@ -940,15 +935,8 @@
             }
 
             saveSettingsBtn.onclick = () => {
-                userApiKey = apiKeyInput.value.replace(/^["']|["']$/g, "").trim();
-                selectedModel = modelSelect.value;
-                if (userApiKey.startsWith("gsk_")) {
-                    selectedModel = "llama-3.1-8b-instant";
-                    modelSelect.value = selectedModel;
-                } else if (userApiKey.startsWith("AIza")) {
-                    selectedModel = "gemini-1.5-flash";
-                    modelSelect.value = selectedModel;
-                }
+                userApiKey = apiKeyInput.value.replace(/^[“"'`\s]+|[”"'`\s]+$/g, "").trim();
+                selectedModel = modelSelect.value; // Kullanıcının seçimi daima korunur!
 
                 focusMode = focusModeSelect.value;
                 englishLevel = levelSelect.value;
