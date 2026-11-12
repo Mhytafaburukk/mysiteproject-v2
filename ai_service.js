@@ -1372,13 +1372,37 @@ function generateConversationalResponse(userMessage, tutorName = "Sarah", isVide
 
     // 2. Günlük Aktiviteler & Özel Durumlar
 
-    // Banka, Telefon Görüşmesi, Stres, Müşteri Hizmetleri
-    if (lower.match(/\b(bank|banking|phone\s*call|calling|customer\s*service|account|money|financial|bureaucracy)\b/i) ||
-        (lower.match(/\b(stress|stressing|stressful|stressed|anxious|nervous|headache)\b/i) && !feelingGood)) {
+    // Aile, Arkadaşlar ve Sevdiklerimizle Konuşma / Görüşme (ÖNCELİKLİ)
+    if (lower.match(/\b(family|parents|mom|mother|dad|father|sister|brother|relative|relatives|cousin|grandma|grandpa|call(ed)?\s*(my\s*)?family|talking\s*to\s*(my\s*)?family|called\s*home)\b/i)) {
         if (isVideoCall) {
-            return `Dealing with banks and customer service phone calls can be so stressful and frustrating! Did you manage to resolve everything with them, or was it a complete headache?`;
+            return `That is so sweet! Staying in touch with your family is always so grounding and heartwarming. How is everyone doing, and did you catch up on good news?`;
         }
-        return `Dealing with bank calls or official customer service can be so stressful and exhausting! 🏦 It really tests anyone's patience.\n\nDid you manage to get everything sorted out with them, or do you have to follow up later?`;
+        return `That is so sweet! ❤️ Staying connected with your family is always so grounding and heartwarming.\n\nHow is everyone doing? Did you get to catch up on good news?`;
+    }
+
+    // Banka, Finans, Müşteri Hizmetleri (SADECE açıkça banka/finans/müşteri hizmetleri ise!)
+    if (lower.match(/\b(bank|banking|bank\s*call|call(ed)?\s*(my\s*)?bank|customer\s*service|bank\s*account|credit\s*card|atm|wire\s*transfer)\b/i) ||
+        (lower.match(/\b(stress|stressing|stressful|stressed|anxious|headache)\b/i) && lower.match(/\b(bank|bureaucracy|customer\s*service|support)\b/i))) {
+        if (isVideoCall) {
+            return `Dealing with banks and customer service calls can be so stressful and frustrating! Did you manage to resolve everything with them, or was it a complete headache?`;
+        }
+        return `Dealing with bank calls or official customer service can be so stressful and exhausting! 🏦 Bureaucracy really tests anyone's patience.\n\nDid you manage to resolve what you were calling about, or was it a headache?`;
+    }
+
+    // Genel Telefon Görüşmesi (Banka veya aile değilse)
+    if (lower.match(/\b(phone\s*call|made\s*a\s*call|called\s*someone|on\s*the\s*phone)\b/i)) {
+        if (isVideoCall) {
+            return `Phone calls can really shape your day! Who did you call? Was it catching up with a friend or a work call?`;
+        }
+        return `Phone calls can definitely take up quite a bit of energy! 📞\n\nWho did you catch up with? Was it a work-related conversation or catching up with someone close to you?`;
+    }
+
+    // "Her zamanki gibi", "sıradan bir gün", "rutin"
+    if (lower.match(/\b(as\s*usual|same\s*as\s*usual|same\s*old|nothing\s*special|just\s*a\s*regular\s*day|normal\s*day|routine)\b/i)) {
+        if (isVideoCall) {
+            return `Sometimes a calm, routine day is the most peaceful kind of day! Did you get to relax at all today, or was it mostly routine tasks?`;
+        }
+        return `Sometimes a calm, routine day is the most peaceful kind of day! ☕ No stress, just steady flow.\n\nDid you get some downtime to relax, or did everyday tasks keep you busy?`;
     }
 
     // Çekingenlik, Utangaçlık, Konuşma Korkusu & Özgüven Kazanma
