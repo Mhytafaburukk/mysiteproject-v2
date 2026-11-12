@@ -213,13 +213,11 @@
 
         <a href="girisliindex.html" class="nav-link" style="background:white; color:#6482AD; font-weight:600;">Panel</a>
         <a href="video_call.html" class="nav-link"
-            style="background:linear-gradient(135deg, #0284c7, #4f46e5); color:white; font-weight:600;">📹 Görüntülü
-            Arama</a>
+            style="background:linear-gradient(135deg, #0284c7, #4f46e5); color:white; font-weight:600;">📹 <span data-i18n="videoMentor">Görüntülü Arama</span></a>
         <a href="mock_interview.html" class="nav-link"
-            style="background:linear-gradient(135deg, #10b981, #059669); color:white; font-weight:600;">🎯 Mock
-            Interview</a>
+            style="background:linear-gradient(135deg, #10b981, #059669); color:white; font-weight:600;">🎯 <span data-i18n="mockInterview">Mock Interview</span></a>
         <button id="logoutBtn" class="nav-link"
-            style="background:rgba(255,0,0,0.2); border:none; color:white; cursor:pointer;">Çıkış Yap</button>
+            style="background:rgba(255,0,0,0.2); border:none; color:white; cursor:pointer;" data-i18n="logout">Çıkış Yap</button>
     </div>
 
     <div class="dashboard-container">
@@ -242,9 +240,9 @@
             color: white;
         ">
             <div style="display:flex; align-items:center; gap:12px; font-size:14px; flex-wrap:wrap;">
-                <span>🎯 Öğrenilen Dil: <strong id="dashLearningBadge" style="color:#38bdf8;">🇬🇧 İngilizce</strong></span>
+                <span>🎯 <span data-i18n="learningLang">Öğrenilen Dil</span>: <strong id="dashLearningBadge" style="color:#38bdf8;">🇬🇧 İngilizce</strong></span>
                 <span style="color:rgba(255,255,255,0.4);">|</span>
-                <span>🏠 Ana Dil: <strong id="dashNativeBadge" style="color:#34d399;">🇹🇷 Türkçe</strong></span>
+                <span>🏠 <span data-i18n="nativeLang">Ana Dil</span>: <strong id="dashNativeBadge" style="color:#34d399;">🇹🇷 Türkçe</strong></span>
             </div>
             <button type="button" onclick="LanguageManager.openModal(updateDashboardLangDisplay)" style="
                 background: linear-gradient(135deg, #4f46e5, #0284c7);
@@ -255,13 +253,13 @@
                 font-size: 12px;
                 font-weight: 600;
                 cursor: pointer;
-            ">🌐 Dili Değiştir</button>
+            " data-i18n="changeLanguage">🌐 Dili Değiştir</button>
         </div>
 
         <div class="stats-card">
-            <h3>İlerleme Durumu</h3>
+            <h3 data-i18n="progressTitle">İlerleme Durumu</h3>
             <div class="stat-number" id="knownCount">0</div>
-            <p>Bilinen Kelime Sayısı</p>
+            <p data-i18n="knownWords">Bilinen Kelime Sayısı</p>
             <div class="progress-bar">
                 <div class="progress-fill" id="progressFill"></div>
             </div>
@@ -272,7 +270,7 @@
             <a href="video_call.html" class="menu-card"
                 style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #4338ca 100%); color: white; border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 10px 25px rgba(56, 189, 248, 0.25);">
                 <div class="menu-icon">📹</div>
-                <h3 style="color:#38bdf8; font-weight:700;">Görüntülü Mentor</h3>
+                <h3 style="color:#38bdf8; font-weight:700;" data-i18n="videoMentor">Görüntülü Mentor</h3>
                 <p style="color:#e0e7ff;">Canlı Eğitici Figür ile Yüz Yüze Konuşma</p>
             </a>
             <a href="Message.html" class="menu-card"
@@ -284,12 +282,12 @@
             </a>
             <a href="kelime.html" class="menu-card">
                 <div class="menu-icon">📝</div>
-                <h3>Kelime Testi</h3>
+                <h3 data-i18n="wordTest">Kelime Testi</h3>
                 <p>Boşluk Doldurma & Quiz</p>
             </a>
             <a href="dinleme_testi.html" class="menu-card">
                 <div class="menu-icon">🔄</div>
-                <h3>Kelime Eşleştirme</h3>
+                <h3 data-i18n="wordMatch">Kelime Eşleştirme</h3>
                 <p>Hızlı & Mobil Eşleştir</p>
             </a>
             <a href="Profil.html?action=users" class="menu-card">
@@ -299,13 +297,13 @@
             </a>
             <a href="Profil.html" class="menu-card">
                 <div class="menu-icon">👤</div>
-                <h3>Profilim</h3>
-                <p>Hesap ayarları</p>
+                <h3 data-i18n="profile">Profilim</h3>
+                <p></p>
             </a>
             <a href="TumKelimeler.html" class="menu-card">
                 <div class="menu-icon">📚</div>
-                <h3>Kelime Listesi</h3>
-                <p>Tüm kelimeleri gör</p>
+                <h3 data-i18n="wordList">Kelime Listesi</h3>
+                <p></p>
             </a>
         </div>
     </div>
@@ -330,6 +328,9 @@
             const nBadge = document.getElementById("dashNativeBadge");
             if (lBadge) lBadge.textContent = `${lMeta.flag} ${lMeta.name}`;
             if (nBadge) nBadge.textContent = `${nMeta.flag} ${nMeta.name}`;
+
+            // data-i18n elementlerini de güncelle
+            LanguageManager.applyUILanguage();
         }
 
         document.addEventListener("DOMContentLoaded", async () => {
@@ -346,7 +347,8 @@
                 return;
             }
 
-            document.getElementById("welcomeMsg").textContent = `Hoşgeldiniz, ${username}`;
+            const welcomeKey = LanguageManager.t('welcome');
+            document.getElementById("welcomeMsg").textContent = `${welcomeKey}, ${username}`;
 
             if (username === "Burak") {
                 const menuGrid = document.getElementById("menuGrid");
