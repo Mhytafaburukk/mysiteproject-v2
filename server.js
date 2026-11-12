@@ -173,7 +173,9 @@ app.get("/get-user-info/:username", (req, res) => {
             followers: DB.getFollowers(username),
             following: DB.getFollowing(username),
             isAI: !!user.is_ai,
-            isVerified: !!user.is_verified
+            isVerified: !!user.is_verified,
+            nativeLang: user.native_lang || "tr",
+            learningLang: user.learning_lang || "en"
         }
     });
 });
@@ -185,8 +187,20 @@ app.get("/users", (req, res) => {
         username: u.username,
         profilePic: u.profile_pic || null,
         isAI: !!u.is_ai,
-        isVerified: !!u.is_verified
+        isVerified: !!u.is_verified,
+        nativeLang: u.native_lang || "tr",
+        learningLang: u.learning_lang || "en"
     })));
+});
+
+// DİL TERCİHLERİ GÜNCELLEME
+app.post("/update-languages", (req, res) => {
+    const { username, nativeLang, learningLang } = req.body || {};
+    if (!username) return res.status(400).json({ success: false, message: "Kullanıcı adı gerekli" });
+    const nLang = nativeLang || "tr";
+    const lLang = learningLang || "en";
+    DB.updateLanguagePreferences(username, nLang, lLang);
+    res.json({ success: true, nativeLang: nLang, learningLang: lLang });
 });
 
 // FAVORİ KELİMELER

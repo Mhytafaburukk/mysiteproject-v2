@@ -394,13 +394,16 @@
     </nav>
 
     <main class="quiz-wrapper">
+        <!-- DİL SEÇİM VE YÖN ÇUBUĞU -->
+        <div id="matchingLangBar" style="margin-bottom: 8px; display: flex; justify-content: center;"></div>
+
         <header class="header-section">
             <h1>Kelime Eşleştirme</h1>
-            <p>İngilizce kelimeleri doğru Türkçe anlamlarıyla eşleştirin.</p>
+            <p id="matchingSubtitle">Kelimeleri doğru anlamlarıyla eşleştirin.</p>
         </header>
 
         <div class="mobile-instruction">
-            📱 <strong>İpucu:</strong> Önce bir kelimeye dokunun, ardından doğru Türkçe anlamına dokunarak anında eşleştirin!
+            📱 <strong>İpucu:</strong> Önce bir kelimeye dokunun, ardından doğru anlamına dokunarak anında eşleştirin!
         </div>
 
         <div class="status-bar">
@@ -418,14 +421,14 @@
         </div>
 
         <div>
-            <div class="section-label">🇬🇧 İngilizce Kelimeler (Seçin veya Sürükleyin):</div>
+            <div class="section-label" id="sourceSectionLabel">🇬🇧 İngilizce Kelimeler (Seçin veya Sürükleyin):</div>
             <div class="words-pool" id="words-source">
                 <!-- Kelimeler JS ile yüklenecek -->
             </div>
         </div>
 
         <div>
-            <div class="section-label">🇹🇷 Türkçe Karşılıkları:</div>
+            <div class="section-label" id="targetSectionLabel">🇹🇷 Türkçe Karşılıkları:</div>
             <div class="targets-grid" id="drop-target">
                 <!-- Eşleştirme kutuları JS ile yüklenecek -->
             </div>
@@ -437,6 +440,7 @@
     </footer>
 
     <script src="all_words.js"></script>
+    <script src="languages.js"></script>
     <script src="dinleme_testi.js"></script>
 </body>
 

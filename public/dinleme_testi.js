@@ -31,7 +31,15 @@ let matchedCount = 0;
 let totalScore = 0;
 let selectedWordEl = null;
 
-document.addEventListener("DOMContentLoaded", initGame);
+document.addEventListener("DOMContentLoaded", () => {
+    if (typeof LanguageManager !== 'undefined') {
+        LanguageManager.renderBar("matchingLangBar", {
+            onDirectionChange: initGame,
+            onLanguageChange: initGame
+        });
+    }
+    initGame();
+});
 
 function initGame() {
     const wordsContainer = document.getElementById("words-source");
@@ -41,6 +49,25 @@ function initGame() {
 
     if (!wordsContainer || !targetsContainer) return;
 
+    // Güncel dil listesini al
+    if (typeof LanguageManager !== 'undefined') {
+        gameWordsSource = LanguageManager.getWordList();
+    } else if (typeof comprehensiveWordList !== 'undefined') {
+        gameWordsSource = comprehensiveWordList;
+    }
+
+    const prefs = (typeof LanguageManager !== 'undefined') ? LanguageManager.getPreferences() : { learningLang: 'en', nativeLang: 'tr', direction: 'learning_to_native' };
+    const isRev = (prefs.direction === 'native_to_learning');
+    const sourceMeta = (typeof LanguageManager !== 'undefined') ? LanguageManager.getLanguageMeta(isRev ? prefs.nativeLang : prefs.learningLang) : { flag: '🇬🇧', name: 'İngilizce', voice: 'en-US' };
+    const targetMeta = (typeof LanguageManager !== 'undefined') ? LanguageManager.getLanguageMeta(isRev ? prefs.learningLang : prefs.nativeLang) : { flag: '🇹🇷', name: 'Türkçe', voice: 'tr-TR' };
+
+    const srcLabel = document.getElementById("sourceSectionLabel");
+    const tgtLabel = document.getElementById("targetSectionLabel");
+    const subTitle = document.getElementById("matchingSubtitle");
+    if (srcLabel) srcLabel.textContent = `${sourceMeta.flag} ${sourceMeta.name} Kelimeler (Seçin veya Sürükleyin):`;
+    if (tgtLabel) tgtLabel.textContent = `${targetMeta.flag} ${targetMeta.name} Karşılıkları:`;
+    if (subTitle) subTitle.textContent = `${sourceMeta.name} kelimeleri doğru ${targetMeta.name} anlamlarıyla eşleştirin.`;
+
     wordsContainer.innerHTML = '';
     targetsContainer.innerHTML = '';
     matchedCount = 0;
@@ -48,8 +75,8 @@ function initGame() {
     if (matchedCountEl) matchedCountEl.textContent = '0';
 
     // Havuz oluştur
-    const richWords = gameWordsSource.filter(w => wordImages[w.word.toLowerCase()]);
-    const otherWords = gameWordsSource.filter(w => !wordImages[w.word.toLowerCase()]);
+    const richWords = gameWordsSource.filter(w => wordImages[(w.word || '').toLowerCase()]);
+    const otherWords = gameWordsSource.filter(w => !wordImages[(w.word || '').toLowerCase()]);
     let pool = [...richWords, ...otherWords];
 
     // 5 adet kelime seç
@@ -64,19 +91,30 @@ function initGame() {
 
     if (totalRoundCountEl) totalRoundCountEl.textContent = roundWords.length;
 
-    // İngilizce Kelimeler (word-chip)
+    // Kaynak Kelimeler (word-chip)
     const shuffledForDrag = [...roundWords].sort(() => Math.random() - 0.5);
     shuffledForDrag.forEach(item => {
         const dragEl = document.createElement("div");
         dragEl.classList.add("word-chip");
         dragEl.draggable = true;
         dragEl.textContent = item.word;
-        dragEl.id = "word-" + item.word.replace(/\s+/g, "_");
+        dragEl.id = "word-" + (item.word || '').replace(/\s+/g, "_");
         dragEl.setAttribute("data-word", item.word);
 
-        // Tıklayarak veya Dokunarak Eşleştirme (Mobilde süper kolay)
+        // Tıklayarak veya Dokunarak Eşleştirme & Sesli Telaffuz
         dragEl.addEventListener("click", () => {
             if (dragEl.classList.contains("matched")) return;
+
+            // Sesli okuma
+            if ('speechSynthesis' in window && item.word) {
+                try {
+                    const utter = new SpeechSynthesisUtterance(item.word);
+                    utter.lang = sourceMeta.voice || 'en-US';
+                    window.speechSynthesis.cancel();
+                    window.speechSynthesis.speak(utter);
+                } catch(e) {}
+            }
+
             if (selectedWordEl && selectedWordEl !== dragEl) {
                 selectedWordEl.classList.remove("selected");
             }
@@ -102,7 +140,7 @@ function initGame() {
         dropEl.setAttribute("data-match", item.word);
         dropEl.setAttribute("data-meaning", item.meaning);
 
-        const imgPath = wordImages[item.word.toLowerCase()] || 'https://img.icons8.com/color/96/translation.png';
+        const imgPath = wordImages[(item.word || '').toLowerCase()] || wordImages[(item.meaning || '').toLowerCase()] || 'https://img.icons8.com/color/96/translation.png';
         const img = document.createElement("img");
         img.src = imgPath;
         img.alt = item.meaning;

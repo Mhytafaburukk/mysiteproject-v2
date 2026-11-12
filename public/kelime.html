@@ -283,6 +283,9 @@
     </nav>
 
     <main class="quiz-card">
+        <!-- DİL SEÇİM VE YÖN ÇUBUĞU -->
+        <div id="kelimeLangBar" style="margin-bottom: 12px; display: flex; justify-content: center;"></div>
+
         <!-- MOD SEÇİCİ -->
         <div class="tab-switch">
             <button class="tab-btn active" id="tabClassic" onclick="switchMode('classic')">📝 Klasik Kelime Testi</button>
@@ -334,17 +337,12 @@
     </footer>
 
     <script src="all_words.js"></script>
+    <script src="languages.js"></script>
     <script>
         const API_URL = window.location.origin;
 
-        // --- KLASİK TEST MANTIĞI ---
-        const wordList = (typeof comprehensiveWordList !== 'undefined') ? comprehensiveWordList : [
-            { word: "approve", meaning: "onaylamak" },
-            { word: "appointment", meaning: "randevu" },
-            { word: "achievement", meaning: "başarı" },
-            { word: "resilience", meaning: "dayanıklılık" }
-        ];
-
+        // --- KLASİK TEST MANTIĞI (DİL YÖNETİMİ ENTEGRELİ) ---
+        let wordList = [];
         let currentQuestionIndex = 0;
         let score = 0;
         let mistakes = [];
@@ -357,9 +355,39 @@
             }
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
+        function loadWordList() {
+            if (typeof LanguageManager !== 'undefined') {
+                wordList = LanguageManager.getWordList();
+            } else if (typeof comprehensiveWordList !== 'undefined') {
+                wordList = comprehensiveWordList;
+            } else {
+                wordList = [
+                    { word: "approve", meaning: "onaylamak" },
+                    { word: "appointment", meaning: "randevu" },
+                    { word: "achievement", meaning: "başarı" },
+                    { word: "resilience", meaning: "dayanıklılık" }
+                ];
+            }
             shuffle(wordList);
+        }
+
+        function restartQuiz() {
+            loadWordList();
+            currentQuestionIndex = 0;
+            score = 0;
+            mistakes = [];
+            isRetrying = false;
             showQuestion();
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            if (typeof LanguageManager !== 'undefined') {
+                LanguageManager.renderBar("kelimeLangBar", {
+                    onDirectionChange: restartQuiz,
+                    onLanguageChange: restartQuiz
+                });
+            }
+            restartQuiz();
         });
 
         function showQuestion() {
@@ -377,18 +405,28 @@
             let currentWord = isRetrying ? mistakes[0] : wordList[currentQuestionIndex];
             
             let options = [currentWord.meaning];
-            while (options.length < 4) {
+            while (options.length < 4 && options.length < wordList.length) {
                 const randomWord = wordList[Math.floor(Math.random() * wordList.length)];
                 if (!options.includes(randomWord.meaning)) options.push(randomWord.meaning);
             }
             shuffle(options);
 
+            const prefs = (typeof LanguageManager !== 'undefined') ? LanguageManager.getPreferences() : { learningLang: 'en', nativeLang: 'tr', direction: 'learning_to_native' };
+            const targetLangCode = (prefs.direction === 'native_to_learning') ? prefs.learningLang : prefs.nativeLang;
+            const targetMeta = (typeof LanguageManager !== 'undefined') ? LanguageManager.getLanguageMeta(targetLangCode) : { name: 'Türkçe', flag: '🇹🇷' };
+
+            const safeTargetWord = (currentWord.word || "").replace(/'/g, "\\'");
+            const safeCorrectMeaning = (currentWord.meaning || "").replace(/'/g, "\\'");
+
             container.innerHTML = `
                 <div class="question-badge">Soru ${isRetrying ? "(Tekrar)" : currentQuestionIndex + 1} / 10</div>
                 <h2 class="target-phrase">${currentWord.word}</h2>
-                <p style="color: var(--text-muted); font-size:0.95rem; margin-bottom:12px;">Bu kelimenin Türkçe karşılığı nedir?</p>
+                <p style="color: var(--text-muted); font-size:0.95rem; margin-bottom:12px;">Bu kelimenin <strong>${targetMeta.flag} ${targetMeta.name}</strong> karşılığı nedir?</p>
                 <div class="options-grid">
-                    ${options.map(opt => `<button class="option-btn" onclick="checkAnswer(this, '${opt}', '${currentWord.meaning}')">${opt}</button>`).join('')}
+                    ${options.map(opt => {
+                        const safeOpt = (opt || "").replace(/'/g, "\\'");
+                        return `<button class="option-btn" onclick="checkAnswer(this, '${safeOpt}', '${safeCorrectMeaning}')">${opt}</button>`;
+                    }).join('')}
                 </div>
             `;
         }

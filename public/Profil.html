@@ -155,6 +155,14 @@
                 <div id="followersClick" style="cursor: pointer;"><strong id="followerCount">0</strong> Takipçi</div>
                 <div id="followingClick" style="cursor: pointer;"><strong id="followingCount">0</strong> Takip Edilen</div>
             </div>
+            <div id="langStats" style="margin-top: 15px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.15); display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
+                <div style="background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 20px; font-size: 13px;">
+                    🏠 Ana Dil: <span id="userNativeLangBadge" style="font-weight: 600; color: #34d399;">🇹🇷 Türkçe</span>
+                </div>
+                <div style="background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 20px; font-size: 13px;">
+                    🎯 Öğrenilen Dil: <span id="userLearningLangBadge" style="font-weight: 600; color: #38bdf8;">🇬🇧 İngilizce</span>
+                </div>
+            </div>
         </div>
 
         <div class="result1">
@@ -163,10 +171,11 @@
 
         <div id="section2">
             <button id="Deleteaccount" style="background-color: #ff4d4d; color: white;">Delete Account</button>
-            <button id="language">Language</button>
+            <button id="language">🌐 Dil Tercihi</button>
         </div>
     </div>
 
+    <script src="languages.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const API_URL = window.location.origin;
@@ -174,6 +183,19 @@
             const savedTheme = localStorage.getItem("selectedTheme");
             const profileImage = document.getElementById("profileImage");
             const content1 = document.getElementById("content1");
+
+            function updateLangBadges(nativeCode, learningCode) {
+                const nMeta = LanguageManager.getLanguageMeta(nativeCode || "tr");
+                const lMeta = LanguageManager.getLanguageMeta(learningCode || "en");
+                const nEl = document.getElementById("userNativeLangBadge");
+                const lEl = document.getElementById("userLearningLangBadge");
+                if (nEl) nEl.textContent = `${nMeta.flag} ${nMeta.name}`;
+                if (lEl) lEl.textContent = `${lMeta.flag} ${lMeta.name}`;
+            }
+
+            // Başlangıçta localStorage'daki tercihleri göster
+            const currentPrefs = LanguageManager.getPreferences();
+            updateLangBadges(currentPrefs.nativeLang, currentPrefs.learningLang);
 
             // TEMA UYGULAMA
             if (savedTheme === 'black') {
@@ -197,12 +219,28 @@
                             document.getElementById("followerCount").textContent = (data.user.followers || []).length;
                             document.getElementById("followingCount").textContent = (data.user.following || []).length;
                             document.getElementById("greeting").textContent = "Hoşgeldiniz, " + savedUsername;
+
+                            // Dil tercihleri veritabanından al ve güncelle
+                            if (data.user.nativeLang || data.user.learningLang) {
+                                const nLang = data.user.nativeLang || "tr";
+                                const lLang = data.user.learningLang || "en";
+                                LanguageManager.setPreferences(nLang, lLang, { syncServer: false });
+                                updateLangBadges(nLang, lLang);
+                            }
                         }
                     })
                     .catch(err => console.error("Bilgi çekme hatası:", err));
             }
 
             loadUserInfo();
+
+            // DİL TERCİHİ BUTONU
+            document.getElementById("language").onclick = function () {
+                LanguageManager.openModal(function(newPrefs) {
+                    updateLangBadges(newPrefs.nativeLang, newPrefs.learningLang);
+                    content1.innerHTML = `<span style='color:#00ff00; font-weight:600;'>✓ Dil tercihleri güncellendi:</span><br>Ana Dil: <strong>${LanguageManager.getLanguageMeta(newPrefs.nativeLang).name}</strong> | Öğrenilen: <strong>${LanguageManager.getLanguageMeta(newPrefs.learningLang).name}</strong>`;
+                });
+            };
 
             // PROFİL RESMİ GÜNCELLEME
             document.getElementById("fileInput").addEventListener("change", function () {

@@ -132,6 +132,8 @@
 
     <div class="main-container">
         <h1 class="title">Tüm Kelimeler</h1>
+        <!-- DİL SEÇİM VE YÖN ÇUBUĞU -->
+        <div id="tumKelimelerLangBar" style="margin-bottom: 20px; display: flex; justify-content: center;"></div>
         <p style="margin-bottom: 20px;">Toplam <span id="word-count">...</span> kelime listeleniyor.</p>
 
         <input type="text" id="searchInput" class="search-box" placeholder="Kelime ara...">
@@ -150,47 +152,62 @@
     </div>
 
     <script src="all_words.js"></script>
+    <script src="languages.js"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            // Check if all_words.js loaded correctly
-            if (typeof comprehensiveWordList === 'undefined') {
-                document.getElementById('wordsContainer').innerHTML = '<p>Kelime listesi yüklenemedi. Lütfen sayfayı yenileyin.</p>';
-                return;
-            }
-
-            const wordList = comprehensiveWordList; // From all_words.js
             const container = document.getElementById('wordsContainer');
             const navContainer = document.getElementById('alphabetNav');
             const searchInput = document.getElementById('searchInput');
             const countSpan = document.getElementById('word-count');
 
-            countSpan.textContent = wordList.length;
-
-            // Generate Alphabet Navigation
-            const alphabet = "ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("");
-            alphabet.forEach(letter => {
-                const a = document.createElement('a');
-                a.className = 'letter-link';
-                a.textContent = letter;
-                a.onclick = () => {
-                    const section = document.getElementById('section-' + letter);
-                    if (section) {
-                        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
-
-                        // Active state handling
-                        document.querySelectorAll('.letter-link').forEach(l => l.classList.remove('active'));
-                        a.classList.add('active');
-                    }
-                };
-                navContainer.appendChild(a);
-            });
-
-            // Group words by first letter
-            // Sort words alphabetically first
-            wordList.sort((a, b) => a.word.localeCompare(b.word));
-
+            let wordList = [];
             let userFavorites = [];
             const savedUsername = localStorage.getItem("username");
+
+            function loadActiveWords() {
+                if (typeof LanguageManager !== 'undefined') {
+                    wordList = LanguageManager.getWordList();
+                } else if (typeof comprehensiveWordList !== 'undefined') {
+                    wordList = comprehensiveWordList;
+                } else {
+                    wordList = [];
+                }
+
+                // Kelimeleri geçerli dile göre alfabetik sırala
+                wordList.sort((a, b) => (a.word || "").localeCompare(b.word || "", 'tr', { sensitivity: 'base' }));
+                countSpan.textContent = wordList.length;
+
+                renderAlphabetNav();
+                renderWords(searchInput.value || "");
+            }
+
+            // Alfabe Harf Navigasyonu Oluşturucu
+            function renderAlphabetNav() {
+                navContainer.innerHTML = "";
+                const letterSet = new Set();
+                wordList.forEach(item => {
+                    if (item.word) {
+                        const first = item.word.trim().charAt(0).toLocaleUpperCase('tr');
+                        if (first) letterSet.add(first);
+                    }
+                });
+
+                const letters = Array.from(letterSet).sort((a, b) => a.localeCompare(b, 'tr'));
+                letters.forEach(letter => {
+                    const a = document.createElement('a');
+                    a.className = 'letter-link';
+                    a.textContent = letter;
+                    a.onclick = () => {
+                        const section = document.getElementById('section-' + encodeURIComponent(letter));
+                        if (section) {
+                            section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                            document.querySelectorAll('.letter-link').forEach(l => l.classList.remove('active'));
+                            a.classList.add('active');
+                        }
+                    };
+                    navContainer.appendChild(a);
+                });
+            }
 
             // Fetch user favorites on load
             if (savedUsername) {
@@ -199,7 +216,7 @@
                     .then(data => {
                         if (data.success) {
                             userFavorites = data.favorikelimeler || [];
-                            renderWords(); // Re-render to show stars
+                            renderWords(searchInput.value || "");
                         }
                     })
                     .catch(err => console.error("Favoriler yüklenemedi:", err));
@@ -211,30 +228,33 @@
 
                 let hasMatches = false;
 
-                // Grouping Logic
+                // Grup Yapısı
                 const grouped = {};
-                alphabet.forEach(l => grouped[l] = []);
-
                 wordList.forEach(item => {
-                    if (item.word.toLowerCase().includes(filterText) || item.meaning.toLowerCase().includes(filterText)) {
-                        const firstChar = item.word.charAt(0).toUpperCase();
-                        if (grouped[firstChar]) {
-                            grouped[firstChar].push(item);
-                        } else {
-                            if (!grouped['#']) grouped['#'] = [];
-                            grouped['#'].push(item);
-                        }
+                    const wLower = (item.word || "").toLowerCase();
+                    const mLower = (item.meaning || "").toLowerCase();
+                    if (wLower.includes(filterText) || mLower.includes(filterText)) {
+                        const firstChar = item.word.trim().charAt(0).toLocaleUpperCase('tr') || '#';
+                        if (!grouped[firstChar]) grouped[firstChar] = [];
+                        grouped[firstChar].push(item);
                     }
                 });
 
-                Object.keys(grouped).forEach(letter => {
+                const prefs = (typeof LanguageManager !== 'undefined') ? LanguageManager.getPreferences() : { learningLang: 'en', nativeLang: 'tr', direction: 'learning_to_native' };
+                const isRev = (prefs.direction === 'native_to_learning');
+                const sourceMeta = (typeof LanguageManager !== 'undefined') ? LanguageManager.getLanguageMeta(isRev ? prefs.nativeLang : prefs.learningLang) : { flag: '🇬🇧', name: 'İngilizce' };
+                const targetMeta = (typeof LanguageManager !== 'undefined') ? LanguageManager.getLanguageMeta(isRev ? prefs.learningLang : prefs.nativeLang) : { flag: '🇹🇷', name: 'Türkçe' };
+
+                const sortedLetters = Object.keys(grouped).sort((a, b) => a.localeCompare(b, 'tr'));
+
+                sortedLetters.forEach(letter => {
                     if (grouped[letter].length > 0) {
                         hasMatches = true;
 
                         // Section Header
                         const header = document.createElement('h2');
                         header.className = 'section-header';
-                        header.id = 'section-' + letter;
+                        header.id = 'section-' + encodeURIComponent(letter);
                         header.textContent = letter;
                         container.appendChild(header);
 
@@ -245,12 +265,11 @@
                         const table = document.createElement('table');
                         table.className = 'word-table';
 
-                        // Construct table HTML with Favorite Column
                         table.innerHTML = `
                             <thead>
                                 <tr>
-                                    <th>İngilizce</th>
-                                    <th>Türkçe</th>
+                                    <th>${sourceMeta.flag} ${sourceMeta.name}</th>
+                                    <th>${targetMeta.flag} ${targetMeta.name}</th>
                                     <th style="width: 50px; text-align: center;">Favori</th>
                                 </tr>
                             </thead>
@@ -267,7 +286,7 @@
                                 <td><strong>${w.word}</strong></td>
                                 <td>${w.meaning}</td>
                                 <td style="text-align: center;">
-                                    <span class="fav-icon ${isFav ? 'active' : ''}" data-word="${w.word}" style="cursor: pointer; font-size: 1.2rem; color: ${isFav ? 'gold' : '#ccc'};">
+                                    <span class="fav-icon ${isFav ? 'active' : ''}" data-word="${w.word.replace(/"/g, '&quot;')}" style="cursor: pointer; font-size: 1.2rem; color: ${isFav ? 'gold' : '#ccc'};">
                                         ★
                                     </span>
                                 </td>
@@ -281,7 +300,7 @@
                 });
 
                 if (!hasMatches) {
-                    container.innerHTML = '<p style="margin-top:20px;">Eşleşen kelime bulunamadı.</p>';
+                    container.innerHTML = '<p style="margin-top:20px; text-align:center;">Eşleşen kelime bulunamadı.</p>';
                 }
 
                 // Add Event Listeners for Stars
@@ -295,53 +314,48 @@
                         const word = this.getAttribute('data-word');
                         const isCurrentlyFav = this.classList.contains('active');
 
-                        // Optimistic UI Update
                         if (!isCurrentlyFav) {
                             this.classList.add('active');
                             this.style.color = 'gold';
-                            // Add to backend
                             fetch(`${window.location.origin}/add-favorite`, {
                                 method: 'POST',
                                 headers: { 'Content-Type': 'application/json' },
                                 body: JSON.stringify({ username: savedUsername, word: word })
                             })
-                                .then(res => res.json())
-                                .then(data => {
-                                    if (data.success) {
-                                        // alert("Kelime favorilere eklendi!"); // Too annoying for every click
-                                        if (!userFavorites.includes(word)) userFavorites.push(word);
-                                    } else {
-                                        alert(data.message);
-                                        // Revert
-                                        this.classList.remove('active');
-                                        this.style.color = '#ccc';
-                                    }
-                                });
+                            .then(res => res.json())
+                            .then(data => {
+                                if (data.success) {
+                                    if (!userFavorites.includes(word)) userFavorites.push(word);
+                                } else {
+                                    alert(data.message);
+                                    this.classList.remove('active');
+                                    this.style.color = '#ccc';
+                                }
+                            });
                         } else {
-                            // Logic for removing logic is not in single-endpoint API yet, but let's assume simple toggle or add logic
-                            // The backend 'add-favorite' only adds. 'update-favorites' is for bulk.
-                            // The user ONLY asked to "save/add". Removing might be a feature request later.
-                            // For now, I will prevent expanding scope unless necessary.
-                            // But usually toggle is expected.
-                            // Let's just alert "Already in favorites" as per current backend generic "success: false" message for existing.
-
-                            // Checking backend server2.js: 
-                            // if (user.favorikelimeler.includes(word)) res.json({ success: false, message: "Bu kelime zaten favorilerde." });
-
                             alert("Bu kelime zaten favorilerde ekli.");
                         }
                     });
                 });
             }
 
+            // Dil Çubuğunu Oluştur
+            if (typeof LanguageManager !== 'undefined') {
+                LanguageManager.renderBar("tumKelimelerLangBar", {
+                    onDirectionChange: loadActiveWords,
+                    onLanguageChange: loadActiveWords
+                });
+            }
+
             // Initial Render
-            renderWords();
+            loadActiveWords();
 
             // Search Functionality
             searchInput.addEventListener('input', (e) => {
                 renderWords(e.target.value);
             });
         });
+    </script>
     </script>
 </body>
 

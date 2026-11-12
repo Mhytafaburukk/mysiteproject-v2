@@ -79,6 +79,15 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_interview_sessions_user ON interview_sessions(username);
 `);
 
+// --- MİGRASYON: users tablosuna native_lang ve learning_lang sütunları ---
+try {
+    db.exec(`ALTER TABLE users ADD COLUMN native_lang TEXT DEFAULT 'tr'`);
+} catch (e) { /* Sütun zaten var */ }
+
+try {
+    db.exec(`ALTER TABLE users ADD COLUMN learning_lang TEXT DEFAULT 'en'`);
+} catch (e) { /* Sütun zaten var */ }
+
 // --- YARDIMCI FONKSİYONLAR ---
 
 function hashPassword(password) {
@@ -93,14 +102,14 @@ function getUser(username) {
 }
 
 function getAllUsers() {
-    return db.prepare("SELECT id, username, profile_pic, is_ai, is_verified, known_words FROM users ORDER BY is_ai DESC, username ASC").all();
+    return db.prepare("SELECT id, username, profile_pic, is_ai, is_verified, known_words, native_lang, learning_lang FROM users ORDER BY is_ai DESC, username ASC").all();
 }
 
 function createUser(username, password, options = {}) {
     const hashed = hashPassword(password);
     const stmt = db.prepare(`
-        INSERT INTO users (username, password, known_words, profile_pic, is_ai, is_verified)
-        VALUES (?, ?, ?, ?, ?, ?)
+        INSERT INTO users (username, password, known_words, profile_pic, is_ai, is_verified, native_lang, learning_lang)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
     return stmt.run(
         username,
@@ -108,8 +117,16 @@ function createUser(username, password, options = {}) {
         options.knownWords || 0,
         options.profilePic || "",
         options.isAI ? 1 : 0,
-        options.isVerified ? 1 : 0
+        options.isVerified ? 1 : 0,
+        options.nativeLang || "tr",
+        options.learningLang || "en"
     );
+}
+
+function updateLanguagePreferences(username, nativeLang = "tr", learningLang = "en") {
+    return db.prepare(`
+        UPDATE users SET native_lang = ?, learning_lang = ? WHERE username = ?
+    `).run(nativeLang || "tr", learningLang || "en", username);
 }
 
 function verifyLogin(username, password) {
@@ -343,6 +360,7 @@ module.exports = {
     deactivateQuiz,
     saveInterviewSession,
     getInterviewSessions,
+    updateLanguagePreferences,
     migrateFromJSON
 };
 
