@@ -1,19 +1,25 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="dark">
 <head>
     <title>Giriş Yap - İngilizce Kelime Testi</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="design-system.css">
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="nav-container">
-        <a href="index.html" class="nav-link">Anasayfa</a>
-        <a href="kaydol.html" class="nav-link">Kayıt Ol</a>
-    </div>
+<body class="ds-page">
+    <header class="ds-topbar">
+        <span class="ds-eyebrow">English Learning Platform</span>
+        <nav class="ds-nav">
+            <a href="index.html" class="ds-navlink">Anasayfa</a>
+            <a href="giris.html" class="ds-navlink is-active">Giriş Yap</a>
+            <a href="kaydol.html" class="ds-navlink">Kayıt Ol</a>
+        </nav>
+    </header>
 
-    <div class="main-container">
+    <main class="main-container ds-animate-in">
+        <p class="ds-eyebrow">Tekrar hoş geldin</p>
         <h1 class="title">Giriş Yap</h1>
         <form id="girisForm" class="login-form">
             <div class="input-group">
@@ -27,7 +33,12 @@
             <button type="submit" id="submitBtn" class="btn-primary">Giriş Yap</button>
         </form>
         <div id="labelenter" class="status-message"></div>
-    </div>
+        <p class="ds-muted" style="margin: 0.5rem 0 0; font-size: 0.8125rem;">
+            Hesabın yok mu? <a href="kaydol.html" style="color: var(--ds-accent-hover); font-weight: 600;">Hemen kayıt ol</a>
+        </p>
+    </main>
+
+    <footer class="footer">© 2024 English Learning Platform</footer>
 
     <script>
 const LOGIN_URL = window.location.origin + "/login";
@@ -55,12 +66,12 @@ const LOGIN_URL = window.location.origin + "/login";
                 if (data.success) {
                     labelenter.style.color = "#28a745";
                     labelenter.textContent = "Giriş başarılı! Hoş geldiniz.";
-                    
+
                     // ÖNEMLİ: Kullanıcı ismini tarayıcıya kaydediyoruz
                     localStorage.setItem("username", username);
-                    
-                    setTimeout(() => { 
-                        window.location.href = "girisliindex.html"; 
+
+                    setTimeout(() => {
+                        window.location.href = "girisliindex.html";
                     }, 1000);
                 } else {
                     throw new Error(data.message || "Kullanıcı adı veya şifre hatalı.");

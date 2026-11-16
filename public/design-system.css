@@ -1,0 +1,729 @@
+/* ==========================================================================
+   design-system.css — English Learning Platform ortak tasarım sistemi
+   --------------------------------------------------------------------------
+   - Tüm token'lar `--ds-` önekiyle tanımlıdır; sayfalardaki mevcut
+     `--primary`, `--primary-color`, `--glass-bg` gibi değişkenlerle çakışmaz.
+   - Hiçbir mevcut ID'ye, JS fonksiyonuna veya eski sınıf adına dokunmaz.
+   - Kullanımı opt-in'dir: <html data-theme="dark"> + <body class="ds-page">
+   - Bileşenler yalnızca `ds-` önekli sınıflarla gelir.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. TOKEN'LAR — KOYU (varsayılan)
+   -------------------------------------------------------------------------- */
+:root {
+    color-scheme: dark;
+
+    /* Renk — yüzeyler */
+    --ds-bg: #07080B;
+    --ds-bg-elevated: #0C0E13;
+    --ds-surface: #11141A;
+    --ds-surface-2: #171B23;
+    --ds-surface-3: #1E232C;
+    --ds-overlay: rgba(4, 5, 8, 0.72);
+
+    /* Renk — metin */
+    --ds-text: #F4F5F7;
+    --ds-text-soft: #C7CBD3;
+    --ds-text-muted: #8B929E;
+    --ds-text-faint: #5C636E;
+
+    /* Renk — çizgi & vurgu */
+    --ds-border: rgba(255, 255, 255, 0.08);
+    --ds-border-strong: rgba(255, 255, 255, 0.14);
+    --ds-accent: #6C5CE7;
+    --ds-accent-hover: #7D6FF0;
+    --ds-accent-soft: rgba(108, 92, 231, 0.16);
+    --ds-accent-contrast: #FFFFFF;
+    --ds-cyan: #38BDF8;
+    --ds-success: #2FD6A0;
+    --ds-warning: #F5B544;
+    --ds-danger: #F2555A;
+
+    /* Tipografi */
+    --ds-font-sans: 'Plus Jakarta Sans', 'Poppins', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    --ds-font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+
+    --ds-fs-display: clamp(2.5rem, 5vw, 4rem);
+    --ds-fs-h1: clamp(1.75rem, 3vw, 2.5rem);
+    --ds-fs-h2: clamp(1.35rem, 2vw, 1.75rem);
+    --ds-fs-h3: 1.125rem;
+    --ds-fs-body: 0.95rem;
+    --ds-fs-sm: 0.8125rem;
+    --ds-fs-xs: 0.6875rem;
+    --ds-tracking-wide: 0.08em;
+
+    /* Ölçü & boşluk */
+    --ds-radius-xs: 8px;
+    --ds-radius-sm: 12px;
+    --ds-radius-md: 18px;
+    --ds-radius-lg: 24px;
+    --ds-radius-xl: 32px;
+    --ds-radius-pill: 999px;
+
+    --ds-gap: 16px;
+    --ds-pad: 24px;
+    --ds-container: 1180px;
+
+    /* Gölge & hareket */
+    --ds-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.35);
+    --ds-shadow-md: 0 10px 30px -12px rgba(0, 0, 0, 0.65);
+    --ds-shadow-lg: 0 28px 60px -24px rgba(0, 0, 0, 0.8);
+    --ds-glow: 0 0 0 1px rgba(108, 92, 231, 0.35), 0 18px 45px -20px rgba(108, 92, 231, 0.55);
+
+    --ds-ease: cubic-bezier(0.22, 0.8, 0.24, 1);
+    --ds-dur-fast: 140ms;
+    --ds-dur: 220ms;
+    --ds-dur-slow: 420ms;
+
+    --ds-focus-ring: 0 0 0 2px var(--ds-bg), 0 0 0 4px var(--ds-accent);
+
+    /* Kademeli giriş animasyonu için varsayılan gecikme çarpanı */
+    --ds-stagger: 60ms;
+}
+
+/* --------------------------------------------------------------------------
+   2. TOKEN'LAR — AÇIK TEMA
+   <html data-theme="light">
+   -------------------------------------------------------------------------- */
+[data-theme="light"] {
+    color-scheme: light;
+
+    --ds-bg: #F5F5F7;
+    --ds-bg-elevated: #FFFFFF;
+    --ds-surface: #FFFFFF;
+    --ds-surface-2: #F0F0F3;
+    --ds-surface-3: #E7E7EC;
+    --ds-overlay: rgba(18, 18, 22, 0.45);
+
+    --ds-text: #0B0C0F;
+    --ds-text-soft: #3A3D45;
+    --ds-text-muted: #6B707A;
+    --ds-text-faint: #9AA0A9;
+
+    --ds-border: rgba(11, 12, 15, 0.08);
+    --ds-border-strong: rgba(11, 12, 15, 0.14);
+    --ds-accent: #5B4BDB;
+    --ds-accent-hover: #4C3DCC;
+    --ds-accent-soft: rgba(91, 75, 219, 0.1);
+    --ds-cyan: #0891B2;
+    --ds-success: #0E9F76;
+    --ds-warning: #B57708;
+    --ds-danger: #D33A40;
+
+    --ds-shadow-sm: 0 1px 2px rgba(16, 18, 24, 0.06);
+    --ds-shadow-md: 0 12px 30px -16px rgba(16, 18, 24, 0.22);
+    --ds-shadow-lg: 0 30px 60px -30px rgba(16, 18, 24, 0.28);
+    --ds-glow: 0 0 0 1px rgba(91, 75, 219, 0.22), 0 18px 45px -24px rgba(91, 75, 219, 0.35);
+}
+
+/* --------------------------------------------------------------------------
+   3. SAYFA İSKELETİ (opt-in)
+   Yalnızca body.ds-page olan sayfalarda uygulanır; eski sayfalar etkilenmez.
+   -------------------------------------------------------------------------- */
+body.ds-page {
+    margin: 0;
+    min-height: 100vh;
+    min-height: 100dvh;
+    background:
+        radial-gradient(circle at 50% -10%, var(--ds-accent-soft) 0%, transparent 55%),
+        var(--ds-bg);
+    color: var(--ds-text);
+    font-family: var(--ds-font-sans);
+    font-size: var(--ds-fs-body);
+    line-height: 1.55;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body.ds-page *,
+body.ds-page *::before,
+body.ds-page *::after {
+    box-sizing: border-box;
+}
+
+body.ds-page a {
+    color: inherit;
+    text-decoration: none;
+}
+
+body.ds-page ::selection {
+    background: var(--ds-accent);
+    color: var(--ds-accent-contrast);
+}
+
+body.ds-page :focus-visible {
+    outline: none;
+    box-shadow: var(--ds-focus-ring);
+    border-radius: var(--ds-radius-xs);
+}
+
+/* İnce, tema uyumlu kaydırma çubuğu */
+body.ds-page * {
+    scrollbar-width: thin;
+    scrollbar-color: var(--ds-surface-3) transparent;
+}
+body.ds-page *::-webkit-scrollbar { width: 10px; height: 10px; }
+body.ds-page *::-webkit-scrollbar-thumb {
+    background: var(--ds-surface-3);
+    border-radius: var(--ds-radius-pill);
+    border: 3px solid transparent;
+    background-clip: padding-box;
+}
+
+/* --------------------------------------------------------------------------
+   4. TİPOGRAFİ
+   -------------------------------------------------------------------------- */
+.ds-display,
+.ds-h1,
+.ds-h2,
+.ds-h3 {
+    margin: 0;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    line-height: 1.12;
+    color: var(--ds-text);
+}
+
+.ds-display { font-size: var(--ds-fs-display); letter-spacing: -0.035em; }
+.ds-h1 { font-size: var(--ds-fs-h1); }
+.ds-h2 { font-size: var(--ds-fs-h2); }
+.ds-h3 { font-size: var(--ds-fs-h3); letter-spacing: -0.01em; }
+
+.ds-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: var(--ds-fs-xs);
+    font-weight: 700;
+    letter-spacing: var(--ds-tracking-wide);
+    text-transform: uppercase;
+    color: var(--ds-text-muted);
+}
+
+.ds-lede {
+    margin: 0;
+    font-size: 1.05rem;
+    color: var(--ds-text-soft);
+    max-width: 56ch;
+}
+
+.ds-muted { color: var(--ds-text-muted); }
+.ds-mono { font-family: var(--ds-font-mono); font-variant-numeric: tabular-nums; }
+
+/* --------------------------------------------------------------------------
+   5. YERLEŞİM
+   -------------------------------------------------------------------------- */
+.ds-container {
+    width: 100%;
+    max-width: var(--ds-container);
+    margin-inline: auto;
+    padding-inline: clamp(16px, 4vw, 32px);
+}
+
+.ds-section {
+    padding-block: clamp(28px, 5vw, 56px);
+}
+
+.ds-stack { display: flex; flex-direction: column; gap: var(--ds-gap); }
+.ds-row { display: flex; align-items: center; flex-wrap: wrap; gap: 12px; }
+.ds-row--between { justify-content: space-between; }
+.ds-center { display: flex; align-items: center; justify-content: center; }
+
+.ds-divider {
+    height: 1px;
+    border: 0;
+    background: var(--ds-border);
+    margin-block: var(--ds-gap);
+}
+
+/* Bento ızgara: 12 kolon, mobilde tek kolon */
+.ds-bento {
+    display: grid;
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    gap: var(--ds-gap);
+}
+
+.ds-bento > * { grid-column: span 12; min-width: 0; }
+
+@media (min-width: 640px) {
+    .ds-span-6 { grid-column: span 6; }
+    .ds-span-4 { grid-column: span 6; }
+    .ds-span-3 { grid-column: span 6; }
+}
+
+@media (min-width: 960px) {
+    .ds-span-6 { grid-column: span 6; }
+    .ds-span-4 { grid-column: span 4; }
+    .ds-span-3 { grid-column: span 3; }
+    .ds-span-8 { grid-column: span 8; }
+    .ds-span-9 { grid-column: span 9; }
+}
+
+/* --------------------------------------------------------------------------
+   6. KART / BENTO KUTUSU
+   -------------------------------------------------------------------------- */
+.ds-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: var(--ds-pad);
+    background: var(--ds-surface);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--ds-radius-lg);
+    box-shadow: var(--ds-shadow-sm);
+    transition:
+        transform var(--ds-dur) var(--ds-ease),
+        border-color var(--ds-dur) var(--ds-ease),
+        box-shadow var(--ds-dur) var(--ds-ease),
+        background-color var(--ds-dur) var(--ds-ease);
+}
+
+.ds-tile--flush { padding: 0; overflow: hidden; }
+.ds-tile--soft { background: var(--ds-surface-2); }
+
+.ds-tile--accent {
+    background:
+        radial-gradient(120% 120% at 100% 0%, var(--ds-accent-soft) 0%, transparent 60%),
+        var(--ds-surface);
+    border-color: rgba(108, 92, 231, 0.28);
+}
+
+.ds-tile--solid {
+    background: linear-gradient(150deg, var(--ds-accent) 0%, #4B3FCB 100%);
+    border-color: transparent;
+    color: #FFFFFF;
+    box-shadow: var(--ds-glow);
+}
+
+.ds-tile--solid .ds-eyebrow,
+.ds-tile--solid .ds-muted { color: rgba(255, 255, 255, 0.72); }
+
+.ds-tile--interactive { cursor: pointer; }
+
+.ds-tile--interactive:hover,
+.ds-tile--interactive:focus-visible {
+    transform: translateY(-3px);
+    border-color: var(--ds-border-strong);
+    box-shadow: var(--ds-shadow-md);
+}
+
+.ds-tile--interactive:active {
+    transform: translateY(-1px) scale(0.995);
+}
+
+/* İstatistik kutusu */
+.ds-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.ds-stat__value {
+    font-size: clamp(2rem, 4vw, 2.75rem);
+    font-weight: 800;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+    color: var(--ds-text);
+}
+
+.ds-stat__label {
+    font-size: var(--ds-fs-sm);
+    color: var(--ds-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   7. BUTONLAR
+   -------------------------------------------------------------------------- */
+.ds-btn {
+    --ds-btn-bg: var(--ds-surface-2);
+    --ds-btn-fg: var(--ds-text);
+    --ds-btn-border: var(--ds-border);
+
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 11px 20px;
+    border: 1px solid var(--ds-btn-border);
+    border-radius: var(--ds-radius-pill);
+    background: var(--ds-btn-bg);
+    color: var(--ds-btn-fg);
+    font-family: inherit;
+    font-size: var(--ds-fs-body);
+    font-weight: 600;
+    line-height: 1;
+    cursor: pointer;
+    white-space: nowrap;
+    transition:
+        background-color var(--ds-dur-fast) var(--ds-ease),
+        border-color var(--ds-dur-fast) var(--ds-ease),
+        transform var(--ds-dur-fast) var(--ds-ease),
+        box-shadow var(--ds-dur-fast) var(--ds-ease),
+        color var(--ds-dur-fast) var(--ds-ease);
+}
+
+.ds-btn:hover { background: var(--ds-surface-3); border-color: var(--ds-border-strong); }
+.ds-btn:active { transform: scale(0.98); }
+.ds-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.ds-btn--primary {
+    --ds-btn-bg: var(--ds-accent);
+    --ds-btn-fg: var(--ds-accent-contrast);
+    --ds-btn-border: transparent;
+    box-shadow: 0 10px 24px -12px rgba(108, 92, 231, 0.85);
+}
+.ds-btn--primary:hover {
+    background: var(--ds-accent-hover);
+    border-color: transparent;
+    box-shadow: 0 14px 30px -12px rgba(108, 92, 231, 0.95);
+}
+
+.ds-btn--ghost {
+    --ds-btn-bg: transparent;
+    --ds-btn-border: transparent;
+    color: var(--ds-text-soft);
+}
+.ds-btn--ghost:hover {
+    background: var(--ds-surface-2);
+    color: var(--ds-text);
+}
+
+.ds-btn--danger {
+    --ds-btn-bg: rgba(242, 85, 90, 0.12);
+    --ds-btn-fg: var(--ds-danger);
+    --ds-btn-border: rgba(242, 85, 90, 0.32);
+}
+.ds-btn--danger:hover { background: rgba(242, 85, 90, 0.2); border-color: rgba(242, 85, 90, 0.45); }
+
+.ds-btn--sm { padding: 8px 14px; font-size: var(--ds-fs-sm); }
+.ds-btn--lg { padding: 14px 26px; font-size: 1rem; }
+.ds-btn--block { width: 100%; }
+
+/* --------------------------------------------------------------------------
+   8. FORMLAR
+   -------------------------------------------------------------------------- */
+.ds-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    text-align: left;
+}
+
+.ds-label {
+    font-size: var(--ds-fs-sm);
+    font-weight: 600;
+    color: var(--ds-text-soft);
+}
+
+.ds-input,
+.ds-select,
+.ds-textarea {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--ds-surface-2);
+    border: 1px solid var(--ds-border);
+    border-radius: var(--ds-radius-sm);
+    color: var(--ds-text);
+    font-family: inherit;
+    font-size: var(--ds-fs-body);
+    transition:
+        border-color var(--ds-dur-fast) var(--ds-ease),
+        background-color var(--ds-dur-fast) var(--ds-ease),
+        box-shadow var(--ds-dur-fast) var(--ds-ease);
+}
+
+.ds-input::placeholder,
+.ds-textarea::placeholder { color: var(--ds-text-faint); }
+
+.ds-input:hover,
+.ds-select:hover,
+.ds-textarea:hover { border-color: var(--ds-border-strong); }
+
+.ds-input:focus,
+.ds-select:focus,
+.ds-textarea:focus {
+    outline: none;
+    border-color: var(--ds-accent);
+    background: var(--ds-surface);
+    box-shadow: 0 0 0 4px var(--ds-accent-soft);
+}
+
+.ds-help {
+    font-size: var(--ds-fs-xs);
+    color: var(--ds-text-muted);
+}
+
+/* --------------------------------------------------------------------------
+   9. ROZET / PİL / AVATAR
+   -------------------------------------------------------------------------- */
+.ds-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 11px;
+    border-radius: var(--ds-radius-pill);
+    background: var(--ds-surface-2);
+    border: 1px solid var(--ds-border);
+    font-size: var(--ds-fs-xs);
+    font-weight: 600;
+    color: var(--ds-text-soft);
+    white-space: nowrap;
+}
+
+.ds-pill--accent {
+    background: var(--ds-accent-soft);
+    border-color: rgba(108, 92, 231, 0.35);
+    color: var(--ds-accent-hover);
+}
+
+.ds-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding-inline: 5px;
+    border-radius: var(--ds-radius-pill);
+    background: var(--ds-danger);
+    color: #FFFFFF;
+    font-size: 10px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.ds-avatar {
+    width: 40px;
+    height: 40px;
+    flex: 0 0 auto;
+    border-radius: 50%;
+    object-fit: cover;
+    background: var(--ds-surface-3);
+    border: 1px solid var(--ds-border-strong);
+}
+
+.ds-avatar--lg { width: 72px; height: 72px; }
+
+/* --------------------------------------------------------------------------
+   10. ÜST BAR / NAVİGASYON
+   -------------------------------------------------------------------------- */
+.ds-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    row-gap: 8px;
+    padding: 10px clamp(12px, 3vw, 24px);
+    background: color-mix(in srgb, var(--ds-bg) 82%, transparent);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border-bottom: 1px solid var(--ds-border);
+}
+
+.ds-nav {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    min-width: 0;
+    padding: 4px;
+    border-radius: var(--ds-radius-pill);
+    background: var(--ds-surface);
+    border: 1px solid var(--ds-border);
+    max-width: 100%;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+.ds-nav::-webkit-scrollbar { display: none; }
+
+.ds-navlink {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: var(--ds-radius-pill);
+    color: var(--ds-text-muted);
+    font-size: var(--ds-fs-sm);
+    font-weight: 600;
+    white-space: nowrap;
+    transition:
+        color var(--ds-dur-fast) var(--ds-ease),
+        background-color var(--ds-dur-fast) var(--ds-ease);
+}
+
+.ds-navlink:hover { color: var(--ds-text); background: var(--ds-surface-2); }
+
+.ds-navlink.is-active {
+    color: var(--ds-text);
+    background: var(--ds-surface-3);
+    box-shadow: var(--ds-shadow-sm);
+}
+
+/* --------------------------------------------------------------------------
+   11. İLERLEME ÇUBUĞU
+   -------------------------------------------------------------------------- */
+.ds-progress {
+    width: 100%;
+    height: 8px;
+    border-radius: var(--ds-radius-pill);
+    background: var(--ds-surface-3);
+    overflow: hidden;
+}
+
+.ds-progress__fill {
+    height: 100%;
+    width: 0%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, var(--ds-accent), var(--ds-cyan));
+    transition: width 600ms var(--ds-ease);
+}
+
+/* --------------------------------------------------------------------------
+   12. MODAL
+   -------------------------------------------------------------------------- */
+.ds-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    background: var(--ds-overlay);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+}
+
+.ds-modal[hidden] { display: none; }
+
+.ds-modal__panel {
+    width: 100%;
+    max-width: 440px;
+    max-height: min(90dvh, 720px);
+    overflow: auto;
+    padding: 24px;
+    border-radius: var(--ds-radius-lg);
+    background: var(--ds-surface);
+    border: 1px solid var(--ds-border-strong);
+    box-shadow: var(--ds-shadow-lg);
+    animation: ds-scale-in var(--ds-dur) var(--ds-ease);
+}
+
+.ds-modal__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+/* --------------------------------------------------------------------------
+   13. TABLO
+   -------------------------------------------------------------------------- */
+.ds-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: var(--ds-fs-sm);
+}
+
+.ds-table th,
+.ds-table td {
+    padding: 12px 14px;
+    text-align: left;
+    border-bottom: 1px solid var(--ds-border);
+}
+
+.ds-table th {
+    font-size: var(--ds-fs-xs);
+    font-weight: 700;
+    letter-spacing: var(--ds-tracking-wide);
+    text-transform: uppercase;
+    color: var(--ds-text-muted);
+}
+
+.ds-table tbody tr {
+    transition: background-color var(--ds-dur-fast) var(--ds-ease);
+}
+
+.ds-table tbody tr:hover { background: var(--ds-surface-2); }
+
+/* --------------------------------------------------------------------------
+   14. MİKRO ANİMASYONLAR
+   -------------------------------------------------------------------------- */
+@keyframes ds-fade-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes ds-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes ds-scale-in {
+    from { opacity: 0; transform: scale(0.96); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes ds-pulse {
+    0%, 100% { opacity: 0.45; transform: scale(0.9); }
+    50% { opacity: 1; transform: scale(1); }
+}
+
+/* Kademeli giriş: data-ds-delay="1..8" veya inline --ds-i kullanın */
+.ds-animate-in {
+    animation: ds-fade-up var(--ds-dur-slow) var(--ds-ease) both;
+    animation-delay: calc(var(--ds-i, 0) * var(--ds-stagger));
+}
+
+.ds-animate-scale { animation: ds-scale-in var(--ds-dur) var(--ds-ease) both; }
+.ds-animate-fade { animation: ds-fade-in var(--ds-dur) var(--ds-ease) both; }
+
+.ds-live-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--ds-success);
+    box-shadow: 0 0 0 0 rgba(47, 214, 160, 0.6);
+    animation: ds-pulse 2s var(--ds-ease) infinite;
+}
+
+/* Hareket azaltma tercihine saygı */
+@media (prefers-reduced-motion: reduce) {
+    body.ds-page *,
+    body.ds-page *::before,
+    body.ds-page *::after {
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.001ms !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+/* --------------------------------------------------------------------------
+   15. ESKİ SAYFALAR İÇİN KÖPRÜ (isteğe bağlı)
+   Sayfa başına eski değişkenleri yeni token'lara bağlamak için örnek:
+   :root {
+       --primary: var(--ds-accent);
+       --primary-color: var(--ds-accent);
+       --secondary: var(--ds-cyan);
+       --bg-color: var(--ds-bg);
+       --card-bg: var(--ds-surface);
+       --card-border: var(--ds-border);
+       --text-main: var(--ds-text);
+       --text-muted: var(--ds-text-muted);
+       --success: var(--ds-success);
+       --danger: var(--ds-danger);
+   }
+   Böylece mevcut sınıf/ID seçicileri hiç değişmeden yeni paleti kullanır.
+   -------------------------------------------------------------------------- */

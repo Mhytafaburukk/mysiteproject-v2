@@ -1,121 +1,140 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="dark">
 
 <head>
     <title>English Learning Platform</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="design-system.css">
     <link rel="stylesheet" href="style.css">
     <style>
-        .hero-section {
-            text-align: center;
-            padding: 2rem;
-            max-width: 800px;
-        }
-
-        .hero-title {
-            font-size: 3rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            background: -webkit-linear-gradient(45deg, #fff, #e0e0e0);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-
-        .hero-subtitle {
-            font-size: 1.2rem;
-            margin-bottom: 2rem;
-            color: rgba(255, 255, 255, 0.9);
-        }
-
-        .features-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 20px;
-            margin-top: 3rem;
-        }
-
-        .feature-card {
-            background: rgba(255, 255, 255, 0.1);
-            backdrop-filter: blur(10px);
-            padding: 2rem;
-            border-radius: 20px;
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            transition: transform 0.3s;
-            text-align: left;
-        }
-
-        .feature-card:hover {
-            transform: translateY(-5px);
-            background: rgba(255, 255, 255, 0.2);
+        .hero-title-accent {
+            display: block;
+            color: var(--ds-accent-hover);
         }
 
         .feature-icon {
-            font-size: 2.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .feature-title {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
-            font-weight: 600;
-        }
-
-        .cta-buttons {
+            font-size: 1.6rem;
+            line-height: 1;
+            width: 44px;
+            height: 44px;
             display: flex;
-            gap: 15px;
+            align-items: center;
             justify-content: center;
-            margin-top: 2rem;
+            border-radius: var(--ds-radius-sm);
+            background: var(--ds-surface-2);
+            border: 1px solid var(--ds-border);
+            margin-bottom: 4px;
         }
 
-        .btn-large {
-            padding: 15px 30px;
-            font-size: 1.2rem;
+        .hero-actions {
+            margin-top: 10px;
+        }
+
+        .mentor-mark {
+            align-self: center;
+            width: 96px;
+            height: 96px;
+            margin: 6px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.4rem;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.12);
+            border: 1px solid rgba(255, 255, 255, 0.22);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.18), 0 24px 40px -24px rgba(0, 0, 0, 0.65);
+        }
+
+        .hero-actions .ds-btn {
+            min-width: 150px;
+        }
+
+        @media (max-width: 420px) {
+            .hero-actions {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .hero-actions .ds-btn {
+                width: 100%;
+            }
         }
     </style>
 </head>
 
-<body>
+<body class="ds-page">
 
-    <div class="nav-container">
-        <a href="index.html" class="nav-link">Anasayfa</a>
-        <a href="giris.html" class="nav-link" style="background:white; color:var(--primary-color);">Giriş Yap</a>
-        <a href="kaydol.html" class="nav-link">Kayıt Ol</a>
-    </div>
-
-    <div class="hero-section">
-        <h1 class="hero-title">İngilizce Öğrenmenin<br>Modern Yolu</h1>
-        <p class="hero-subtitle">Kelime hazineni geliştir, dinleme becerilerini test et ve arkadaşlarınla yarış.</p>
-
-        <div class="cta-buttons">
-            <a href="giris.html" class="btn-primary btn-large">Hemen Başla</a>
-            <a href="kaydol.html" class="btn-secondary btn-large" style="color:white; border-color:white;">Hesap
-                Oluştur</a>
+    <header class="ds-topbar">
+        <div class="ds-row" style="gap: 10px;">
+            <span class="ds-live-dot"></span>
+            <span class="ds-eyebrow">English Learning Platform</span>
         </div>
+        <nav class="ds-nav">
+            <a href="index.html" class="ds-navlink is-active">Anasayfa</a>
+            <a href="giris.html" class="ds-navlink">Giriş Yap</a>
+            <a href="kaydol.html" class="ds-navlink">Kayıt Ol</a>
+        </nav>
+    </header>
 
-        <div class="features-grid">
-            <div class="feature-card">
+    <main class="ds-container ds-section">
+        <div class="ds-bento">
+
+            <section class="ds-tile ds-span-8 ds-tile--accent ds-animate-in"
+                style="--ds-i: 0; padding: clamp(28px, 5vw, 56px); gap: 18px;">
+                <p class="ds-eyebrow">Kelime · Dinleme · Konuşma</p>
+                <h1 class="ds-display">İngilizce öğrenmenin
+                    <span class="hero-title-accent">modern yolu</span>
+                </h1>
+                <p class="ds-lede">Kelime hazineni geliştir, dinleme becerilerini test et ve arkadaşlarınla
+                    yarış.</p>
+                <div class="ds-row hero-actions">
+                    <a href="giris.html" class="ds-btn ds-btn--primary ds-btn--lg">Hemen Başla</a>
+                    <a href="kaydol.html" class="ds-btn ds-btn--lg">Hesap Oluştur</a>
+                </div>
+            </section>
+
+            <aside class="ds-tile ds-span-4 ds-tile--solid ds-animate-in"
+                style="--ds-i: 1; justify-content: space-between; gap: 14px;">
+                <div class="ds-stack" style="gap: 8px;">
+                    <p class="ds-eyebrow">Canlı Mentor</p>
+                    <h2 class="ds-h2">English_Mentor</h2>
+                    <p class="ds-muted">Sorularına anında yanıt veren, cümlelerini düzelten yapay zeka eğitmenin.</p>
+                </div>
+                <div class="mentor-mark" aria-hidden="true">🎓</div>
+                <div class="ds-row" style="gap: 8px;">
+                    <span class="ds-pill" style="background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.24); color: #fff;">🎓 Konuşma pratiği</span>
+                    <span class="ds-pill" style="background: rgba(255,255,255,0.14); border-color: rgba(255,255,255,0.24); color: #fff;">⚡ 7/24</span>
+                </div>
+            </aside>
+
+            <article class="ds-tile ds-span-4 ds-tile--interactive ds-animate-in" style="--ds-i: 2;">
                 <div class="feature-icon">📚</div>
-                <h3 class="feature-title">Kelime Testi</h3>
-                <p>Binlerce kelime ile kendini sına. Yanlış yaptıklarını tekrar ederek öğren.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">🎧</div>
-                <h3 class="feature-title">Dinleme & Eşleştirme</h3>
-                <p>Duyduğun kelimeleri görsellerle eşleştirerek hafızanı güçlendir.</p>
-            </div>
-            <div class="feature-card">
-                <div class="feature-icon">💬</div>
-                <h3 class="feature-title">Global Mesajlaşma</h3>
-                <p>Diğer öğrencilerle iletişim kur ve pratik yap.</p>
-            </div>
-        </div>
-    </div>
+                <h3 class="ds-h3">Kelime Testi</h3>
+                <p class="ds-muted" style="margin: 0;">Binlerce kelime ile kendini sına. Yanlış yaptıklarını tekrar
+                    ederek öğren.</p>
+            </article>
 
-    <div class="footer">
+            <article class="ds-tile ds-span-4 ds-tile--interactive ds-animate-in" style="--ds-i: 3;">
+                <div class="feature-icon">🎧</div>
+                <h3 class="ds-h3">Dinleme &amp; Eşleştirme</h3>
+                <p class="ds-muted" style="margin: 0;">Duyduğun kelimeleri görsellerle eşleştirerek hafızanı
+                    güçlendir.</p>
+            </article>
+
+            <article class="ds-tile ds-span-4 ds-tile--interactive ds-animate-in" style="--ds-i: 4;">
+                <div class="feature-icon">💬</div>
+                <h3 class="ds-h3">Global Mesajlaşma</h3>
+                <p class="ds-muted" style="margin: 0;">Diğer öğrencilerle iletişim kur ve pratik yap.</p>
+            </article>
+
+        </div>
+    </main>
+
+    <footer class="footer">
         © 2024 English Learning Platform
-    </div>
+    </footer>
 
 </body>
 

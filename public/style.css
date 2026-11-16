@@ -1,23 +1,43 @@
+/* ==========================================================================
+   style.css — ortak temel stiller
+   Yeni tasarım token'ları design-system.css'ten gelir. Bu dosya yüklenmeyen
+   sayfalarda eski görünüm bozulmasın diye her token'ın bir fallback'i vardır.
+   ========================================================================== */
+
 :root {
-    --primary-color: #6a11cb;
-    --secondary-color: #2575fc;
-    --text-color: #333;
-    --bg-gradient: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
-    --glass-bg: rgba(255, 255, 255, 0.95);
-    --glass-border: rgba(255, 255, 255, 0.3);
-    --input-bg: #f5f7fa;
-    --shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+    /* Eski değişkenler → yeni tasarım sistemi köprüsü */
+    --primary-color: var(--ds-accent, #6a11cb);
+    --secondary-color: var(--ds-cyan, #2575fc);
+    --text-color: var(--ds-text, #333);
+    --bg-gradient: linear-gradient(135deg, var(--ds-accent, #6a11cb) 0%, #4b3fcb 100%);
+    --glass-bg: var(--ds-surface, rgba(255, 255, 255, 0.95));
+    --glass-border: var(--ds-border, rgba(255, 255, 255, 0.3));
+    --input-bg: var(--ds-surface-2, #f5f7fa);
+    --shadow: var(--ds-shadow-lg, 0 8px 32px 0 rgba(31, 38, 135, 0.37));
 }
 
 body {
     margin: 0;
-    font-family: 'Poppins', sans-serif;
-    background: var(--bg-gradient);
+    font-family: var(--ds-font-sans, 'Poppins', sans-serif);
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
     min-height: 100vh;
     display: flex;
     flex-direction: column;
     align-items: center;
-    color: var(--text-color);
+    color: var(--ds-text, #333);
+    -webkit-font-smoothing: antialiased;
+}
+
+/* Yeni tasarım sistemi kullanılan sayfalar */
+body.ds-page {
+    background:
+        radial-gradient(circle at 50% -10%, var(--ds-accent-soft) 0%, transparent 55%),
+        var(--ds-bg);
+    color: var(--ds-text);
+}
+
+body.ds-page .ds-topbar {
+    align-self: stretch;
 }
 
 a {
@@ -26,7 +46,7 @@ a {
     transition: all 0.3s ease;
 }
 
-/* Navigation */
+/* Navigation (eski sayfalar için korunur) */
 .nav-container {
     background: rgba(255, 255, 255, 0.1);
     backdrop-filter: blur(10px);
@@ -55,29 +75,37 @@ a {
 
 /* Main Content */
 .main-container {
-    background: var(--glass-bg);
-    backdrop-filter: blur(20px);
-    border-radius: 20px;
-    padding: 3rem;
-    margin-top: 2rem;
-    width: 400px;
-    box-shadow: var(--shadow);
+    background: var(--ds-surface, var(--glass-bg));
     border: 1px solid var(--glass-border);
+    border-radius: var(--ds-radius-xl, 20px);
+    padding: clamp(24px, 4vw, 40px);
+    margin: clamp(24px, 5vw, 48px) auto 0;
+    width: min(440px, calc(100% - 32px));
+    box-shadow: var(--shadow);
     text-align: center;
+    color: var(--ds-text, var(--text-color));
+    box-sizing: border-box;
+}
+
+body.ds-page .main-container {
+    backdrop-filter: blur(18px);
+    -webkit-backdrop-filter: blur(18px);
 }
 
 .hero-image {
     width: 100%;
     max-width: 460px;
-    border-radius: 15px;
+    border-radius: calc(var(--ds-radius-lg, 20px) - 6px);
     margin-bottom: 1.5rem;
-    box-shadow: 0 10px 20px rgba(0,0,0,0.2);
+    box-shadow: var(--ds-shadow-md, 0 10px 20px rgba(0,0,0,0.2));
 }
 
 h1.title {
-    color: var(--primary-color);
-    font-size: 2rem;
-    margin-bottom: 1.5rem;
+    color: var(--ds-text, var(--primary-color));
+    font-size: clamp(1.6rem, 3vw, 2rem);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin: 0 0 1.5rem;
 }
 
 /* Form Styles */
@@ -85,6 +113,7 @@ h1.title {
     display: flex;
     flex-direction: column;
     gap: 1.2rem;
+    margin-top: 1.25rem;
 }
 
 .input-group {
@@ -95,76 +124,110 @@ h1.title {
     display: block;
     margin-bottom: 0.5rem;
     font-weight: 600;
-    color: #555;
-    font-size: 0.9rem;
+    color: var(--ds-text-soft, #555);
+    font-size: 0.8125rem;
 }
 
 .styled-input {
     width: 100%;
-    padding: 12px;
-    border: 2px solid #e0e0e0;
-    border-radius: 10px;
+    padding: 13px 16px;
+    border: 1px solid var(--ds-border, #e0e0e0);
+    border-radius: var(--ds-radius-sm, 10px);
     background: var(--input-bg);
+    color: var(--ds-text, #333);
+    font-family: inherit;
     font-size: 1rem;
-    transition: all 0.3s;
+    transition:
+        border-color var(--ds-dur-fast, 0.3s) var(--ds-ease, ease),
+        background-color var(--ds-dur-fast, 0.3s) var(--ds-ease, ease),
+        box-shadow var(--ds-dur-fast, 0.3s) var(--ds-ease, ease);
     box-sizing: border-box;
 }
 
+.styled-input::placeholder {
+    color: var(--ds-text-faint, #9aa0a9);
+}
+
+.styled-input:hover {
+    border-color: var(--ds-border-strong, #d0d0d0);
+}
+
 .styled-input:focus {
-    border-color: var(--secondary-color);
-    background: white;
+    border-color: var(--ds-accent, var(--secondary-color));
+    background: var(--ds-surface, white);
     outline: none;
-    box-shadow: 0 0 0 3px rgba(37, 117, 252, 0.1);
+    box-shadow: 0 0 0 4px var(--ds-accent-soft, rgba(37, 117, 252, 0.1));
 }
 
 .btn-primary {
-    background: var(--bg-gradient);
-    color: white;
-    border: none;
-    padding: 12px;
-    border-radius: 10px;
-    font-size: 1.1rem;
+    background: var(--ds-accent, var(--primary-color));
+    color: var(--ds-accent-contrast, white);
+    border: 1px solid transparent;
+    padding: 13px 20px;
+    border-radius: var(--ds-radius-pill, 10px);
+    font-family: inherit;
+    font-size: 1rem;
     font-weight: 600;
     cursor: pointer;
-    transition: transform 0.2s, box-shadow 0.2s;
+    box-shadow: 0 10px 24px -12px rgba(108, 92, 231, 0.85);
+    transition:
+        background-color var(--ds-dur-fast, 0.2s) var(--ds-ease, ease),
+        transform var(--ds-dur-fast, 0.2s) var(--ds-ease, ease),
+        box-shadow var(--ds-dur-fast, 0.2s) var(--ds-ease, ease);
 }
 
 .btn-primary:hover {
+    background: var(--ds-accent-hover, var(--secondary-color));
     transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(37, 117, 252, 0.4);
+    box-shadow: 0 14px 30px -12px rgba(108, 92, 231, 0.95);
+}
+
+.btn-primary:active {
+    transform: scale(0.99);
+}
+
+.btn-primary:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
 }
 
 .btn-secondary {
     background: transparent;
-    color: #777;
-    border: 2px solid #e0e0e0;
-    padding: 10px;
-    border-radius: 10px;
-    font-size: 1rem;
+    color: var(--ds-text-soft, #777);
+    border: 1px solid var(--ds-border-strong, #e0e0e0);
+    padding: 12px 18px;
+    border-radius: var(--ds-radius-pill, 10px);
+    font-family: inherit;
+    font-size: 0.95rem;
+    font-weight: 600;
     cursor: pointer;
     transition: all 0.3s;
 }
 
 .btn-secondary:hover {
-    background: #f5f5f5;
-    color: #333;
+    background: var(--ds-surface-2, #f5f5f5);
+    color: var(--ds-text, #333);
+    border-color: var(--ds-border-strong, #d0d0d0);
 }
 
 .status-message {
-    color: #dc3545;
+    color: var(--ds-danger, #dc3545);
     margin-top: 1rem;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     min-height: 20px;
 }
 
 .footer {
     margin-top: 3rem;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 0.9rem;
-}
-.admin-card {
-    border: 2px solid #ff4d4d !important;
-    background: rgba(255, 230, 230, 0.9) !important;
-    color: #333 !important;
+    padding: 20px;
+    color: var(--ds-text-faint, rgba(255, 255, 255, 0.8));
+    font-size: 0.8125rem;
+    text-align: center;
 }
 
+.admin-card {
+    border: 1px solid rgba(242, 85, 90, 0.45) !important;
+    background: rgba(242, 85, 90, 0.1) !important;
+    color: var(--ds-text, #333) !important;
+}

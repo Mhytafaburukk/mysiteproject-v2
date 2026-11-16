@@ -1,11 +1,12 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="dark">
 
 <head>
     <title>Panel - English Learning Platform</title>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="design-system.css">
     <link rel="stylesheet" href="style.css">
     <style>
         .dashboard-container {
@@ -178,139 +179,310 @@
             padding: 20px;
         }
     </style>
+    <style>
+        /* --- YENİ PANEL KATMANI (design-system.css üzerine) --- */
+        .dashboard-wrap {
+            display: flex;
+            flex-direction: column;
+            gap: var(--ds-gap);
+            width: 100%;
+        }
+
+        .topbar-actions { min-width: 0; }
+
+        .welcome-text {
+            margin: 0;
+            font-size: clamp(1.6rem, 3vw, 2.15rem);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: var(--ds-text);
+        }
+
+        #dashboardLangBanner {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 10px;
+            padding: 12px 16px;
+            background: var(--ds-surface);
+            border: 1px solid var(--ds-border);
+            border-radius: var(--ds-radius-md);
+            color: var(--ds-text-soft);
+            font-size: 0.875rem;
+        }
+
+        #dashboardLangBanner [data-i18n] { color: var(--ds-text-muted); }
+
+        .menu-grid {
+            display: grid;
+            grid-template-columns: repeat(12, minmax(0, 1fr));
+            gap: var(--ds-gap);
+        }
+
+        .menu-card {
+            grid-column: span 12;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 6px;
+            min-height: 156px;
+            padding: var(--ds-pad);
+            background: var(--ds-surface);
+            border: 1px solid var(--ds-border);
+            border-radius: var(--ds-radius-lg);
+            color: var(--ds-text);
+            text-align: left;
+            cursor: pointer;
+            transition:
+                transform var(--ds-dur) var(--ds-ease),
+                border-color var(--ds-dur) var(--ds-ease),
+                box-shadow var(--ds-dur) var(--ds-ease);
+        }
+
+        .menu-card h3 {
+            margin: 0;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: -0.01em;
+            color: inherit;
+        }
+
+        .menu-card p {
+            margin: 0;
+            font-size: 0.8125rem;
+            color: var(--ds-text-muted);
+            line-height: 1.45;
+        }
+
+        .menu-card:hover,
+        .menu-card:focus-visible {
+            transform: translateY(-3px);
+            border-color: var(--ds-border-strong);
+            box-shadow: var(--ds-shadow-md);
+        }
+
+        .menu-card--accent {
+            background:
+                radial-gradient(120% 120% at 100% 0%, rgba(108, 92, 231, 0.35) 0%, transparent 60%),
+                var(--ds-surface);
+            border-color: rgba(108, 92, 231, 0.35);
+        }
+
+        .menu-card--solid {
+            background: linear-gradient(150deg, var(--ds-accent) 0%, #4b3fcb 100%);
+            border-color: transparent;
+            box-shadow: var(--ds-glow);
+        }
+
+        .menu-card--solid p { color: rgba(255, 255, 255, 0.78); }
+
+        .menu-icon {
+            font-size: 1.6rem;
+            line-height: 1;
+        }
+
+        @media (max-width: 720px) {
+            .ds-nav {
+                flex-wrap: wrap;
+                overflow-x: visible;
+                justify-content: center;
+            }
+        }
+
+        @media (min-width: 640px) {
+            .menu-card { grid-column: span 6; }
+        }
+
+        @media (min-width: 1100px) {
+            .menu-card { grid-column: span 4; }
+        }
+
+        /* Bildirimler */
+        .notif-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+        }
+
+        .notif-bell {
+            font-size: 1.15rem;
+            line-height: 1;
+            opacity: 0.85;
+            transition: opacity var(--ds-dur-fast) var(--ds-ease);
+        }
+
+        .notif-container:hover .notif-bell { opacity: 1; }
+
+        .notif-badge {
+            position: absolute;
+            top: -6px;
+            right: -8px;
+            min-width: 18px;
+            height: 18px;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 0 5px;
+            border-radius: var(--ds-radius-pill);
+            background: var(--ds-danger);
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .notif-dropdown {
+            position: absolute;
+            top: 36px;
+            right: -8px;
+            width: 264px;
+            display: none;
+            z-index: 2000;
+            overflow: hidden;
+            background: var(--ds-surface);
+            border: 1px solid var(--ds-border-strong);
+            border-radius: var(--ds-radius-md);
+            box-shadow: var(--ds-shadow-lg);
+            color: var(--ds-text);
+        }
+
+        .notif-dropdown.show { display: block; }
+
+        .notif-header {
+            padding: 12px 14px;
+            background: var(--ds-surface-2);
+            border-bottom: 1px solid var(--ds-border);
+            font-size: 12px;
+            font-weight: 700;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            color: var(--ds-text-muted);
+        }
+
+        .notif-item {
+            padding: 12px 14px;
+            border-bottom: 1px solid var(--ds-border);
+            font-size: 13px;
+            line-height: 1.4;
+            color: var(--ds-text-soft);
+            text-align: left;
+            cursor: pointer;
+            transition: background-color var(--ds-dur-fast) var(--ds-ease);
+        }
+
+        .notif-item:hover { background: var(--ds-surface-2); }
+        .notif-item:last-child { border-bottom: none; }
+
+        .admin-card h3 { color: var(--ds-danger); }
+    </style>
 </head>
 
-<body>
+<body class="ds-page">
 
-    <div class="nav-container">
-        <div class="notif-container" id="notifBtn">
-            <span class="notif-bell">🔔</span>
-            <span class="notif-badge" id="notifCount">0</span>
-            <div class="notif-dropdown" id="notifBox">
-                <div class="notif-header">Bildirimler</div>
-                <div id="notifList">
-                    <div style="padding:15px; text-align:center; color:#999; font-size:12px;">Yeni mesaj yok</div>
+    <header class="ds-topbar">
+        <div class="ds-row" style="gap: 10px;">
+            <span class="ds-live-dot"></span>
+            <span class="ds-eyebrow">Panel</span>
+        </div>
+
+        <div class="ds-row topbar-actions" style="gap: 10px; justify-content: flex-end; flex: 1;">
+            <div class="notif-container" id="notifBtn">
+                <span class="notif-bell">🔔</span>
+                <span class="notif-badge" id="notifCount">0</span>
+                <div class="notif-dropdown" id="notifBox">
+                    <div class="notif-header">Bildirimler</div>
+                    <div id="notifList">
+                        <div style="padding:15px; text-align:center; color:var(--ds-text-faint); font-size:12px;">Yeni mesaj yok</div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="navLangPill" class="ds-pill ds-pill--accent" onclick="LanguageManager.openModal(updateDashboardLangDisplay)" style="cursor: pointer;" title="Dil Tercihlerini Değiştir">
+                <span id="navLangPillText">🇬🇧 İngilizce ➔ 🇹🇷 Türkçe</span> ⚙️
+            </div>
+
+            <nav class="ds-nav">
+                <a href="girisliindex.html" class="ds-navlink is-active">Panel</a>
+                <a href="video_call.html" class="ds-navlink">📹 <span data-i18n="videoMentor">Görüntülü Arama</span></a>
+                <a href="mock_interview.html" class="ds-navlink">🎯 <span data-i18n="mockInterview">Mock Interview</span></a>
+                <button id="logoutBtn" class="ds-btn ds-btn--ghost ds-btn--sm" data-i18n="logout">Çıkış Yap</button>
+            </nav>
+        </div>
+    </header>
+
+    <main class="ds-container ds-section" style="flex: 1 0 auto; width: 100%;">
+        <div class="dashboard-wrap">
+            <div class="welcome-text" id="welcomeMsg">Hoşgeldiniz</div>
+
+            <div id="dashboardLangBanner">
+                <div class="ds-row" style="gap: 10px;">
+                    <span>🎯 <span data-i18n="learningLang">Öğrenilen Dil</span>: <strong id="dashLearningBadge" style="color: #38bdf8;">🇬🇧 İngilizce</strong></span>
+                    <span style="color: var(--ds-text-faint);">|</span>
+                    <span>🏠 <span data-i18n="nativeLang">Ana Dil</span>: <strong id="dashNativeBadge" style="color: #34d399;">🇹🇷 Türkçe</strong></span>
+                </div>
+                <button type="button" class="ds-btn ds-btn--sm" onclick="LanguageManager.openModal(updateDashboardLangDisplay)" data-i18n="changeLanguage">🌐 Dili Değiştir</button>
+            </div>
+
+            <div class="ds-bento">
+                <section class="ds-tile ds-span-4 ds-animate-in" style="--ds-i: 0; justify-content: space-between;">
+                    <p class="ds-eyebrow" data-i18n="progressTitle">İlerleme Durumu</p>
+                    <div class="ds-stat">
+                        <div class="ds-stat__value" id="knownCount">0</div>
+                        <div class="ds-stat__label" data-i18n="knownWords">Bilinen Kelime Sayısı</div>
+                    </div>
+                    <div class="ds-progress">
+                        <div class="ds-progress__fill" id="progressFill"></div>
+                    </div>
+                    <p class="ds-muted" id="totalWords" style="margin: 0; font-size: 0.8125rem;">Yükleniyor...</p>
+                </section>
+
+                <div class="menu-grid ds-span-8" id="menuGrid">
+                    <a href="video_call.html" class="menu-card menu-card--solid ds-animate-in" style="--ds-i: 1;">
+                        <div class="menu-icon">📹</div>
+                        <h3 data-i18n="videoMentor">Görüntülü Mentor</h3>
+                        <p>Canlı Eğitici Figür ile Yüz Yüze Konuşma</p>
+                    </a>
+                    <a href="Message.html" class="menu-card menu-card--accent ds-animate-in"
+                        onclick="localStorage.setItem('currentusername', 'English_Mentor');" style="--ds-i: 2;">
+                        <div class="menu-icon">🎓</div>
+                        <h3>English Mentor ✓</h3>
+                        <p>Canlı Soru, Cümle &amp; Pratik</p>
+                    </a>
+                    <a href="kelime.html" class="menu-card ds-animate-in" style="--ds-i: 3;">
+                        <div class="menu-icon">📝</div>
+                        <h3 data-i18n="wordTest">Kelime Testi</h3>
+                        <p>Boşluk Doldurma &amp; Quiz</p>
+                    </a>
+                    <a href="dinleme_testi.html" class="menu-card ds-animate-in" style="--ds-i: 4;">
+                        <div class="menu-icon">🔄</div>
+                        <h3 data-i18n="wordMatch">Kelime Eşleştirme</h3>
+                        <p>Hızlı &amp; Mobil Eşleştir</p>
+                    </a>
+                    <a href="Profil.html?action=users" class="menu-card ds-animate-in" style="--ds-i: 5;">
+                        <div class="menu-icon">💬</div>
+                        <h3>Mesajlar</h3>
+                        <p>Arkadaşlarınla konuş</p>
+                    </a>
+                    <a href="Profil.html" class="menu-card ds-animate-in" style="--ds-i: 6;">
+                        <div class="menu-icon">👤</div>
+                        <h3 data-i18n="profile">Profilim</h3>
+                        <p>Hesabın ve dil tercihlerin</p>
+                    </a>
+                    <a href="TumKelimeler.html" class="menu-card ds-animate-in" style="--ds-i: 7;">
+                        <div class="menu-icon">📚</div>
+                        <h3 data-i18n="wordList">Kelime Listesi</h3>
+                        <p>Tüm kelimeleri keşfet</p>
+                    </a>
                 </div>
             </div>
         </div>
+    </main>
 
-        <div id="navLangPill" onclick="LanguageManager.openModal(updateDashboardLangDisplay)" style="
-            background: rgba(255,255,255,0.18);
-            border: 1px solid rgba(255,255,255,0.3);
-            color: white;
-            padding: 6px 12px;
-            border-radius: 20px;
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            transition: 0.2s;
-        " title="Dil Tercihlerini Değiştir">
-            <span id="navLangPillText">🇬🇧 İngilizce ➔ 🇹🇷 Türkçe</span> ⚙️
-        </div>
-
-        <a href="girisliindex.html" class="nav-link" style="background:white; color:#6482AD; font-weight:600;">Panel</a>
-        <a href="video_call.html" class="nav-link"
-            style="background:linear-gradient(135deg, #0284c7, #4f46e5); color:white; font-weight:600;">📹 <span data-i18n="videoMentor">Görüntülü Arama</span></a>
-        <a href="mock_interview.html" class="nav-link"
-            style="background:linear-gradient(135deg, #10b981, #059669); color:white; font-weight:600;">🎯 <span data-i18n="mockInterview">Mock Interview</span></a>
-        <button id="logoutBtn" class="nav-link"
-            style="background:rgba(255,0,0,0.2); border:none; color:white; cursor:pointer;" data-i18n="logout">Çıkış Yap</button>
-    </div>
-
-    <div class="dashboard-container">
-        <div class="welcome-text" id="welcomeMsg">Hoşgeldiniz</div>
-
-        <div id="dashboardLangBanner" style="
-            width: 100%;
-            margin-top: -10px;
-            margin-bottom: 20px;
-            background: rgba(15, 23, 42, 0.6);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255,255,255,0.15);
-            border-radius: 14px;
-            padding: 10px 18px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 10px;
-            color: white;
-        ">
-            <div style="display:flex; align-items:center; gap:12px; font-size:14px; flex-wrap:wrap;">
-                <span>🎯 <span data-i18n="learningLang">Öğrenilen Dil</span>: <strong id="dashLearningBadge" style="color:#38bdf8;">🇬🇧 İngilizce</strong></span>
-                <span style="color:rgba(255,255,255,0.4);">|</span>
-                <span>🏠 <span data-i18n="nativeLang">Ana Dil</span>: <strong id="dashNativeBadge" style="color:#34d399;">🇹🇷 Türkçe</strong></span>
-            </div>
-            <button type="button" onclick="LanguageManager.openModal(updateDashboardLangDisplay)" style="
-                background: linear-gradient(135deg, #4f46e5, #0284c7);
-                border: none;
-                color: white;
-                padding: 6px 14px;
-                border-radius: 12px;
-                font-size: 12px;
-                font-weight: 600;
-                cursor: pointer;
-            " data-i18n="changeLanguage">🌐 Dili Değiştir</button>
-        </div>
-
-        <div class="stats-card">
-            <h3 data-i18n="progressTitle">İlerleme Durumu</h3>
-            <div class="stat-number" id="knownCount">0</div>
-            <p data-i18n="knownWords">Bilinen Kelime Sayısı</p>
-            <div class="progress-bar">
-                <div class="progress-fill" id="progressFill"></div>
-            </div>
-            <p id="totalWords">Yükleniyor...</p>
-        </div>
-
-        <div class="menu-grid" id="menuGrid">
-            <a href="video_call.html" class="menu-card"
-                style="background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #4338ca 100%); color: white; border: 1px solid rgba(56, 189, 248, 0.4); box-shadow: 0 10px 25px rgba(56, 189, 248, 0.25);">
-                <div class="menu-icon">📹</div>
-                <h3 style="color:#38bdf8; font-weight:700;" data-i18n="videoMentor">Görüntülü Mentor</h3>
-                <p style="color:#e0e7ff;">Canlı Eğitici Figür ile Yüz Yüze Konuşma</p>
-            </a>
-            <a href="Message.html" class="menu-card"
-                onclick="localStorage.setItem('currentusername', 'English_Mentor');"
-                style="background: linear-gradient(135deg, rgba(79, 70, 229, 0.95), rgba(56, 189, 248, 0.95)); color: white;">
-                <div class="menu-icon">🎓</div>
-                <h3>English Mentor ✓</h3>
-                <p>Canlı Soru, Cümle & Pratik</p>
-            </a>
-            <a href="kelime.html" class="menu-card">
-                <div class="menu-icon">📝</div>
-                <h3 data-i18n="wordTest">Kelime Testi</h3>
-                <p>Boşluk Doldurma & Quiz</p>
-            </a>
-            <a href="dinleme_testi.html" class="menu-card">
-                <div class="menu-icon">🔄</div>
-                <h3 data-i18n="wordMatch">Kelime Eşleştirme</h3>
-                <p>Hızlı & Mobil Eşleştir</p>
-            </a>
-            <a href="Profil.html?action=users" class="menu-card">
-                <div class="menu-icon">💬</div>
-                <h3>Mesajlar</h3>
-                <p>Arkadaşlarınla konuş</p>
-            </a>
-            <a href="Profil.html" class="menu-card">
-                <div class="menu-icon">👤</div>
-                <h3 data-i18n="profile">Profilim</h3>
-                <p></p>
-            </a>
-            <a href="TumKelimeler.html" class="menu-card">
-                <div class="menu-icon">📚</div>
-                <h3 data-i18n="wordList">Kelime Listesi</h3>
-                <p></p>
-            </a>
-        </div>
-    </div>
-
-    <div class="footer">
+    <footer class="footer">
         © 2024 English Learning Platform
-    </div>
+    </footer>
 
     <script src="all_words.js"></script>
     <script src="languages.js"></script>
