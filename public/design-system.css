@@ -265,6 +265,13 @@ body.ds-page *::-webkit-scrollbar-thumb {
    6. KART / BENTO KUTUSU
    -------------------------------------------------------------------------- */
 .ds-tile {
+    --ds-mx: 50%;
+    --ds-my: 50%;
+    --ds-rx: 0deg;
+    --ds-ry: 0deg;
+    --ds-ty: 0px;
+    --ds-scale: 1;
+
     position: relative;
     display: flex;
     flex-direction: column;
@@ -280,6 +287,56 @@ body.ds-page *::-webkit-scrollbar-thumb {
         box-shadow var(--ds-dur) var(--ds-ease),
         background-color var(--ds-dur) var(--ds-ease);
 }
+
+/* Fare konumuna göre yumuşak eğilme (design-system.js sürer) */
+.ds-tile[data-tilt] {
+    transform: perspective(1000px)
+        rotateX(var(--ds-rx))
+        rotateY(var(--ds-ry))
+        translateY(var(--ds-ty))
+        scale(var(--ds-scale));
+    will-change: transform;
+}
+
+/* Fareyi takip eden çok hafif ışık */
+.ds-tile::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    pointer-events: none;
+    background: radial-gradient(
+        240px circle at var(--ds-mx) var(--ds-my),
+        rgba(255, 255, 255, 0.09),
+        transparent 62%
+    );
+    opacity: 0;
+    transition: opacity 350ms var(--ds-ease);
+}
+
+.ds-tile:hover::after { opacity: 1; }
+
+[data-theme="light"] .ds-tile::after {
+    background: radial-gradient(
+        240px circle at var(--ds-mx) var(--ds-my),
+        rgba(11, 12, 15, 0.06),
+        transparent 62%
+    );
+}
+
+/* Çizgi ikonlar */
+.ds-icon {
+    width: 22px;
+    height: 22px;
+    flex: 0 0 auto;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+}
+
+.ds-icon--lg { width: 28px; height: 28px; }
 
 .ds-tile--flush { padding: 0; overflow: hidden; }
 .ds-tile--soft { background: var(--ds-surface-2); }
@@ -303,15 +360,20 @@ body.ds-page *::-webkit-scrollbar-thumb {
 
 .ds-tile--interactive { cursor: pointer; }
 
+.ds-tile--interactive {
+    transform: translateY(var(--ds-ty)) scale(var(--ds-scale));
+}
+
 .ds-tile--interactive:hover,
 .ds-tile--interactive:focus-visible {
-    transform: translateY(-3px);
+    --ds-ty: -3px;
     border-color: var(--ds-border-strong);
     box-shadow: var(--ds-shadow-md);
 }
 
 .ds-tile--interactive:active {
-    transform: translateY(-1px) scale(0.995);
+    --ds-ty: -1px;
+    --ds-scale: 0.995;
 }
 
 /* İstatistik kutusu */
