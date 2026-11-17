@@ -231,3 +231,252 @@ h1.title {
     background: rgba(242, 85, 90, 0.1) !important;
     color: var(--ds-text, #333) !important;
 }
+
+/* ==========================================================================
+   MOTION — Revolut tarzı akıcılık katmanı
+   Sayfa açılışında süzülme, kaydırdıkça belirme, kart yükselmesi/parlaması
+   ve yaylı buton etkileşimleri yalnızca CSS ile sağlanır (JS gerekmez).
+   Tüm hareketler prefers-reduced-motion tercihine saygı duyar.
+   ========================================================================== */
+
+:root {
+    --motion-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+    --motion-ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+    --motion-dur-fast: 200ms;
+    --motion-dur-base: 480ms;
+    --motion-dur-slow: 720ms;
+    --motion-rise: 20px;
+    --motion-glow: var(--ds-accent, #6a11cb);
+}
+
+/* --- Anahtar kareler ------------------------------------------------------ */
+
+@keyframes rev-fade-up {
+    from {
+        opacity: 0;
+        transform: translate3d(0, var(--motion-rise, 20px), 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes rev-fade-down {
+    from {
+        opacity: 0;
+        transform: translate3d(0, calc(var(--motion-rise, 20px) * -1), 0);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0);
+    }
+}
+
+@keyframes rev-fade-in {
+    from { opacity: 0; }
+    to   { opacity: 1; }
+}
+
+@keyframes rev-reveal {
+    from {
+        opacity: 0;
+        transform: translate3d(0, 32px, 0) scale(0.985);
+    }
+    to {
+        opacity: 1;
+        transform: translate3d(0, 0, 0) scale(1);
+    }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+    html {
+        scroll-behavior: smooth;
+    }
+
+    /* --- 1. Sayfa açılışı: yukarıdan aşağıya süzülme --------------------- */
+
+    .main-container,
+    .nav-container,
+    .admin-card,
+    .page-header {
+        animation: rev-fade-up var(--motion-dur-slow, 720ms)
+            var(--motion-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) backwards;
+    }
+
+    .ds-topbar {
+        animation: rev-fade-down 560ms var(--motion-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) backwards;
+    }
+
+    /* Container'ın doğrudan çocukları hafif gecikmeyle belirir */
+    .main-container > *,
+    .login-form > *,
+    .motion-stagger > * {
+        animation: rev-fade-up 560ms var(--motion-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) backwards;
+    }
+
+    /* Kademeli gecikmeler (staggered fade-up) */
+    .login-form > *:nth-child(1) { animation-delay: 110ms; }
+    .login-form > *:nth-child(2) { animation-delay: 170ms; }
+    .login-form > *:nth-child(3) { animation-delay: 230ms; }
+    .login-form > *:nth-child(4) { animation-delay: 290ms; }
+    .login-form > *:nth-child(5) { animation-delay: 350ms; }
+    .login-form > *:nth-child(6) { animation-delay: 410ms; }
+    .login-form > *:nth-child(7) { animation-delay: 470ms; }
+    .login-form > *:nth-child(8) { animation-delay: 530ms; }
+
+    .main-container > *:nth-child(1),
+    .motion-stagger > *:nth-child(1) { animation-delay: 80ms; }
+    .main-container > *:nth-child(2),
+    .motion-stagger > *:nth-child(2) { animation-delay: 140ms; }
+    .main-container > *:nth-child(3),
+    .motion-stagger > *:nth-child(3) { animation-delay: 200ms; }
+    .main-container > *:nth-child(4),
+    .motion-stagger > *:nth-child(4) { animation-delay: 260ms; }
+    .main-container > *:nth-child(5),
+    .motion-stagger > *:nth-child(5) { animation-delay: 320ms; }
+    .main-container > *:nth-child(6),
+    .motion-stagger > *:nth-child(6) { animation-delay: 380ms; }
+    .main-container > *:nth-child(7),
+    .motion-stagger > *:nth-child(7) { animation-delay: 440ms; }
+    .main-container > *:nth-child(8),
+    .motion-stagger > *:nth-child(8) { animation-delay: 500ms; }
+    .motion-stagger > *:nth-child(9) { animation-delay: 560ms; }
+    .motion-stagger > *:nth-child(10) { animation-delay: 620ms; }
+
+    /* --- 2. Kaydırdıkça belirme (scroll-reveal) -------------------------
+       Yalnızca scroll-driven animation destekleyen tarayıcılarda çalışır;
+       desteklemeyenlerde öğeler normal şekilde görünür kalır.
+       İsteğe bağlı kullanım: class="motion-reveal"                    */
+
+    @supports (animation-timeline: view()) {
+        .card,
+        .ds-card,
+        .feature-card,
+        .stat-card,
+        .word-card,
+        .quiz-card,
+        .topic-card,
+        .section-card,
+        .panel,
+        .motion-reveal {
+            animation: rev-reveal linear backwards;
+            animation-duration: auto;
+            animation-timeline: view();
+            animation-range: entry 0% entry 55%;
+        }
+    }
+}
+
+/* --- 3. Kartlarda yumuşak yükselme ve kenar parlaması --------------------- */
+
+.card,
+.ds-card,
+.feature-card,
+.stat-card,
+.word-card,
+.quiz-card,
+.topic-card,
+.section-card,
+.panel,
+.admin-card {
+    transition:
+        transform 520ms var(--motion-ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)),
+        box-shadow 520ms var(--motion-ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+        border-color 360ms ease,
+        background-color 360ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .card:hover,
+    .ds-card:hover,
+    .feature-card:hover,
+    .stat-card:hover,
+    .word-card:hover,
+    .quiz-card:hover,
+    .topic-card:hover,
+    .section-card:hover,
+    .panel:hover {
+        transform: translateY(-6px);
+        /* color-mix desteklemeyen tarayıcılar için düz fallback */
+        border-color: rgba(108, 92, 231, 0.45);
+        box-shadow:
+            0 24px 48px -24px rgba(15, 23, 42, 0.45),
+            0 0 32px -10px rgba(108, 92, 231, 0.5);
+        border-color: color-mix(in srgb, var(--motion-glow, #6a11cb) 45%, transparent);
+        box-shadow:
+            0 24px 48px -24px rgba(15, 23, 42, 0.45),
+            0 0 0 1px color-mix(in srgb, var(--motion-glow, #6a11cb) 35%, transparent),
+            0 0 40px -12px color-mix(in srgb, var(--motion-glow, #6a11cb) 55%, transparent);
+    }
+}
+
+/* --- 4. Butonlarda yaylı hover / tıklama efekti --------------------------- */
+
+.btn-primary,
+.btn-secondary,
+.ds-btn {
+    transition:
+        transform var(--motion-dur-fast, 200ms) var(--motion-ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)),
+        box-shadow var(--motion-dur-base, 480ms) var(--motion-ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+        background-color 220ms ease,
+        border-color 220ms ease,
+        color 220ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .btn-primary:hover,
+    .btn-secondary:hover,
+    .ds-btn:hover {
+        transform: translateY(-2px) scale(1.015);
+    }
+}
+
+.btn-primary:active,
+.btn-secondary:active,
+.ds-btn:active {
+    transform: translateY(0) scale(0.96);
+    transition-duration: 90ms;
+}
+
+.btn-primary:focus-visible,
+.btn-secondary:focus-visible,
+.ds-btn:focus-visible {
+    outline: 2px solid var(--ds-accent, var(--primary-color));
+    outline-offset: 3px;
+}
+
+/* --- 5. Hareket azaltma tercihi ------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto;
+    }
+
+    .main-container,
+    .nav-container,
+    .admin-card,
+    .page-header,
+    .ds-topbar,
+    .main-container > *,
+    .login-form > *,
+    .motion-stagger > *,
+    .card,
+    .ds-card,
+    .feature-card,
+    .stat-card,
+    .word-card,
+    .quiz-card,
+    .topic-card,
+    .section-card,
+    .panel,
+    .motion-reveal,
+    .btn-primary,
+    .btn-secondary,
+    .ds-btn {
+        animation: none !important;
+        transition: none !important;
+        transform: none !important;
+        opacity: 1 !important;
+    }
+}
