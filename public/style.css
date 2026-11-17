@@ -856,3 +856,89 @@ img.ds-img.ds-img--loaded {
         filter: none !important;
     }
 }
+
+/* ==========================================================================
+   OBSIDIAN DESIGN LANGUAGE — ana sayfa bento estetiği tüm ds sayfalarına
+   ========================================================================== */
+
+body.ds-page {
+    --ds-bg: #07080B;
+    --ds-surface: #141418;
+    --ds-surface-2: #191920;
+    --ds-surface-3: #212129;
+    --ds-overlay: rgba(4, 5, 8, 0.78);
+    --ds-border: rgba(255, 255, 255, 0.08);
+    --ds-border-strong: rgba(255, 255, 255, 0.16);
+    --ds-accent: #7C5CFF;
+    --ds-accent-hover: #9179FF;
+    --ds-accent-soft: rgba(124, 92, 255, 0.16);
+    --ds-cyan: #5B8CFF;
+    --ds-glow: 0 0 0 1px rgba(124, 92, 255, 0.34), 0 20px 48px -22px rgba(124, 92, 255, 0.55);
+}
+
+/* Koyu cam kartlar */
+body.ds-page .ds-tile {
+    background:
+        linear-gradient(160deg, rgba(255, 255, 255, 0.035) 0%, transparent 44%),
+        var(--ds-surface);
+    border-color: var(--ds-border);
+    box-shadow: 0 18px 40px -30px rgba(0, 0, 0, 0.9);
+}
+
+/* 1. Bento kart hover & mikro animasyonlar */
+.ds-bento .ds-tile--interactive {
+    cursor: pointer;
+    will-change: transform;
+}
+
+.ds-bento .ds-tile--interactive:hover,
+.ds-bento .ds-tile--interactive:focus-visible {
+    --ds-ty: -4px;
+    border-color: rgba(124, 92, 255, 0.55);
+    box-shadow:
+        0 0 0 1px rgba(124, 92, 255, 0.34),
+        0 24px 52px -24px rgba(124, 92, 255, 0.6),
+        0 10px 28px -14px rgba(0, 0, 0, 0.85);
+}
+
+.ds-bento .ds-tile--interactive:active {
+    --ds-ty: -1px;
+    --ds-scale: 0.992;
+    transition-duration: 90ms;
+}
+
+/* Fareyi takip eden indigo spotlight (design-system.js sürer) */
+body.ds-page .ds-tile::after {
+    background: radial-gradient(
+        240px circle at var(--ds-mx) var(--ds-my),
+        rgba(124, 92, 255, 0.22) 0%,
+        rgba(91, 140, 255, 0.08) 38%,
+        transparent 68%
+    );
+}
+
+/* İkon kutuları hover'da ölçeklenir ve parlar */
+.feature-icon,
+.menu-icon,
+.mentor-mark {
+    transition:
+        transform 340ms var(--motion-ease-spring, cubic-bezier(0.34, 1.56, 0.64, 1)),
+        background-color 260ms ease,
+        border-color 260ms ease,
+        box-shadow 260ms ease;
+}
+
+.ds-tile:hover .feature-icon,
+.ds-tile:hover .mentor-mark,
+.menu-card:hover .menu-icon {
+    transform: scale(1.08) rotate(-1deg);
+    border-color: rgba(124, 92, 255, 0.55);
+    background: rgba(124, 92, 255, 0.16);
+    box-shadow:
+        0 0 0 1px rgba(124, 92, 255, 0.3),
+        0 14px 28px -14px rgba(124, 92, 255, 0.7);
+}
+
+.mentor-mark:hover {
+    transform: scale(1.05);
+}

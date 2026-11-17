@@ -118,6 +118,38 @@
 
     injectMediaPolishStyles();
 
+    /* --- 0b. Bento spotlight: fareyi takip eden iç ışık ------------------- */
+
+    var finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+
+    function bindSpotlight(el) {
+        if (!el || el.dataset.dsSpot === "1") return;
+        el.dataset.dsSpot = "1";
+
+        el.addEventListener("pointermove", function (event) {
+            var rect = el.getBoundingClientRect();
+            if (!rect.width || !rect.height) return;
+            var px = (event.clientX - rect.left) / rect.width;
+            var py = (event.clientY - rect.top) / rect.height;
+            el.style.setProperty("--ds-mx", (px * 100).toFixed(2) + "%");
+            el.style.setProperty("--ds-my", (py * 100).toFixed(2) + "%");
+        }, { passive: true });
+
+        el.addEventListener("pointerleave", function () {
+            el.style.setProperty("--ds-mx", "50%");
+            el.style.setProperty("--ds-my", "50%");
+        });
+    }
+
+    function scanSpotlights() {
+        var tiles = document.querySelectorAll(".ds-tile");
+        for (var i = 0; i < tiles.length; i++) bindSpotlight(tiles[i]);
+    }
+
+    if (!reduceMotion && finePointer) {
+        scanSpotlights();
+    }
+
     /* --- 1. Cam navbar: sayfa kaydırıldıkça camlaşır ---------------------- */
 
     var barSelector = ".ds-topbar, .nav-container";
@@ -274,6 +306,7 @@
             if (!hasAdded) return;
             collectBars();
             updateBars();
+            if (!reduceMotion && finePointer) scanSpotlights();
             scanStatusMessages(document);
             scheduleImageScan();
         }).observe(document.documentElement, {

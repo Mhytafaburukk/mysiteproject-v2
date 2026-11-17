@@ -117,6 +117,118 @@
             font-size: 1.5rem;
             text-align: left;
         }
+
+        /* ==================================================================
+           OBSIDIAN KELİME LİSTESİ
+           ================================================================== */
+        body {
+            background:
+                radial-gradient(1100px 560px at 50% -12%, rgba(124, 92, 255, 0.24), transparent 62%),
+                radial-gradient(900px 520px at 100% 18%, rgba(91, 140, 255, 0.12), transparent 58%),
+                #07080B !important;
+            color: #F4F5F7;
+        }
+
+        .nav-container {
+            background: rgba(20, 20, 24, 0.78) !important;
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+            box-shadow: 0 18px 40px -28px rgba(0, 0, 0, 0.9);
+        }
+
+        .nav-link {
+            color: #A7ADBA;
+            background: transparent;
+            border-color: transparent;
+        }
+
+        .nav-link:hover {
+            background: rgba(124, 92, 255, 0.18);
+            color: #FFFFFF;
+        }
+
+        .nav-container .nav-link[style] {
+            background: rgba(124, 92, 255, 0.22) !important;
+            color: #FFFFFF !important;
+            border: 1px solid rgba(124, 92, 255, 0.42);
+        }
+
+        .main-container {
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.035) 0%, transparent 42%),
+                #141418 !important;
+            border: 1px solid rgba(255, 255, 255, 0.09) !important;
+            border-radius: 26px !important;
+            box-shadow:
+                0 50px 100px -60px rgba(0, 0, 0, 0.95),
+                inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
+            color: #F4F5F7;
+        }
+
+        .main-container .title { color: #FFFFFF; }
+
+        .main-container > p { color: #A7ADBA; }
+
+        .search-box {
+            background: rgba(9, 9, 13, 0.7);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #FFFFFF;
+            backdrop-filter: blur(12px);
+        }
+
+        .search-box::placeholder { color: #6B7280; }
+
+        .search-box:focus {
+            background: rgba(9, 9, 13, 0.9);
+            border-color: rgba(124, 92, 255, 0.7);
+            box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.18), 0 12px 30px -18px rgba(124, 92, 255, 0.7);
+        }
+
+        .alphabet-nav {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .letter-link {
+            background: rgba(255, 255, 255, 0.05);
+            color: #C4B5FF;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        .letter-link:hover,
+        .letter-link.active {
+            background: linear-gradient(135deg, #7C5CFF, #5B8CFF);
+            color: #FFFFFF;
+            box-shadow: 0 10px 22px -12px rgba(124, 92, 255, 0.9);
+        }
+
+        .word-table-container { box-shadow: none; }
+
+        table.word-table {
+            background: #141418;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        th {
+            background: linear-gradient(135deg, rgba(124, 92, 255, 0.35), rgba(91, 140, 255, 0.18)) !important;
+            color: #FFFFFF;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        }
+
+        td {
+            color: #D8DCE5;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        tr:hover { background: rgba(124, 92, 255, 0.08); }
+
+        .section-header {
+            color: #C4B5FF;
+            border-bottom-color: rgba(124, 92, 255, 0.4);
+        }
+
+        .footer { color: #5C636E; }
     </style>
 </head>
 

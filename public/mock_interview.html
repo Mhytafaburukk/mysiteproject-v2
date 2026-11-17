@@ -830,6 +830,118 @@
         .icon-badge--lg svg { width: 17px; height: 17px; }
         .icon-inline { display: inline-block; vertical-align: -.18em; margin: 0 2px; }
         .icon-svg { display: block; }
+
+        /* ==================================================================
+           OBSIDIAN MOCK INTERVIEW
+           ================================================================== */
+        :root {
+            --bg-primary: #07080B;
+            --bg-secondary: #0F0F14;
+            --bg-card: rgba(20, 20, 24, 0.76);
+            --border-subtle: rgba(255, 255, 255, 0.08);
+            --border-accent: rgba(124, 92, 255, 0.35);
+            --accent-cyan: #5B8CFF;
+            --accent-indigo: #7C5CFF;
+        }
+
+        body {
+            background:
+                radial-gradient(circle at 50% 0%, #191430 0%, #07080B 65%);
+        }
+
+        .top-navbar {
+            background: rgba(12, 12, 16, 0.86);
+            border-bottom-color: rgba(255, 255, 255, 0.07);
+            backdrop-filter: blur(18px);
+            -webkit-backdrop-filter: blur(18px);
+        }
+
+        .brand-logo {
+            background: linear-gradient(135deg, #7C5CFF, #5B8CFF 55%, #22D3EE);
+            box-shadow: 0 0 24px rgba(124, 92, 255, 0.55);
+        }
+
+        .mode-selection-panel,
+        .chat-section,
+        .session-hud {
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.03) 0%, transparent 45%),
+                rgba(20, 20, 24, 0.78);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .mode-card {
+            background: rgba(20, 20, 24, 0.72);
+            border-color: rgba(255, 255, 255, 0.07);
+        }
+
+        .mode-card:hover {
+            background: rgba(28, 28, 36, 0.9);
+            border-color: rgba(124, 92, 255, 0.45);
+            box-shadow: 0 20px 42px -24px rgba(124, 92, 255, 0.55);
+        }
+
+        .mode-icon { color: #B9A9FF; }
+
+        .nav-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.09);
+        }
+
+        .nav-btn:hover {
+            background: rgba(124, 92, 255, 0.18);
+            border-color: rgba(124, 92, 255, 0.4);
+        }
+
+        .active-mode-badge {
+            background: rgba(124, 92, 255, 0.14);
+            border-color: rgba(124, 92, 255, 0.35);
+        }
+
+        .session-timer { color: #B9A9FF; }
+
+        .msg-row.ai .msg-bubble {
+            background: #17171E;
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .msg-row.candidate .msg-bubble {
+            background: linear-gradient(135deg, #6C5CE7 0%, #4F7CFF 100%);
+            box-shadow: 0 10px 26px -14px rgba(108, 92, 231, 0.85);
+        }
+
+        .send-btn,
+        .btn-modal-save {
+            background: linear-gradient(135deg, #7C5CFF, #4F7CFF);
+            box-shadow: 0 12px 26px -14px rgba(124, 92, 255, 0.9);
+        }
+
+        .mic-btn {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.09);
+            color: #F4F5F7;
+        }
+
+        .text-input-wrap {
+            background: rgba(9, 9, 13, 0.7);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
+
+        .modal-card {
+            background: #141418;
+            border-color: rgba(255, 255, 255, 0.09);
+        }
+
+        .form-select,
+        .form-input {
+            background: #0B0C10;
+            border-color: rgba(255, 255, 255, 0.1);
+        }
+
+        .debrief-report {
+            background: #101015;
+            border-color: rgba(52, 211, 153, 0.35);
+        }
     </style>
 </head>
 <body>
