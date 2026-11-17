@@ -16,13 +16,27 @@
         th { background: #008069; color: white; }
         tr:hover { background: #f1f1f1; }
         .back-link { color: #aaa; text-decoration: none; display: block; margin-top: 20px; font-size: 14px; }
+
+        /* --- Inline SVG ikon rozetleri --- */
+        .icon-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 22px; height: 22px; border-radius: 7px;
+            background: linear-gradient(135deg, rgba(108,92,231,.20), rgba(56,189,248,.12)), rgba(255,255,255,.08);
+            border: 1px solid rgba(129,140,248,.32);
+            color: #a5b4fc; flex-shrink: 0; vertical-align: -.28em; line-height: 0;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+        }
+        .icon-badge svg { width: 13px; height: 13px; display: block; }
+        .icon-badge--sm { width: 18px; height: 18px; border-radius: 6px; }
+        .icon-badge--sm svg { width: 10.5px; height: 10.5px; }
+        .icon-inline { display: inline-block; vertical-align: -.18em; margin: 0 2px; }
     </style>
 </head>
 <body>
 
     <div class="admin-box">
         <div id="authArea">
-            <h2>🛡️ Admin Güvenlik Doğrulaması</h2>
+            <h2><span class="icon-badge" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v5c0 5 3.4 8 8 10 4.6-2 8-5 8-10V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg></span> Admin Güvenlik Doğrulaması</h2>
             <p>Lütfen devam etmek için yönetici parolasını girin.</p>
             <input type="password" id="adminPass" class="secure-input" placeholder="Yönetici Şifresi">
             <br>
@@ -42,7 +56,7 @@
                 <tbody id="userList"></tbody>
             </table>
         </div>
-        <a href="girisliindex.html" class="back-link">← Panele Geri Dön</a>
+        <a href="girisliindex.html" class="back-link"><svg class="icon-inline" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"/><path d="m11 18-6-6 6-6"/></svg> Panele Geri Dön</a>
     </div>
 
     <script>

@@ -269,6 +269,23 @@
             .sentence-box { font-size: 0.98rem; }
             .ai-input-bar { flex-direction: column; }
         }
+
+        /* --- Inline SVG ikon rozetleri --- */
+        .icon-badge {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 22px; height: 22px; border-radius: 7px;
+            background: linear-gradient(135deg, rgba(108,92,231,.18), rgba(56,189,248,.12)), rgba(255,255,255,.06);
+            border: 1px solid rgba(129,140,248,.32);
+            color: #a5b4fc; flex-shrink: 0; vertical-align: -.28em; line-height: 0;
+            box-shadow: inset 0 1px 0 rgba(255,255,255,.10);
+        }
+        .icon-badge svg { width: 13px; height: 13px; display: block; }
+        .icon-badge--sm { width: 18px; height: 18px; border-radius: 6px; }
+        .icon-badge--sm svg { width: 10.5px; height: 10.5px; }
+        .icon-badge--lg { width: 30px; height: 30px; border-radius: 9px; }
+        .icon-badge--lg svg { width: 17px; height: 17px; }
+        .icon-inline { display: inline-block; vertical-align: -.18em; margin: 0 2px; }
+        .icon-svg { display: block; }
     </style>
 </head>
 
@@ -288,8 +305,8 @@
 
         <!-- MOD SEÇİCİ -->
         <div class="tab-switch">
-            <button class="tab-btn active" id="tabClassic" onclick="switchMode('classic')">📝 Klasik Kelime Testi</button>
-            <button class="tab-btn" id="tabAI" onclick="switchMode('ai')">🤖 AI Boşluk Doldurma & Soru</button>
+            <button class="tab-btn active" id="tabClassic" onclick="switchMode('classic')"><span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.12 2.12 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5Z"/></svg></span> Klasik Kelime Testi</button>
+            <button class="tab-btn" id="tabAI" onclick="switchMode('ai')"><span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z"/><path d="M19 15l.6 1.7 1.7.6-1.7.6L19 19.6l-.6-1.7-1.7-.6 1.7-.6.6-1.7Z"/></svg></span> AI Boşluk Doldurma &amp; Soru</button>
         </div>
 
         <!-- 1. KLASİK TEST ALANI -->
@@ -303,11 +320,11 @@
         <div id="ai-section" style="display: none; text-align: left;">
             <div class="ai-input-bar">
                 <input type="text" id="aiWordInput" class="ai-input" placeholder="İstediğiniz kelimeyi girin (Örn: resilience, appointment)...">
-                <button class="btn-ai-generate" onclick="fetchAIQuestion()">✨ AI İle Soru Üret</button>
+                <button class="btn-ai-generate" onclick="fetchAIQuestion()"><span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z"/><path d="M19 15l.6 1.7 1.7.6-1.7.6L19 19.6l-.6-1.7-1.7-.6 1.7-.6.6-1.7Z"/></svg></span> AI İle Soru Üret</button>
             </div>
 
             <div id="aiQuestionBox" style="display: flex; flex-direction: column; gap: 14px;">
-                <div class="question-badge">🤖 Yapay Zeka Boşluk Doldurma Sorusu</div>
+                <div class="question-badge"><span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l1.9 5.1L19 10l-5.1 1.9L12 17l-1.9-5.1L5 10l5.1-1.9L12 3Z"/><path d="M19 15l.6 1.7 1.7.6-1.7.6L19 19.6l-.6-1.7-1.7-.6 1.7-.6.6-1.7Z"/></svg></span> Yapay Zeka Boşluk Doldurma Sorusu</div>
                 
                 <div class="sentence-box" id="aiSentence">
                     Yükleniyor...
@@ -315,18 +332,18 @@
 
                 <div style="font-size: 0.88rem; color: #94a3b8; display:flex; justify-content:space-between; align-items:center;">
                     <span>Aşağıdaki şıklardan cümleye en uygun olanını seçin:</span>
-                    <button onclick="speakSentence()" style="background:none; border:none; color:#38bdf8; cursor:pointer; font-size:0.9rem;">🔊 Cümleyi Dinle</button>
+                    <button onclick="speakSentence()" style="background:none; border:none; color:#38bdf8; cursor:pointer; font-size:0.9rem;"><span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M11 5 6 9H3v6h3l5 4V5Z"/><path d="M15.5 8.5a5 5 0 0 1 0 7"/><path d="M18 6a9 9 0 0 1 0 12"/></svg></span> Cümleyi Dinle</button>
                 </div>
 
                 <div class="options-grid" id="aiOptionsGrid"></div>
 
                 <div class="explanation-card" id="aiExplanation">
-                    <strong style="color: #38bdf8; display:block; margin-bottom:4px;">💡 Türkçe Çeviri & Açıklama:</strong>
+                    <strong style="color: #38bdf8; display:block; margin-bottom:4px;"><span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M9 18h6"/><path d="M10 21h4"/><path d="M12 3a6 6 0 0 0-4 10.5c.8.8 1 1.5 1 2.5h6c0-1 .2-1.7 1-2.5A6 6 0 0 0 12 3Z"/></svg></span> Türkçe Çeviri &amp; Açıklama:</strong>
                     <div id="aiExplanationText"></div>
                 </div>
 
                 <button class="btn-action-primary" onclick="fetchAIQuestion(true)" style="align-self: center; margin-top: 10px;">
-                    Sonraki AI Soru ➔
+                    Sonraki AI Soru <svg class="icon-inline" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
                 </button>
             </div>
         </div>
