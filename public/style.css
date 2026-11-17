@@ -560,3 +560,299 @@ h1.title {
 .fav-icon.active svg {
     fill: currentColor;
 }
+
+/* ==========================================================================
+   MICRO-INTERACTIONS — Revolut / Stripe seviyesi etkileşim cilası
+   Form odak, modal/toast geçişleri, cam navbar ve medya yükleme efektleri.
+   ========================================================================== */
+
+/* --- 1. Form & input odak efektleri --------------------------------------- */
+
+.login-form .input-group,
+.ds-field {
+    position: relative;
+}
+
+.login-form .input-group > label,
+.ds-label {
+    transform-origin: left center;
+    transition:
+        transform 280ms var(--motion-ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+        color 200ms ease;
+}
+
+.login-form .input-group:focus-within > label,
+.ds-field:focus-within > .ds-label {
+    transform: translateY(-2px);
+    color: var(--ds-accent-hover, var(--primary-color));
+}
+
+.styled-input:focus,
+.ds-input:focus,
+.ds-select:focus,
+.ds-textarea:focus {
+    outline: none;
+    border-color: var(--ds-accent, var(--primary-color));
+    box-shadow:
+        0 0 0 3px var(--ds-accent-soft, rgba(108, 92, 231, 0.16)),
+        0 10px 30px -16px rgba(108, 92, 231, 0.6);
+}
+
+@keyframes ds-shake {
+    0%, 100% { transform: translateX(0); }
+    18% { transform: translateX(-5px); }
+    36% { transform: translateX(4px); }
+    54% { transform: translateX(-3px); }
+    72% { transform: translateX(2px); }
+    88% { transform: translateX(-1px); }
+}
+
+.ds-shake,
+.styled-input:user-invalid,
+.ds-input:user-invalid,
+.ds-select:user-invalid,
+.ds-textarea:user-invalid {
+    animation: ds-shake 440ms cubic-bezier(0.36, 0.07, 0.19, 0.97) both;
+    border-color: var(--ds-danger, #f2555a);
+}
+
+/* --- 2. Smooth modal & toast geçişleri ------------------------------------ */
+
+.modal-overlay,
+.ds-modal,
+#langPreferenceModal,
+.notif-dropdown {
+    opacity: 0;
+    transition:
+        opacity 280ms var(--ds-ease, cubic-bezier(0.22, 0.8, 0.24, 1)),
+        backdrop-filter 280ms var(--ds-ease, ease),
+        -webkit-backdrop-filter 280ms var(--ds-ease, ease),
+        display 280ms allow-discrete;
+}
+
+.modal-overlay[style*="display: flex"],
+.modal-overlay[style*="display:flex"],
+.modal-overlay[style*="display: block"],
+.modal-overlay[style*="display:block"],
+#langPreferenceModal[style*="display: flex"],
+#langPreferenceModal[style*="display:flex"],
+#langPreferenceModal[style*="display: block"],
+#langPreferenceModal[style*="display:block"],
+.ds-modal:not([hidden]),
+.notif-dropdown.show {
+    opacity: 1;
+}
+
+/* Açılışta arka plan bulanıklığını yumuşakça artır */
+.modal-overlay[style*="display: flex"],
+.modal-overlay[style*="display:flex"],
+.modal-overlay[style*="display: block"],
+.modal-overlay[style*="display:block"],
+.ds-modal:not([hidden]) {
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+}
+
+#langPreferenceModal[style*="display: flex"],
+#langPreferenceModal[style*="display:flex"] {
+    backdrop-filter: blur(18px) saturate(140%) !important;
+    -webkit-backdrop-filter: blur(18px) saturate(140%) !important;
+}
+
+@starting-style {
+    .modal-overlay[style*="display: flex"],
+    .modal-overlay[style*="display:flex"],
+    #langPreferenceModal[style*="display: flex"],
+    #langPreferenceModal[style*="display:flex"],
+    .ds-modal:not([hidden]),
+    .notif-dropdown.show {
+        opacity: 0;
+        backdrop-filter: blur(4px);
+        -webkit-backdrop-filter: blur(4px);
+    }
+}
+
+@keyframes ds-modal-pop {
+    from {
+        opacity: 0;
+        transform: translateY(10px) scale(0.97);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-overlay > .modal-card,
+#langPreferenceModal > div,
+.ds-modal__panel {
+    animation: ds-modal-pop 340ms var(--motion-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+@keyframes ds-toast-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.status-message:not(:empty),
+.test-result-box[style*="display: block"],
+.test-result-box[style*="display:block"],
+.notif-dropdown.show {
+    animation: ds-toast-in 320ms var(--motion-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+/* --- 3. Navbar cam efekti & kayan vurgu ----------------------------------- */
+
+.ds-topbar {
+    transition:
+        background-color 320ms var(--ds-ease, ease),
+        border-color 320ms var(--ds-ease, ease),
+        box-shadow 320ms var(--ds-ease, ease),
+        backdrop-filter 320ms var(--ds-ease, ease),
+        -webkit-backdrop-filter 320ms var(--ds-ease, ease);
+}
+
+.ds-topbar.ds-scrolled {
+    background: color-mix(in srgb, var(--ds-bg) 68%, transparent);
+    border-bottom-color: var(--ds-border-strong);
+    box-shadow: 0 18px 44px -30px rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(28px) saturate(165%);
+    -webkit-backdrop-filter: blur(28px) saturate(165%);
+}
+
+.ds-navlink {
+    position: relative;
+}
+
+.ds-navlink::after {
+    content: "";
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 3px;
+    height: 1.5px;
+    border-radius: 2px;
+    background: linear-gradient(90deg, var(--ds-accent), var(--ds-cyan));
+    transform: scaleX(0);
+    transform-origin: left center;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        transform 300ms var(--ds-ease, cubic-bezier(0.22, 0.8, 0.24, 1)),
+        opacity 200ms var(--ds-ease, ease);
+}
+
+.ds-navlink:hover::after,
+.ds-navlink:focus-visible::after,
+.ds-navlink.is-active::after {
+    transform: scaleX(1);
+    opacity: 1;
+}
+
+.nav-link {
+    position: relative;
+}
+
+.nav-link::after {
+    content: "";
+    position: absolute;
+    left: 14px;
+    right: 14px;
+    bottom: 6px;
+    height: 1.5px;
+    border-radius: 2px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left center;
+    opacity: 0;
+    pointer-events: none;
+    transition:
+        transform 300ms var(--ds-ease, cubic-bezier(0.22, 0.8, 0.24, 1)),
+        opacity 200ms ease;
+}
+
+.nav-link:hover::after,
+.nav-link.active::after {
+    transform: scaleX(1);
+    opacity: 0.85;
+}
+
+/* --- 4. Görsel & medya yükleme cilası ------------------------------------- */
+
+.hero-image,
+.target-box img,
+.header-avatar,
+.profile-pic,
+.profile-img,
+.ds-avatar,
+.ds-tile img,
+.menu-card img,
+.card img {
+    transition:
+        transform 700ms var(--motion-ease-out, cubic-bezier(0.22, 1, 0.36, 1)),
+        filter 640ms ease,
+        opacity 640ms ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+    .hero-image:hover,
+    .target-box:hover img,
+    .profile-pic-container:hover .profile-pic,
+    .profile-pic:hover,
+    .profile-img:hover,
+    .ds-avatar:hover,
+    .ds-tile:hover img,
+    .menu-card:hover img,
+    .card:hover img {
+        transform: scale(1.035);
+    }
+}
+
+/* design-system.js yüklenen görsellere .ds-img / .ds-img--loaded ekler */
+img.ds-img {
+    opacity: 0;
+    filter: blur(10px);
+    transition:
+        opacity 640ms ease,
+        filter 640ms ease,
+        transform 700ms var(--motion-ease-out, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+img.ds-img.ds-img--loaded {
+    opacity: 1;
+    filter: blur(0);
+}
+
+/* --- 5. Hareket azaltma tercihi ------------------------------------------- */
+
+@media (prefers-reduced-motion: reduce) {
+    .ds-shake,
+    .styled-input:user-invalid,
+    .ds-input:user-invalid,
+    .ds-select:user-invalid,
+    .ds-textarea:user-invalid,
+    .status-message,
+    .test-result-box,
+    .notif-dropdown,
+    .modal-overlay,
+    .ds-modal,
+    #langPreferenceModal,
+    .modal-overlay > .modal-card,
+    #langPreferenceModal > div,
+    .ds-modal__panel,
+    img.ds-img {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    img.ds-img {
+        opacity: 1 !important;
+        filter: none !important;
+    }
+}
