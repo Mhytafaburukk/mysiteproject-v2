@@ -582,13 +582,13 @@
             const finalScore = isRetrying ? 10 : score;
 
             container.innerHTML = `
-                <h2 class="target-phrase" style="color: #34d399;">Test Tamamlandı! 🎉</h2>
+                <h2 class="target-phrase" style="color: #34d399;">Test Tamamlandı</h2>
                 <p style="color: #cbd5e1; font-size: 1.1rem; margin: 15px 0;">Skorunuz: <strong>${finalScore} / 10</strong></p>
                 ${mistakes.length > 0 && !isRetrying ? `
                     <p style="color: #f87171;">${mistakes.length} kelimede hata yaptınız.</p>
-                    <button class="btn-action-primary" onclick="retryMistakes()">Hataları Tekrar Et 🔄</button>
+                    <button class="btn-action-primary" onclick="retryMistakes()">Hataları Tekrar Et</button>
                 ` : `
-                    <button class="btn-action-primary" onclick="location.reload()">Yeniden Başla 🔄</button>
+                    <button class="btn-action-primary" onclick="location.reload()">Yeniden Başla</button>
                 `}
             `;
         }
@@ -631,7 +631,7 @@
             const optionsGrid = document.getElementById("aiOptionsGrid");
             const explanationBox = document.getElementById("aiExplanation");
 
-            sentenceBox.innerHTML = "🤖 Yapay Zeka soru üretiyor, lütfen bekleyin...";
+            sentenceBox.innerHTML = "Yapay zeka soru üretiyor, lütfen bekleyin...";
             optionsGrid.innerHTML = "";
             explanationBox.style.display = "none";
 
@@ -688,8 +688,8 @@
             sentenceBox.innerHTML = currentAIQuestionData.sentence.replace("_______", `<strong style="color:#10b981;">${correct}</strong>`);
 
             explanationText.innerHTML = `
-                <div>🇹🇷 <strong>Çeviri:</strong> ${currentAIQuestionData.turkishHint}</div>
-                <div style="margin-top:6px;">📖 <strong>Detay:</strong> ${currentAIQuestionData.explanation}</div>
+                <div><strong>Çeviri:</strong> ${currentAIQuestionData.turkishHint}</div>
+                <div style="margin-top:6px;"><strong>Detay:</strong> ${currentAIQuestionData.explanation}</div>
             `;
             explanationBox.style.display = "block";
         }

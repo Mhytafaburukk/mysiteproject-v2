@@ -210,7 +210,9 @@ function executeMatch(sourceElement, targetZone, word) {
         // Doğru Eşleşme
         targetZone.classList.add("matched");
         targetZone.innerHTML = `
-            <div style="font-size:1.6rem; margin-bottom:2px;">✨</div>
+            <div style="display:flex; justify-content:center; margin-bottom:4px; color:#6EE7B7;">
+                <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M5 13l4 4L19 7"/></svg>
+            </div>
             <div class="matched-title">${word}</div>
             <div class="matched-sub">${meaning}</div>
         `;
@@ -227,7 +229,7 @@ function executeMatch(sourceElement, targetZone, word) {
 
         if (matchedCount === roundWords.length) {
             setTimeout(() => {
-                alert(`🎉 Tebrikler! Tüm kelimeleri başarıyla eşleştirdiniz!\nToplam Skor: ${totalScore}`);
+                alert(`Tebrikler! Tüm kelimeleri başarıyla eşleştirdiniz.\nToplam Skor: ${totalScore}`);
                 initGame();
             }, 400);
         }

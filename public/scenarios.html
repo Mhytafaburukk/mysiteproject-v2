@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="tr" data-theme="dark">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Senaryolar - English Learning Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="design-system.css">
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .scenarios-hero {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            padding: clamp(28px, 5vw, 48px);
+            border-radius: var(--ds-radius-xl);
+            background:
+                radial-gradient(120% 140% at 100% 0%, rgba(124, 92, 255, 0.22) 0%, transparent 55%),
+                linear-gradient(165deg, rgba(255, 255, 255, 0.05) 0%, transparent 46%),
+                var(--ds-surface);
+            border: 1px solid var(--ds-border);
+            box-shadow: 0 30px 80px -50px rgba(0, 0, 0, 0.95);
+        }
+
+        .scenarios-hero h1 {
+            margin: 0;
+            font-size: clamp(2rem, 4vw, 3rem);
+            letter-spacing: -0.035em;
+            line-height: 1.08;
+            color: var(--ds-text);
+        }
+
+        .scenarios-hero p {
+            margin: 0;
+            max-width: 62ch;
+            color: var(--ds-text-soft);
+        }
+
+        .filter-block {
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            margin-top: 18px;
+        }
+
+        .filter-label {
+            margin-right: 4px;
+            font-size: var(--ds-fs-xs);
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--ds-text-muted);
+        }
+
+        .filter-chip {
+            appearance: none;
+            border: 1px solid var(--ds-border);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--ds-text-soft);
+            border-radius: var(--ds-radius-pill);
+            padding: 7px 14px;
+            font: inherit;
+            font-size: var(--ds-fs-sm);
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1), background-color 200ms ease, border-color 200ms ease, color 200ms ease;
+        }
+
+        .filter-chip:hover {
+            transform: translateY(-1px);
+            border-color: rgba(124, 92, 255, 0.5);
+            background: rgba(124, 92, 255, 0.12);
+            color: var(--ds-text);
+        }
+
+        .filter-chip.is-active {
+            background: linear-gradient(135deg, #7C5CFF, #5B8CFF);
+            border-color: transparent;
+            color: #FFFFFF;
+            box-shadow: 0 10px 24px -14px rgba(124, 92, 255, 0.9);
+        }
+
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+            gap: 18px;
+        }
+
+        .scenario-card {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+            padding: 22px;
+            border-radius: 22px;
+            background:
+                linear-gradient(160deg, rgba(255, 255, 255, 0.04) 0%, transparent 48%),
+                #141418;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 24px 60px -46px rgba(0, 0, 0, 0.95);
+            transition: transform 280ms cubic-bezier(0.34, 1.56, 0.64, 1), border-color 240ms ease, box-shadow 240ms ease;
+        }
+
+        .scenario-card:hover {
+            transform: translateY(-4px);
+            border-color: rgba(124, 92, 255, 0.5);
+            box-shadow:
+                0 0 0 1px rgba(124, 92, 255, 0.25),
+                0 28px 60px -28px rgba(124, 92, 255, 0.45);
+        }
+
+        .scenario-card__top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+        }
+
+        .scenario-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 46px;
+            height: 46px;
+            border-radius: 14px;
+            background: rgba(124, 92, 255, 0.14);
+            border: 1px solid rgba(124, 92, 255, 0.32);
+            color: #C4B5FF;
+            flex-shrink: 0;
+        }
+
+        .scenario-icon svg {
+            width: 22px;
+            height: 22px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.75;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .scenario-badges {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            justify-content: flex-end;
+        }
+
+        .scenario-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            border-radius: var(--ds-radius-pill);
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.09);
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.04em;
+            color: var(--ds-text-muted);
+        }
+
+        .scenario-badge--level {
+            background: rgba(124, 92, 255, 0.16);
+            border-color: rgba(124, 92, 255, 0.35);
+            color: #C4B5FF;
+        }
+
+        .scenario-card h2 {
+            margin: 0;
+            font-size: 1.08rem;
+            font-weight: 700;
+            letter-spacing: -0.015em;
+            color: var(--ds-text);
+        }
+
+        .scenario-card__subtitle {
+            margin: -8px 0 0;
+            font-size: var(--ds-fs-sm);
+            color: var(--ds-text-muted);
+        }
+
+        .scenario-setting {
+            margin: 0;
+            font-size: 0.875rem;
+            line-height: 1.55;
+            color: var(--ds-text-soft);
+        }
+
+        .scenario-tasks {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+            margin: 0;
+            padding: 12px 14px;
+            list-style: none;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.025);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+        }
+
+        .scenario-tasks li {
+            display: flex;
+            gap: 8px;
+            font-size: 0.8rem;
+            line-height: 1.45;
+            color: var(--ds-text-muted);
+        }
+
+        .task-num {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            border-radius: 50%;
+            background: rgba(124, 92, 255, 0.16);
+            color: #C4B5FF;
+            font-size: 10px;
+            font-weight: 700;
+        }
+
+        .scenario-start {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: auto;
+            padding: 12px 18px;
+            border-radius: var(--ds-radius-pill);
+            background: linear-gradient(135deg, #7C5CFF, #4F7CFF);
+            color: #FFFFFF;
+            font-weight: 700;
+            font-size: var(--ds-fs-sm);
+            text-decoration: none;
+            box-shadow: 0 14px 30px -16px rgba(124, 92, 255, 0.9);
+            transition: transform 240ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 200ms ease;
+        }
+
+        .scenario-start:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 36px -16px rgba(124, 92, 255, 0.95);
+        }
+
+        .scenario-start svg {
+            width: 15px;
+            height: 15px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.75;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+        }
+
+        .scenario-empty {
+            padding: 40px 20px;
+            text-align: center;
+            color: var(--ds-text-muted);
+            border: 1px dashed rgba(255, 255, 255, 0.12);
+            border-radius: 18px;
+        }
+
+        @media (max-width: 640px) {
+            .scenarios-hero { padding: 22px 18px; }
+            .scenario-card { padding: 18px; }
+        }
+    </style>
+</head>
+<body class="ds-page">
+    <header class="ds-topbar">
+        <div class="ds-row" style="gap: 10px;">
+            <span class="ds-live-dot"></span>
+            <span class="ds-eyebrow">English Learning Platform</span>
+        </div>
+        <nav class="ds-nav">
+            <a href="index.html" class="ds-navlink">Anasayfa</a>
+            <a href="girisliindex.html" class="ds-navlink">Panel</a>
+            <a href="scenarios.html" class="ds-navlink is-active">Senaryolar</a>
+            <a href="video_call.html" class="ds-navlink">Görüntülü Mentor</a>
+        </nav>
+    </header>
+
+    <main class="ds-container ds-section">
+        <section class="scenarios-hero">
+            <p class="ds-eyebrow">Roleplay Merkezi</p>
+            <h1>Gerçek hayat senaryolarında İngilizce konuş</h1>
+            <p>Sarah ile kafe, havalimanı, otel, sağlık ve iş görüşmesi gibi gerçek durumları canlandır. Her senaryoda üç görevi tamamlayarak konuşma güvenini artır.</p>
+            <div class="filter-block" id="levelFilters">
+                <span class="filter-label">Seviye</span>
+            </div>
+            <div class="filter-block" id="categoryFilters">
+                <span class="filter-label">Kategori</span>
+            </div>
+        </section>
+
+        <section class="ds-section" style="padding-top: 22px;">
+            <div class="scenario-grid" id="scenarioGrid">
+                <div class="scenario-empty">Senaryolar yükleniyor...</div>
+            </div>
+        </section>
+    </main>
+
+    <footer class="footer">© 2024 English Learning Platform</footer>
+
+    <script src="design-system.js"></script>
+    <script>
+        (function () {
+            var ICONS = {
+                coffee: '<svg viewBox="0 0 24 24"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8Z"/><path d="M6 2v3"/><path d="M10 2v3"/><path d="M14 2v3"/></svg>',
+                plane: '<svg viewBox="0 0 24 24"><path d="M17.8 19.2 16 11l3.5-3.5a2.1 2.1 0 0 0-3-3L13 8 4.8 6.2a1 1 0 0 0-.9 1.7L10 12l-2 3H5l-2 2 4 1 1 4 2-2v-3l3-2 4.1 6.1a1 1 0 0 0 1.7-.9Z"/></svg>',
+                hotel: '<svg viewBox="0 0 24 24"><path d="M3 21V7a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14"/><path d="M3 21h18"/><path d="M7 9h3v3H7z"/><path d="M14 9h3v3h-3z"/><path d="M7 15h3v3H7z"/><path d="M14 15h3v3h-3z"/></svg>',
+                health: '<svg viewBox="0 0 24 24"><path d="M12 21c-4.5-3-8-6.2-8-10.2A4.8 4.8 0 0 1 12 7a4.8 4.8 0 0 1 8 3.8c0 4-3.5 7.2-8 10.2Z"/><path d="M12 10v4"/><path d="M10 12h4"/></svg>',
+                interview: '<svg viewBox="0 0 24 24"><rect x="3" y="7" width="18" height="13" rx="2"/><path d="M8 7V5a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M3 12h18"/><path d="M10 12v2h4v-2"/></svg>',
+                pitch: '<svg viewBox="0 0 24 24"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20V7"/></svg>'
+            };
+
+            var LEVELS = ["Tümü", "A2", "B1", "B2", "C1"];
+            var CATEGORIES = ["Tümü", "Günlük Hayat", "Seyahat", "İş Dünyası", "Sağlık"];
+            var activeLevel = "Tümü";
+            var activeCategory = "Tümü";
+            var scenarios = [];
+
+            var grid = document.getElementById("scenarioGrid");
+            var levelWrap = document.getElementById("levelFilters");
+            var categoryWrap = document.getElementById("categoryFilters");
+
+            function arrowIcon() {
+                return '<svg viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>';
+            }
+
+            function renderFilters() {
+                LEVELS.forEach(function (level) {
+                    var btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "filter-chip" + (level === activeLevel ? " is-active" : "");
+                    btn.textContent = level;
+                    btn.onclick = function () { activeLevel = level; renderFilters(); renderCards(); };
+                    levelWrap.appendChild(btn);
+                });
+                CATEGORIES.forEach(function (category) {
+                    var btn = document.createElement("button");
+                    btn.type = "button";
+                    btn.className = "filter-chip" + (category === activeCategory ? " is-active" : "");
+                    btn.textContent = category;
+                    btn.onclick = function () { activeCategory = category; renderFilters(); renderCards(); };
+                    categoryWrap.appendChild(btn);
+                });
+            }
+
+            function renderCards() {
+                var filtered = scenarios.filter(function (item) {
+                    var levelOk = activeLevel === "Tümü" || item.level === activeLevel;
+                    var categoryOk = activeCategory === "Tümü" || item.category === activeCategory;
+                    return levelOk && categoryOk;
+                });
+
+                if (!filtered.length) {
+                    grid.innerHTML = '<div class="scenario-empty">Bu filtrelerde senaryo bulunamadı.</div>';
+                    return;
+                }
+
+                grid.innerHTML = filtered.map(function (item) {
+                    var tasks = item.tasks.map(function (task, index) {
+                        return '<li><span class="task-num">' + (index + 1) + '</span><span>' + task.label + '</span></li>';
+                    }).join("");
+
+                    return '<article class="scenario-card">' +
+                        '<div class="scenario-card__top">' +
+                            '<span class="scenario-icon">' + (ICONS[item.icon] || ICONS.interview) + '</span>' +
+                            '<div class="scenario-badges">' +
+                                '<span class="scenario-badge scenario-badge--level">' + item.level + '</span>' +
+                                '<span class="scenario-badge">' + item.category + '</span>' +
+                                '<span class="scenario-badge">' + item.duration + '</span>' +
+                            '</div>' +
+                        '</div>' +
+                        '<h2>' + item.title + '</h2>' +
+                        '<p class="scenario-card__subtitle">' + item.titleTr + '</p>' +
+                        '<p class="scenario-setting">' + item.setting + '</p>' +
+                        '<ul class="scenario-tasks">' + tasks + '</ul>' +
+                        '<a class="scenario-start" href="video_call.html?scenario=' + encodeURIComponent(item.id) + '">Senaryoyu Başlat' + arrowIcon() + '</a>' +
+                    '</article>';
+                }).join("");
+            }
+
+            renderFilters();
+
+            fetch("/api/scenarios")
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    if (data && data.success && Array.isArray(data.scenarios)) {
+                        scenarios = data.scenarios;
+                        renderCards();
+                    } else {
+                        grid.innerHTML = '<div class="scenario-empty">Senaryolar yüklenemedi. Sunucunun çalıştığından emin olun.</div>';
+                    }
+                })
+                .catch(function () {
+                    grid.innerHTML = '<div class="scenario-empty">Senaryolar yüklenemedi. Sunucunun çalıştığından emin olun.</div>';
+                });
+        })();
+    </script>
+</body>
+</html>

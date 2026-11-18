@@ -709,6 +709,22 @@ const LanguageManager = {
     }
 };
 
+// Emoji temizliği — arayüzde emoji kullanılmaz
+(function stripLanguageEmojis() {
+    const emojiRe = /[\u{1F000}-\u{1FAFF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}\u{1F1E6}-\u{1F1FF}]/gu;
+    Object.keys(UI_TRANSLATIONS).forEach(function (lang) {
+        const dict = UI_TRANSLATIONS[lang];
+        Object.keys(dict).forEach(function (key) {
+            if (typeof dict[key] === "string") {
+                dict[key] = dict[key].replace(emojiRe, "").replace(/\s{2,}/g, " ").trim();
+            }
+        });
+    });
+    Object.keys(SUPPORTED_LANGUAGES).forEach(function (code) {
+        SUPPORTED_LANGUAGES[code].flag = "";
+    });
+})();
+
 // Global dışa aktarım
 window.SUPPORTED_LANGUAGES = SUPPORTED_LANGUAGES;
 window.UI_TRANSLATIONS = UI_TRANSLATIONS;

@@ -78,7 +78,7 @@ app.post("/register", (req, res) => {
     DB.followUser(AI_BOT, username);
 
     // Hoş geldin mesajı
-    DB.sendMessage(AI_BOT, username, `Merhaba ${username}! 👋 Platformumuza hoş geldin! Ben senin İngilizce Mentörünüm. Bana istediğin soruyu sorabilirsin.`);
+    DB.sendMessage(AI_BOT, username, `Merhaba ${username}! Platformumuza hoş geldin. Ben senin İngilizce Mentörünüm. Bana istediğin soruyu sorabilirsin.`);
 
     res.json({ success: true, message: "Kayıt başarılı!" });
 });
@@ -115,6 +115,9 @@ app.post("/send-message", async (req, res) => {
     DB.sendMessage(sender, receiver, content);
 
     let mentorReplyText = null;
+    let liveModelUsed = false;
+    let liveModelName = "built-in";
+    let liveProvider = "built-in";
 
     // Eğer alıcı AI ise yanıt üret
     if (receiver === AI_BOT) {
@@ -133,6 +136,9 @@ app.post("/send-message", async (req, res) => {
                 const apiRes = await aiService.callExternalAI(content, aiConfig.apiKey, aiConfig.model, focusMode, englishLevel, history);
                 if (typeof apiRes === "string") {
                     mentorReplyText = apiRes;
+                    liveModelUsed = true;
+                    liveModelName = aiConfig.model;
+                    liveProvider = aiConfig.provider || "auto";
                     console.log(`[CANLI API BAŞARILI] ${aiConfig.model} yanıt üretti.`);
                 } else if (apiRes && apiRes.error) {
                     console.warn(`[CANLI API HATASI]`, apiRes.message);
@@ -149,11 +155,19 @@ app.post("/send-message", async (req, res) => {
             mentorReplyText = aiService.generateFallbackResponse(content, sender, DB, history);
         }
 
-        // Yanıtı kaydet
+        // Emoji temizliği + kayıt
+        mentorReplyText = aiService.stripEmojis(mentorReplyText);
         DB.sendMessage(AI_BOT, sender, mentorReplyText);
     }
 
-    res.json({ success: true });
+    res.json({
+        success: true,
+        ai: {
+            live: liveModelUsed,
+            model: liveModelUsed ? liveModelName : "built-in",
+            provider: liveProvider
+        }
+    });
 });
 
 // TÜM MESAJLAR (Bildirim için)
@@ -174,7 +188,55 @@ app.post("/mark-messages-read", (req, res) => {
 app.post("/api/ai/test-key", async (req, res) => {
     const { apiKey, model } = req.body || {};
     const result = await aiService.testAPIKey(apiKey, model);
+    if (result && result.message) result.message = aiService.stripEmojis(result.message);
     res.json(result);
+});
+
+// AI DURUMU — aktif sağlayıcı/model bilgisi
+app.post("/api/ai/status", async (req, res) => {
+    try {
+        const { apiKey, model } = req.body || {};
+        const cfg = aiService.resolveAIConfig({ apiKey, model });
+        let activeModel = cfg.model;
+        const isLive = !!(cfg.apiKey && cfg.model && cfg.model !== "built-in");
+        if (isLive && (cfg.provider === "groq" || String(cfg.apiKey).startsWith("gsk_"))) {
+            try {
+                activeModel = await aiService.getActiveGroqModel(cfg.apiKey, cfg.model);
+            } catch (e) { /* model listesi alınamadıysa çözümlenen model kullanılır */ }
+        }
+        res.json({
+            success: true,
+            live: isLive,
+            keyPresent: !!cfg.apiKey,
+            provider: cfg.provider || "auto",
+            model: activeModel || "built-in"
+        });
+    } catch (e) {
+        res.status(500).json({ success: false, message: e.message });
+    }
+});
+
+// SENARYOLAR
+app.get("/api/scenarios", (req, res) => {
+    res.json({ success: true, scenarios: aiService.SCENARIOS });
+});
+
+app.get("/api/scenarios/:id", (req, res) => {
+    const scenario = aiService.getScenario(req.params.id);
+    if (!scenario) return res.status(404).json({ success: false, message: "Senaryo bulunamadı." });
+    res.json({ success: true, scenario });
+});
+
+// ÇEVİRİ (EN -> TR)
+app.post("/api/translate", async (req, res) => {
+    try {
+        const { text, apiKey, model } = req.body || {};
+        const cfg = aiService.resolveAIConfig({ apiKey, model });
+        const result = await aiService.translateToTurkish(text, cfg.apiKey, cfg.model);
+        res.json(result);
+    } catch (e) {
+        res.status(500).json({ success: false, message: "Çeviri hatası: " + e.message });
+    }
 });
 
 // TAKİP
@@ -315,6 +377,8 @@ app.post("/api/interview/chat", async (req, res) => {
             );
         }
 
+        aiReply = aiService.stripEmojis(aiReply);
+
         res.json({
             success: true,
             reply: aiReply,
@@ -356,9 +420,10 @@ app.get("/api/interview/history/:username", (req, res) => {
 
 app.post("/api/video-call/chat", async (req, res) => {
     try {
-        const { username, message, history, apiKey, model, tutorName, englishLevel } = req.body || {};
+        const { username, message, history, apiKey, model, tutorName, englishLevel, scenarioId } = req.body || {};
         const safeHistory = Array.isArray(history) ? history.slice(-24) : [];
         const safeTutor = tutorName || "Sarah";
+        const safeScenarioId = scenarioId || null;
         const aiConfig = aiService.resolveAIConfig({ apiKey, model });
 
         console.log(`[VIDEO CALL] User: ${username || "Anonymous"} | Tutor: ${safeTutor} | Provider: ${aiConfig.provider || "auto"} | Message: "${(message || '').slice(0, 40)}"`);
@@ -375,7 +440,8 @@ app.post("/api/video-call/chat", async (req, res) => {
                     aiConfig.model,
                     safeTutor,
                     safeHistory,
-                    englishLevel || "auto"
+                    englishLevel || "auto",
+                    safeScenarioId
                 );
                 if (typeof apiRes === "string" && apiRes.trim()) {
                     replyText = apiRes.trim();
@@ -391,14 +457,20 @@ app.post("/api/video-call/chat", async (req, res) => {
 
         // 2. Canlı API yoksa veya başarısızsa akıllı video call fallback
         if (!replyText) {
-            replyText = aiService.generateVideoCallFallback(message, safeTutor, safeHistory);
+            replyText = aiService.generateVideoCallFallback(message, safeTutor, safeHistory, safeScenarioId);
         }
+
+        replyText = aiService.stripEmojis(replyText);
+        if (apiError) apiError = aiService.stripEmojis(apiError);
 
         res.json({
             success: true,
             reply: replyText,
             tutor: safeTutor,
-            apiError: apiError
+            apiError: apiError,
+            scenarioId: safeScenarioId,
+            scenarioProgress: aiService.analyzeScenarioProgress(safeScenarioId, safeHistory, message),
+            naturalSuggestion: aiService.suggestNaturalPhrase(message)
         });
     } catch (e) {
         console.error("Video call chat error:", e.message);

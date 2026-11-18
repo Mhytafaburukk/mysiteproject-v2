@@ -60,6 +60,197 @@ function resolveAIConfig(input = {}) {
 }
 
 // =============================================
+// EMOJİ TEMİZLEME — arayüz ve AI yanıtlarında emoji kullanılmaz
+// =============================================
+
+function stripEmojis(value) {
+    return String(value || "")
+        .replace(/[\u{1F000}-\u{1FAFF}\u{1F300}-\u{1F5FF}\u{2600}-\u{27BF}\u{2B00}-\u{2BFF}\u{FE0F}\u{200D}\u{1F1E6}-\u{1F1FF}]/gu, "")
+        .replace(/[ \t]{2,}/g, " ")
+        .trim();
+}
+
+// =============================================
+// SENARYOLAR (ROLEPLAY) — frontend ve backend ortak tanım
+// =============================================
+
+const SCENARIOS = [
+    {
+        id: "artisan-coffee-shop",
+        title: "Artisan Coffee Shop",
+        titleTr: "Artisan Kahve Dükkanı",
+        level: "A2",
+        category: "Günlük Hayat",
+        duration: "3-5 dk",
+        icon: "coffee",
+        setting: "Yoğun bir Londra kafesinde barista ile konuşuyorsun.",
+        role: "the barista at a busy artisan coffee shop in London",
+        intro: "Hi there! Welcome in. It is pretty busy today, but I have a minute. What can I get started for you?",
+        tasks: [
+            { id: "order-coffee", label: "Süt tercihini belirterek kahve sipariş et", hint: "Hi, could I get a medium latte with oat milk, please?", patterns: [/(latte|coffee|cappuccino|flat white|americano|espresso|mocha|tea)/i, /(oat|almond|soy|whole|skim|semi-skimmed|milk)/i] },
+            { id: "add-snack", label: "Bir atıştırmalık ekle ve toplam tutarı sor", hint: "Could I also add a croissant? And how much is the total?", patterns: [/(croissant|muffin|cookie|cake|sandwich|snack|pastry|bagel)/i, /(how much|total|price|cost|pay)/i] },
+            { id: "wifi-seating", label: "Wi-Fi şifresini ve oturma alanını öğren", hint: "What is the Wi-Fi password, and is there a quiet table I can sit at?", patterns: [/(wi-?fi|password|internet)/i, /(seat|seating|table|sit|chair)/i] }
+        ]
+    },
+    {
+        id: "airport-immigration",
+        title: "Airport Immigration",
+        titleTr: "Havalimanı Sınır Kontrolü",
+        level: "B1",
+        category: "Seyahat",
+        duration: "3-5 dk",
+        icon: "plane",
+        setting: "Londra Heathrow'da sınır kontrol memuru ile konuşuyorsun.",
+        role: "an immigration officer at London Heathrow Airport",
+        intro: "Good morning. Passport and landing card, please. What is the purpose of your visit to the UK?",
+        tasks: [
+            { id: "purpose-duration", label: "Seyahat amacını ve kalış süreni açıkla", hint: "I am here for a short holiday, and I plan to stay for ten days.", patterns: [/(holiday|vacation|tourism|visit|business|work|study|conference|trip|here to)/i, /(days|weeks|months|stay|staying|until|for \d+)/i] },
+            { id: "address-hotel", label: "Konaklayacağın adresi veya oteli belirt", hint: "I will be staying at the Riverside Hotel in central London.", patterns: [/(hotel|address|staying at|accommodation|hostel|airbnb|street|road)/i] },
+            { id: "return-ticket", label: "Dönüş biletin ve planların hakkında soruyu yanıtla", hint: "Yes, I have a return ticket for next Friday, and I am visiting a friend.", patterns: [/(return|back|flight|ticket|departure|leaving|go home|itinerary|plan)/i] }
+        ]
+    },
+    {
+        id: "hotel-checkin",
+        title: "Hotel Check-in Issue",
+        titleTr: "Otel Giriş Sorunu",
+        level: "B1",
+        category: "Seyahat",
+        duration: "3-5 dk",
+        icon: "hotel",
+        setting: "Otel resepsiyonunda rezervasyon ve oda sorunu hakkında konuşuyorsun.",
+        role: "the receptionist at a four-star hotel in Manchester",
+        intro: "Good evening, welcome to the hotel. Do you have a reservation with us tonight?",
+        tasks: [
+            { id: "check-in", label: "Rezervasyon bilgilerini vererek giriş yap", hint: "Yes, I have a booking under the name Alex Morgan for two nights.", patterns: [/(reservation|booking|booked|check in|check-in|under the name|name)/i] },
+            { id: "room-issue", label: "Odadaki klima veya manzara sorununu kibarca bildir", hint: "The air conditioning is not working, and the room looks out onto a wall.", patterns: [/(air conditioning|a\/c|heating|view|noise|noisy|window|broken|problem|issue|not working)/i] },
+            { id: "ask-solution", label: "Oda değişimi veya alternatif çözüm talep et", hint: "Would it be possible to change to another room or send someone to fix it?", patterns: [/(change|switch|another room|different room|upgrade|solution|fix|refund)/i] }
+        ]
+    },
+    {
+        id: "doctor-pharmacy",
+        title: "Doctor & Pharmacy",
+        titleTr: "Doktor ve Eczane",
+        level: "B1",
+        category: "Sağlık",
+        duration: "3-5 dk",
+        icon: "health",
+        setting: "Nöbetçi bir klinikte doktorla şikayetlerini konuşuyorsun.",
+        role: "a doctor at a walk-in clinic in London",
+        intro: "Come in and have a seat. What seems to be the problem today?",
+        tasks: [
+            { id: "symptoms-duration", label: "Şikayetlerini ve ne zamandır sürdüğünü anlat", hint: "I have had a sore throat and a headache for three days.", patterns: [/(pain|hurt|ache|fever|cough|headache|sore throat|nausea|dizzy|rash|throat)/i, /(day|days|week|weeks|since|for \d+|started)/i] },
+            { id: "allergy", label: "Alerjin olup olmadığını belirt", hint: "I am not allergic to penicillin, but I do have a mild allergy to nuts.", patterns: [/(allerg|allergic|penicillin|medicine|medication)/i] },
+            { id: "dosage-side-effects", label: "İlaç kullanım sıklığını ve yan etkilerini sor", hint: "How often should I take it, and are there any side effects I should watch for?", patterns: [/(dose|dosage|how often|how many times|side effect|twice|once a day|with food)/i] }
+        ]
+    },
+    {
+        id: "tech-job-interview",
+        title: "Tech Job Interview",
+        titleTr: "Teknoloji İş Görüşmesi",
+        level: "B2",
+        category: "İş Dünyası",
+        duration: "3-5 dk",
+        icon: "interview",
+        setting: "Teknoloji şirketinde kıdemli İK ve ekip lideri ile görüşüyorsun.",
+        role: "a senior HR manager and engineering team lead at a technology company",
+        intro: "Thanks for making the time today. To start, could you tell me a little about your background and experience?",
+        tasks: [
+            { id: "experience", label: "Geçmiş deneyimini kısaca özetle", hint: "I have three years of experience building backend services with Node.js and Python.", patterns: [/(experience|worked|years|company|role|developer|engineer|background)/i] },
+            { id: "challenging-project", label: "Zorlu bir projeyi nasıl çözdüğünü anlat", hint: "My hardest project was migrating a legacy service; I split it into smaller steps and reduced downtime.", patterns: [/(project|challenge|difficult|hard|problem|solution|led|built|launched|migrated|improved)/i] },
+            { id: "culture-question", label: "Ekip kültürü veya beklentilerle ilgili bir soru sor", hint: "How does the team handle code reviews and remote collaboration?", patterns: [/(culture|team|expect|expectations|management|remote|process|value|growth)/i] }
+        ]
+    },
+    {
+        id: "startup-investor-pitch",
+        title: "Startup Investor Pitch",
+        titleTr: "Girişim Yatırımcı Sunumu",
+        level: "C1",
+        category: "İş Dünyası",
+        duration: "3-5 dk",
+        icon: "pitch",
+        setting: "Risk sermayesi yatırımcısına ürününü sunuyorsun.",
+        role: "a venture capital investor evaluating early-stage startups",
+        intro: "Thanks for coming in. You have sixty seconds. What problem does your product solve?",
+        tasks: [
+            { id: "problem", label: "Ürünün çözdüğü ana problemi tek cümlede sun", hint: "We help small clinics reduce missed appointments by automating reminders.", patterns: [/(problem|pain|waste|cost|inefficient|solution|help|reduce)/i] },
+            { id: "revenue-market", label: "Gelir modelini ve hedef pazarı savun", hint: "We use a monthly subscription model for independent clinics in Europe.", patterns: [/(revenue|business model|subscription|pricing|saas)/i, /(market|customers|b2b|b2c|clinics|users|europe)/i] },
+            { id: "funding-plan", label: "Yatırım tutarını ve kullanım planını açıkla", hint: "We are raising 500,000 dollars to hire engineers and expand our sales team.", patterns: [/(raise|investment|funding|round|seed)/i, /(hire|product|marketing|team|scale|growth|use)/i] }
+        ]
+    }
+];
+
+function getScenario(scenarioId) {
+    return SCENARIOS.find(item => item.id === scenarioId) || null;
+}
+
+function analyzeScenarioProgress(scenarioId, history, currentMessage) {
+    const scenario = getScenario(scenarioId);
+    if (!scenario) return { completed: [], total: 0, progress: 0 };
+
+    const texts = [];
+    if (Array.isArray(history)) {
+        for (const msg of history) {
+            const sender = msg.sender || msg.role;
+            if (sender === "English_Mentor" || sender === "English_AI" || sender === "assistant" || sender === "model") continue;
+            const text = String(msg.content || msg.text || "").trim();
+            if (text) texts.push(text);
+        }
+    }
+    if (currentMessage) texts.push(String(currentMessage));
+
+    const combined = texts.join(" \n ").toLowerCase();
+    const completed = scenario.tasks
+        .filter(task => task.patterns.every(pattern => pattern.test(combined)))
+        .map(task => task.id);
+
+    return {
+        completed: completed,
+        total: scenario.tasks.length,
+        progress: Math.round((completed.length / scenario.tasks.length) * 100)
+    };
+}
+
+function suggestNaturalPhrase(text) {
+    let phrase = String(text || "").trim().replace(/\s+/g, " ");
+    if (!phrase || isLikelyTurkish(phrase)) return "";
+
+    const original = phrase;
+    phrase = phrase
+        .replace(/\bi\s+am\s+agree\b/gi, "I agree")
+        .replace(/\bi\s+have\s+(\d+)\s+years?\s+old\b/gi, "I am $1 years old")
+        .replace(/\b(he|she|it)\s+go\b/gi, (m, p1) => p1 + " goes")
+        .replace(/\byesterday\s+i\s+go\b/gi, "yesterday I went")
+        .replace(/\bi\s+very\s+(like|love)\b/gi, "I really $1")
+        .replace(/\bi\s+am\s+boring\b/gi, "I am bored");
+
+    phrase = phrase.charAt(0).toUpperCase() + phrase.slice(1);
+    if (!/[.!?]$/.test(phrase)) phrase += ".";
+
+    return phrase === original ? "" : phrase;
+}
+
+async function translateToTurkish(text, apiKey, model) {
+    const clean = String(text || "").trim();
+    if (!clean) return { success: false, message: "Çevrilecek metin bulunamadı." };
+    if (!apiKey) return { success: false, message: "Çeviri için canlı AI anahtarı yapılandırılmadı." };
+
+    const prompt = "You are a professional English-to-Turkish translator for a language learning app. " +
+        "Translate the user's text into natural, conversational Turkish. " +
+        "Output ONLY the translation: no quotes, no explanations, no headings, no emojis. " +
+        "If the text is already Turkish, return it unchanged.";
+
+    try {
+        const result = await callExternalAI(clean, apiKey, model, "translation", "native", [], prompt);
+        if (typeof result === "string" && result.trim()) {
+            return { success: true, translation: stripEmojis(result).trim() };
+        }
+        return { success: false, message: (result && result.message) || "Çeviri alınamadı." };
+    } catch (e) {
+        return { success: false, message: "Çeviri hatası: " + e.message };
+    }
+}
+
+// =============================================
 // ZENGİN KELİME HAVUZU (Yerleşik + Dosyadan)
 // =============================================
 const BUILTIN_VOCABULARY = [
@@ -438,12 +629,13 @@ NON-NEGOTIABLE CONVERSATION RULES:
 1. NEVER use canned, robotic teacher praise. These are BANNED: "Wonderful! A good day is always worth celebrating.", "Your English is so good!", "I love chatting with you!", "Great job!" as a standalone sentence.
 2. React to the SPECIFIC detail the student just shared (their job, game, coffee, tiredness, exam, family, city, plan). Quote or paraphrase that detail so it is obvious you actually read it.
 3. You receive the full "messages" conversation history. Remember and naturally reference topics from several turns ago ("Earlier you mentioned your job interview — how did that go?"). NEVER ask a question that has already been answered.
-4. If the student writes English, keep the conversation flowing in English. If they write Turkish, reply in Turkish but still model natural English phrases.
+4. If the student writes English, keep the conversation flowing in English. If the student writes Turkish or asks "Türkçe konuşur musun?", continue the conversation in natural Turkish — do NOT merely translate their sentence and stop. Stay in Turkish until they switch back.
 5. Adapt automatically to their level: short simple sentences for A1–A2, richer vocabulary for B1–B2+, but never lecture.
 6. Correct small grammar mistakes GENTLY inside the flow of the reply — recast the correct form once ("I agree with you — 'I agree' is the natural form"), then continue. Do not stop the conversation for a grammar lesson unless explicitly asked.
 7. ALWAYS end with exactly one creative, open follow-up question that grows out of their answer.
 8. Keep normal conversational replies to 2–3 short sentences (this is read aloud by TTS). Use Markdown only for word explanations, quizzes, or when the student asks for a structured lesson.
-9. Never respond in Arabic or any unrelated language. English or Turkish only.
+9. NEVER use emojis anywhere in your response.
+10. Never respond in Arabic or any unrelated language. English or Turkish only.
 
 WORD EXPLANATIONS (only when asked):
 - Turkish definition + part of speech
@@ -1365,6 +1557,11 @@ function generateFallbackResponse(userMessage, senderUsername, dbModule, convers
         return `Merhaba ${senderUsername}! 👋\n\nBen senin resmi **İngilizce Mentörünüm**. Bugün İngilizceni bir adım ileri taşımaya hazır mısın?\n\nBirlikte neler yapabiliriz:\n• 🎯 **Soru Çöz** → *"Bana bir soru sor"*\n• 📖 **Kelime Öğren** → *"resilience kelimesini anlatır mısın"*\n• 📝 **Cümle Kur & Kontrol Et** → *"I have 25 years old doğru mu?"*\n• 🗣️ **İngilizce Sohbet Et** → *"Let's practice English!"*\n• 🌟 **Günün Kelimesi** → *"Günün kelimesi nedir?"*\n\nNe ile başlayalım?`;
     }
 
+    // --- Türkçe serbest sohbet ---
+    if (isLikelyTurkish(raw)) {
+        return generateTurkishConversationFallback(raw, false, conversationHistory);
+    }
+
     // --- Genel Anlayışlı Yanıt ---
     return `"${raw}" konusunu inceledim! 🌟\n\nİngilizce yolculuğunda sana en doğru şekilde rehberlik edebilmem için şunlardan birini deneyebilirsin:\n\n• **"resilience kelimesini anlatır mısın"** → Detaylı kelime incelemesi ve örnekler\n• **"Bana bir soru sor"** → Test sorusu ve seviye ölçümü\n• **"İngilizce sohbet edelim"** → Karşılıklı pratik konuşma\n• **"[cümlem] doğru mu?"** → Anında gramer kontrolü\n• **"Günün deyimi"** → Günlük konuşma kalıpları\n\nBirlikte ne yapmak istersin?`;
 }
@@ -1554,12 +1751,22 @@ function generateFallbackInterviewResponse(userMessage, modeName, conversationHi
 // 8. GÖRÜNTÜLÜ İNGİLİZCE MENTOR (VIDEO CALL AVATAR TUTOR)
 // =============================================
 
-function getVideoCallSystemPrompt(tutorName = "Sarah", level = "auto") {
+function getVideoCallSystemPrompt(tutorName = "Sarah", level = "auto", scenario = null) {
+    const scenarioBlock = scenario ? `
+
+[ACTIVE ROLEPLAY SCENARIO]
+You are NOT the usual tutor right now. Stay fully in character as ${scenario.role}.
+Setting: ${scenario.setting}
+Open the scene naturally and guide the student through these communicative goals without reading them aloud as a checklist:
+${scenario.tasks.map((task, index) => `${index + 1}. ${task.label}`).join("\n")}
+React to what the student actually says, help them complete the goals through natural conversation, and gently push them to the next goal if they get stuck. Never mention "tasks", "checklist" or "scenario" explicitly unless the student asks.
+` : "";
+
     return `[ROLE]
 You are ${tutorName || "Sarah"}, a real person on a live one-on-one video call with an English learner. You are warm, quick-witted, genuinely curious, and you talk like a friend — never like a scripted teacher bot.
 
 [STUDENT LEVEL]
-${level && level !== "auto" ? `The student's level is roughly ${level}.` : "Infer the student's level from their messages and quietly match it."} Use short, simple sentences for beginners and richer, idiomatic English for advanced students.
+${level && level !== "auto" ? `The student's level is roughly ${level}.` : "Infer the student's level from their messages and quietly match it."} Use short, simple sentences for beginners and richer, idiomatic English for advanced students.${scenarioBlock}
 
 [NON-NEGOTIABLE RULES]
 1. React to the SPECIFIC detail the student just said. If they mention their job, a game, coffee, being tired, an exam, a friend, or a plan, directly reference that detail in your first sentence.
@@ -1572,10 +1779,10 @@ ${level && level !== "auto" ? `The student's level is roughly ${level}.` : "Infe
 3. You receive the full "messages" array on every request. Use it as real memory: remember topics from 3+ turns ago and bring them back naturally ("Earlier you mentioned your job — did that deadline go okay?"). Never re-ask a question the student has already answered.
 4. If the student asks about you ("what about you?", "how are you?"), answer in character with a concrete, believable detail of your own day, then return the question to them.
 5. GRAMMAR: Do not interrupt the flow for every mistake. If there is a clear error, recast the correct form once, naturally inside your reply ("I agree — we usually say 'I agree' rather than 'I am agree'"). Ignore tiny article/preposition slips during a fast spoken conversation.
-6. LANGUAGE: Speak natural English. Only switch to Turkish if the student explicitly asks for help in Turkish.
+6. LANGUAGE: Speak natural English by default. If the student writes Turkish or asks "Türkçe konuşur musun?", switch to natural Turkish and continue the conversation in Turkish — never just translate one sentence and stop. Stay in Turkish until they switch back.
 7. Always end with exactly ONE open-ended follow-up question that grows out of their answer and keeps the conversation moving.
 8. OUTPUT FORMAT: 2 to 3 short spoken sentences, TTS-friendly. No markdown, no bullet points, no emojis, no lists, no headings.
-9. Do not invent facts about the student. Only use what they actually told you in the messages.
+9. Do not invent facts about the student. Only use what they actually told you in the messages. NEVER use emojis.
 
 [STYLE EXAMPLES]
 Student: "I had a long day at work, lots of meetings."
@@ -2049,6 +2256,48 @@ function gentleGrammarRecast(text) {
     return "";
 }
 
+const TURKISH_TOPIC_RULES = [
+    { re: /(türkçe|turkce)\s*(konuş|konus|bil|devam)|türkçe konuşur musun/i, lines: ["Elbette, bundan sonra seninle doğal Türkçe konuşabilirim. Bugün nasıl geçti, neler yaptın?"] },
+    { re: /\b(iş|ofis|müdür|patron|toplantı|proje|mesai|çalışıyorum|çalıştım)\b/i, lines: ["İş günü seni epey yormuş gibi görünüyor. En çok hangi kısım zorladı?", "Toplantılar ve işler bir günü kolayca doldurabiliyor. Bugün seni en çok ne yordu?", "İş tarafında günün nasıl geçti, beklediğin gibi mi gitti?"] },
+    { re: /\b(yorgun|bitkin|uykusuz|stresli|yoğun|yogun|uzun bir gün)\b/i, lines: ["Uzun bir gün geçirmişsin. Bu akşam seni rahatlatacak tek bir şey ne olurdu?", "Gerçekten yorgun görünüyorsun. Bugün seni en çok ne yordu?", "Böyle günlerde küçük bir mola bile iyi gelir. Bu akşam ne yapmayı planlıyorsun?"] },
+    { re: /\b(kahve|çay|cay|yemek|kahvaltı|öğle|aksam yemeği|restoran|kafe)\b/i, lines: ["Kahve ya da yemek günün küçük ama güzel bir molası olmuş. Yanında başka ne yaptın?", "Güzel bir kahve günü gerçekten değiştirebiliyor. Bugün nasıl bir gündü?", "Yemek kısmı iyi görünüyor. Günün geri kalanı nasıl geçti?"] },
+    { re: /\b(oyun|oynadım|oynuyorum|futbol|maç|mac|bilgisayar oyunu)\b/i, lines: ["Oyun iyi bir kafa dağıtma yolu. Bu sefer kazanabildin mi, yoksa zor bir el miydi?", "Oyun oynamak günün yükünü atmak için güzel bir yol. En iyi an hangisiydi?", "Hangi oyunu oynadın? Seni en çok ne eğlendirdi?"] },
+    { re: /\b(aile|anne|baba|kardeş|kardes|annem|babam|ailem)\b/i, lines: ["Ailenle konuşmak iyi gelmiş gibi. Nelerden bahsettiniz?", "Aileyle vakit geçirmek gerçekten değerli. Bugün nasıl bir buluşmaydı?", "Ailenden bahsettin; herkes iyi mi?"] },
+    { re: /\b(ders|sınav|sinav|okul|üniversite|universite|ödev|odev|çalıştım)\b/i, lines: ["Ders çalışmak bütün öğleden sonranı almış olabilir. Konu artık oturmaya başladı mı?", "Sınav hazırlığı yorucu olabilir. En çok hangi konuda zorlanıyorsun?", "Çalışma nasıl gitti, planladığın kadarını bitirebildin mi?"] },
+    { re: /\b(film|dizi|izledim|kitap|okudum|netflix)\b/i, lines: ["İzlediğin ya da okuduğun şeyi merak ettim. Gerçekten tavsiye eder misin?", "Güzel bir film ya da kitap günü dinlendirebilir. En çok neyi sevdin?", "Bu hikâyenin seni en çok etkileyen kısmı neydi?"] },
+    { re: /\b(spor|gym|koşu|kosu|yürüyüş|yuruyus|antrenman)\b/i, lines: ["Spor yapmak günün havasını değiştirir. Bugün zorlayıcı mıydı, yoksa sakin mi geçti?", "Antrenman sonrası kendini nasıl hissediyorsun?", "Spor yapmak iyi bir alışkanlık. Bunu düzenli yapıyor musun?"] },
+    { re: /\b(arkadaş|arkadas|buluştuk|bulustuk|gezdik|parti|alışveriş|alisveris)\b/i, lines: ["Arkadaşlarınla vakit geçirmek iyi gelmiş. Neler yaptınız?", "Güzel bir buluşma gibi görünüyor. En eğlenceli an hangisiydi?", "Dışarı çıkmak iyi gelmiş olmalı. Nereye gittiniz?"] }
+];
+
+function generateTurkishConversationFallback(userMessage, isVideoCall = false, conversationHistory = []) {
+    const raw = String(userMessage || "").trim();
+    const history = Array.isArray(conversationHistory) ? conversationHistory : [];
+
+    if (/^(merhaba|selam|günaydın|gunaydin|iyi akşamlar|iyi aksamlar|nasılsın|nasilsin)\b/i.test(raw)) {
+        return "Merhaba, ben iyiyim, teşekkür ederim. Bugün senin için nasıl geçti, neler yaptın?";
+    }
+
+    for (const rule of TURKISH_TOPIC_RULES) {
+        if (rule.re.test(raw)) {
+            const seed = hashString(raw + "|" + history.length) % rule.lines.length;
+            let reply = rule.lines[seed];
+            const previousUser = history.filter(isUserHistoryItem).map(m => String(m.content || m.text || "")).filter(t => t && t !== raw);
+            if (previousUser.length >= 2 && seed % 2 === 0) {
+                reply += " Bu arada, daha önce bahsettiğin konuya dönersek, o iş nasıl sonuçlandı?";
+            }
+            return reply;
+        }
+    }
+
+    const generic = [
+        "Anlattığın kısım ilgimi çekti. En ilginç yanı neydi?",
+        "Bunu duyduğuma sevindim. O an tam olarak ne hissettin?",
+        "Biraz daha anlatır mısın? En çok neye dikkat ettin?",
+        "Anlıyorum. Peki bundan sonra ne yapmayı düşünüyorsun?"
+    ];
+    return generic[hashString(raw + "|" + history.length) % generic.length];
+}
+
 /**
  * LLM yokken bile önceki mesajları hatırlayan, kullanıcının son mesajındaki
  * somut detaya atıfta bulunan ve tekrar etmeyen yedek konuşma üreticisi.
@@ -2061,7 +2310,12 @@ function generateContextualConversationFallback(userMessage, tutorName = "Sarah"
     if (!raw) {
         return isVideoCall
             ? "I'm still here — take your time. What's been on your mind today?"
-            : "I'm still here! 😊 What would you like to talk about?";
+            : "I'm still here. What would you like to talk about?";
+    }
+
+    // Türkçe mesaj veya "Türkçe konuşur musun?" → doğal Türkçe sohbet
+    if (isLikelyTurkish(raw)) {
+        return generateTurkishConversationFallback(raw, isVideoCall, history);
     }
 
     // Selamlaşma — ilk turda kalıp olmayan, kişisel bir açılış
@@ -2159,8 +2413,8 @@ function generateContextualConversationFallback(userMessage, tutorName = "Sarah"
     return sentences.slice(0, 3).join(" ").trim();
 }
 
-async function callVideoCallAI(userMessage, apiKey, model, tutorName = "Sarah", conversationHistory = [], level = "auto") {
-    const prompt = getVideoCallSystemPrompt(tutorName, level);
+async function callVideoCallAI(userMessage, apiKey, model, tutorName = "Sarah", conversationHistory = [], level = "auto", scenarioId = null) {
+    const prompt = getVideoCallSystemPrompt(tutorName, level, getScenario(scenarioId));
     return await callExternalAI(
         userMessage,
         apiKey,
@@ -2172,11 +2426,21 @@ async function callVideoCallAI(userMessage, apiKey, model, tutorName = "Sarah", 
     );
 }
 
-function generateVideoCallFallback(userMessage, tutorName = "Sarah", conversationHistory = []) {
+function generateVideoCallFallback(userMessage, tutorName = "Sarah", conversationHistory = [], scenarioId = null) {
     const raw = (userMessage || "").trim();
     const lower = raw.toLowerCase();
     const history = Array.isArray(conversationHistory) ? conversationHistory : [];
     const priorUserTurns = history.filter(isUserHistoryItem).length;
+    const scenario = getScenario(scenarioId);
+
+    // Senaryo başlangıcı: daha önce AI konuşmadıysa sahneye uygun giriş cümlesi
+    const hasAssistantTurn = history.some(item => {
+        const sender = item && (item.sender || item.role);
+        return sender === "English_Mentor" || sender === "English_AI" || sender === "assistant" || sender === "model";
+    });
+    if (scenario && !hasAssistantTurn) {
+        return scenario.intro;
+    }
 
     // İlk turda kişiselleştirilmiş, kalıp olmayan karşılama
     if (priorUserTurns === 0 && lower.match(/^(hello|hi|hey|good\s*(morning|afternoon|evening)|howdy)\b/i)) {
@@ -2194,6 +2458,13 @@ function generateVideoCallFallback(userMessage, tutorName = "Sarah", conversatio
 
 module.exports = {
     resolveAIConfig,
+    getActiveGroqModel,
+    stripEmojis,
+    translateToTurkish,
+    SCENARIOS,
+    getScenario,
+    analyzeScenarioProgress,
+    suggestNaturalPhrase,
     callExternalAI,
     callInterviewAI,
     getMockInterviewSystemPrompt,

@@ -402,11 +402,12 @@
             </div>
 
             <div id="navLangPill" class="ds-pill ds-pill--accent" onclick="LanguageManager.openModal(updateDashboardLangDisplay)" style="cursor: pointer;" title="Dil Tercihlerini Değiştir">
-                <span id="navLangPillText">🇬🇧 İngilizce ➔ 🇹🇷 Türkçe</span> <span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><circle cx="4" cy="12" r="2"/><circle cx="12" cy="10" r="2"/><circle cx="20" cy="14" r="2"/></svg></span>
+                <span id="navLangPillText">İngilizce → Türkçe</span> <span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21v-7"/><path d="M4 10V3"/><path d="M12 21v-9"/><path d="M12 8V3"/><path d="M20 21v-5"/><path d="M20 12V3"/><circle cx="4" cy="12" r="2"/><circle cx="12" cy="10" r="2"/><circle cx="20" cy="14" r="2"/></svg></span>
             </div>
 
             <nav class="ds-nav">
                 <a href="girisliindex.html" class="ds-navlink is-active">Panel</a>
+                <a href="scenarios.html" class="ds-navlink"><span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L4 21l2-4.5A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8.5 11h7"/><path d="M8.5 14.5h4.5"/></svg></span> Senaryolar</a>
                 <a href="video_call.html" class="ds-navlink"><span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="14" height="12" rx="2"/><path d="m16 10 5-3v10l-5-3"/></svg></span> <span data-i18n="videoMentor">Görüntülü Arama</span></a>
                 <a href="mock_interview.html" class="ds-navlink"><span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/></svg></span> <span data-i18n="mockInterview">Mock Interview</span></a>
                 <button id="logoutBtn" class="ds-btn ds-btn--ghost ds-btn--sm" data-i18n="logout">Çıkış Yap</button>
@@ -420,9 +421,9 @@
 
             <div id="dashboardLangBanner">
                 <div class="ds-row" style="gap: 10px;">
-                    <span><span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/></svg></span> <span data-i18n="learningLang">Öğrenilen Dil</span>: <strong id="dashLearningBadge" style="color: #38bdf8;">🇬🇧 İngilizce</strong></span>
+                    <span><span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/></svg></span> <span data-i18n="learningLang">Öğrenilen Dil</span>: <strong id="dashLearningBadge" style="color: #38bdf8;">İngilizce</strong></span>
                     <span style="color: var(--ds-text-faint);">|</span>
-                    <span><span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10.5 9-7.5 9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></span> <span data-i18n="nativeLang">Ana Dil</span>: <strong id="dashNativeBadge" style="color: #34d399;">🇹🇷 Türkçe</strong></span>
+                    <span><span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10.5 9-7.5 9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></span> <span data-i18n="nativeLang">Ana Dil</span>: <strong id="dashNativeBadge" style="color: #34d399;">Türkçe</strong></span>
                 </div>
                 <button type="button" class="ds-btn ds-btn--sm" onclick="LanguageManager.openModal(updateDashboardLangDisplay)"><span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18"/><path d="M12 3a15 15 0 0 0 0 18"/></svg></span> <span data-i18n="changeLanguage">Dili Değiştir</span></button>
             </div>
@@ -446,10 +447,15 @@
                         <h3 data-i18n="videoMentor">Görüntülü Mentor</h3>
                         <p>Canlı Eğitici Figür ile Yüz Yüze Konuşma</p>
                     </a>
+                    <a href="scenarios.html" class="menu-card ds-animate-in" style="--ds-i: 2;">
+                        <div class="menu-icon"><svg class="icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M21 11.5a8.5 8.5 0 0 1-12.5 7.5L4 21l2-4.5A8.5 8.5 0 1 1 21 11.5Z"/><path d="M8.5 11h7"/><path d="M8.5 14.5h4.5"/><path d="M12 7.5v7"/></svg></div>
+                        <h3>Senaryolar</h3>
+                        <p>Gerçek hayat roleplay pratiği</p>
+                    </a>
                     <a href="Message.html" class="menu-card menu-card--accent ds-animate-in"
-                        onclick="localStorage.setItem('currentusername', 'English_Mentor');" style="--ds-i: 2;">
+                        onclick="localStorage.setItem('currentusername', 'English_Mentor');" style="--ds-i: 3;">
                         <div class="menu-icon"><svg class="icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M22 9.5 12 4.5 2 9.5l10 5 10-5Z"/><path d="M6 11.7V16c0 1.6 2.7 2.9 6 2.9s6-1.3 6-2.9v-4.3"/><path d="M22 9.5V15"/></svg></div>
-                        <h3>English Mentor ✓</h3>
+                        <h3>English Mentor</h3>
                         <p>Canlı Soru, Cümle &amp; Pratik</p>
                     </a>
                     <a href="kelime.html" class="menu-card ds-animate-in" style="--ds-i: 3;">
@@ -496,12 +502,12 @@
             const nMeta = LanguageManager.getLanguageMeta(prefs.nativeLang);
             
             const pillText = document.getElementById("navLangPillText");
-            if (pillText) pillText.textContent = `${lMeta.flag} ${lMeta.name} ➔ ${nMeta.flag} ${nMeta.name}`;
+            if (pillText) pillText.textContent = `${lMeta.name} → ${nMeta.name}`;
 
             const lBadge = document.getElementById("dashLearningBadge");
             const nBadge = document.getElementById("dashNativeBadge");
-            if (lBadge) lBadge.textContent = `${lMeta.flag} ${lMeta.name}`;
-            if (nBadge) nBadge.textContent = `${nMeta.flag} ${nMeta.name}`;
+            if (lBadge) lBadge.textContent = lMeta.name;
+            if (nBadge) nBadge.textContent = nMeta.name;
 
             // data-i18n elementlerini de güncelle
             LanguageManager.applyUILanguage();
@@ -530,7 +536,7 @@
                 adminCard.href = "Admin.html";
                 adminCard.className = "menu-card admin-card";
                 adminCard.innerHTML = `
-                    <div class="menu-icon">🛡️</div>
+                    <div class="menu-icon"><svg class="icon-svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 4 6v5c0 5 3.4 8 8 10 4.6-2 8-5 8-10V6l-8-3Z"/><path d="m9 12 2 2 4-4"/></svg></div>
                     <h3>Admin Paneli</h3>
                     <p>Kullanıcı Yönetimi</p>
                 `;
@@ -580,7 +586,7 @@
 
                             if (!titleInterval) {
                                 titleInterval = setInterval(() => {
-                                    document.title = (document.title === originalTitle) ? "🔴 Yeni Mesajın Var!" : originalTitle;
+                                    document.title = (document.title === originalTitle) ? "Yeni Mesajın Var!" : originalTitle;
                                 }, 1000);
                             }
                         } else {

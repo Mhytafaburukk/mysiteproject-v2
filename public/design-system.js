@@ -132,6 +132,7 @@
             ".ds-aurora--violet{width:48vmax;height:48vmax;right:-12%;top:8%;background:radial-gradient(circle,rgba(168,85,247,.26) 0%,transparent 68%);animation-duration:34s;animation-delay:-8s}" +
             ".ds-aurora--cyan{width:44vmax;height:44vmax;left:18%;bottom:-18%;background:radial-gradient(circle,rgba(34,211,238,.22) 0%,transparent 70%);animation-duration:30s;animation-delay:-14s}" +
             "@keyframes ds-aurora-drift{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(4vw,3vh,0) scale(1.07)}100%{transform:translate3d(-3vw,5vh,0) scale(.97)}}" +
+            ".ds-neural-canvas{position:absolute;inset:0;width:100%;height:100%;opacity:.6;pointer-events:none}" +
             ".ds-particle-field{position:absolute;inset:-4%;will-change:transform;transition:transform 520ms cubic-bezier(.22,1,.36,1)}" +
             ".ds-particle{position:absolute;font-family:'Plus Jakarta Sans','Poppins',sans-serif;font-weight:600;font-size:clamp(10px,1.2vw,15px);letter-spacing:.14em;color:#C4B5FF;opacity:.07;text-shadow:0 0 14px rgba(124,92,255,.45);animation:ds-particle-drift var(--dur,26s) ease-in-out infinite alternate;animation-delay:var(--delay,0s);user-select:none;white-space:nowrap}" +
             ".ds-particle--line{height:1px;width:var(--len,120px);border-radius:1px;background:linear-gradient(90deg,transparent,rgba(124,92,255,.55),transparent);opacity:.08;animation:none}" +
@@ -139,6 +140,115 @@
             "body>.call-room{background:radial-gradient(circle at 50% 30%,rgba(25,20,48,.88) 0%,rgba(7,8,11,.96) 70%)}" +
             "@media (prefers-reduced-motion:reduce){.ds-aurora,.ds-particle{animation:none!important}.ds-particle-field{transition:none!important}}";
         document.head.appendChild(style);
+    }
+
+    function initNeuralCanvas(canvas) {
+        var ctx = canvas.getContext("2d");
+        if (!ctx) return;
+
+        var dpr = Math.min(window.devicePixelRatio || 1, 2);
+        var width = 0;
+        var height = 0;
+        var nodes = [];
+        var pointerX = 0;
+        var pointerY = 0;
+        var offsetX = 0;
+        var offsetY = 0;
+        var running = true;
+
+        function resize() {
+            width = window.innerWidth;
+            height = window.innerHeight;
+            canvas.width = Math.round(width * dpr);
+            canvas.height = Math.round(height * dpr);
+            ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+            var count = Math.min(46, Math.max(18, Math.round(width / 38)));
+            nodes = [];
+            for (var i = 0; i < count; i++) {
+                nodes.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    vx: (Math.random() - 0.5) * 0.16,
+                    vy: (Math.random() - 0.5) * 0.16,
+                    r: 1 + Math.random() * 1.4
+                });
+            }
+            if (reduceMotion) draw();
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, width, height);
+            var maxDistance = 132;
+            var palette = ["rgba(124,92,255,", "rgba(91,140,255,"];
+
+            for (var i = 0; i < nodes.length; i++) {
+                var a = nodes[i];
+                var ax = a.x + offsetX;
+                var ay = a.y + offsetY;
+                for (var j = i + 1; j < nodes.length; j++) {
+                    var b = nodes[j];
+                    var bx = b.x + offsetX;
+                    var by = b.y + offsetY;
+                    var dx = ax - bx;
+                    var dy = ay - by;
+                    var dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist > maxDistance) continue;
+                    var alpha = (1 - dist / maxDistance) * 0.16;
+                    ctx.strokeStyle = palette[(i + j) % 2] + alpha.toFixed(3) + ")";
+                    ctx.lineWidth = 1;
+                    ctx.beginPath();
+                    ctx.moveTo(ax, ay);
+                    ctx.lineTo(bx, by);
+                    ctx.stroke();
+                }
+            }
+
+            for (var k = 0; k < nodes.length; k++) {
+                var n = nodes[k];
+                ctx.beginPath();
+                ctx.fillStyle = "rgba(180,166,255," + (0.22 + (k % 5) * 0.03).toFixed(2) + ")";
+                ctx.arc(n.x + offsetX, n.y + offsetY, n.r, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        function frame() {
+            if (!running) return;
+            if (!reduceMotion) {
+                offsetX += (pointerX - offsetX) * 0.045;
+                offsetY += (pointerY - offsetY) * 0.045;
+                for (var i = 0; i < nodes.length; i++) {
+                    var node = nodes[i];
+                    node.x += node.vx;
+                    node.y += node.vy;
+                    if (node.x < -20) node.x = width + 20;
+                    if (node.x > width + 20) node.x = -20;
+                    if (node.y < -20) node.y = height + 20;
+                    if (node.y > height + 20) node.y = -20;
+                }
+                draw();
+                window.requestAnimationFrame(frame);
+            }
+        }
+
+        window.addEventListener("resize", resize, { passive: true });
+        document.addEventListener("pointermove", function (event) {
+            pointerX = ((event.clientX / window.innerWidth) - 0.5) * 16;
+            pointerY = ((event.clientY / window.innerHeight) - 0.5) * 12;
+        }, { passive: true });
+
+        document.addEventListener("visibilitychange", function () {
+            if (document.hidden) {
+                running = false;
+            } else if (!running && !reduceMotion) {
+                running = true;
+                window.requestAnimationFrame(frame);
+            }
+        });
+
+        resize();
+        if (!reduceMotion) window.requestAnimationFrame(frame);
     }
 
     function mountAmbientScene() {
@@ -153,7 +263,8 @@
             [7, 18], [22, 70], [34, 12], [47, 82], [59, 24], [71, 62], [84, 14], [14, 46],
             [90, 40], [29, 54], [54, 66], [67, 8], [41, 36], [78, 86], [11, 86], [87, 66]
         ];
-        var html = '<span class="ds-aurora ds-aurora--indigo"></span>' +
+        var html = '<canvas class="ds-neural-canvas" aria-hidden="true"></canvas>' +
+            '<span class="ds-aurora ds-aurora--indigo"></span>' +
             '<span class="ds-aurora ds-aurora--violet"></span>' +
             '<span class="ds-aurora ds-aurora--cyan"></span>' +
             '<div class="ds-particle-field">';
@@ -175,6 +286,9 @@
         layer.innerHTML = html;
 
         document.body.insertBefore(layer, document.body.firstChild);
+
+        var neuralCanvas = layer.querySelector(".ds-neural-canvas");
+        if (neuralCanvas) initNeuralCanvas(neuralCanvas);
 
         // Hafif fare parallax'ı — yalnızca hassas işaretçi ve hareket azaltma kapalıysa
         var finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
