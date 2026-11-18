@@ -40,15 +40,21 @@ function resolveAIConfig(input = {}) {
     // İstemci anahtarı yoksa .env modeli kullanılır; o da yoksa anahtar önekinden türetilir.
     let model = clientKey ? clientModel : String(process.env.AI_MODEL || "").trim();
 
+    // Evren / Anthropic uyumlu gateway otomatik tespiti
+    const inferredProvider = envProvider ||
+        (/anthropic|evren/i.test(baseURL) ? "anthropic" : "") ||
+        (apiKey.startsWith("sk-ant-") ? "anthropic" : "");
+
     if (!model) {
-        if (envProvider === "gemini" || apiKey.startsWith("AIza")) model = "gemini-1.5-flash";
-        else if (envProvider === "groq" || apiKey.startsWith("gsk_")) model = "llama-3.1-8b-instant";
-        else if (envProvider === "openrouter" || apiKey.startsWith("sk-or-")) model = "google/gemini-2.0-flash-exp:free";
+        if (inferredProvider === "anthropic" || apiKey.startsWith("sk-ant-")) model = "claude-3-5-sonnet-latest";
+        else if (inferredProvider === "gemini" || apiKey.startsWith("AIza")) model = "gemini-1.5-flash";
+        else if (inferredProvider === "groq" || apiKey.startsWith("gsk_")) model = "llama-3.1-8b-instant";
+        else if (inferredProvider === "openrouter" || apiKey.startsWith("sk-or-")) model = "google/gemini-2.0-flash-exp:free";
         else if (baseURL || apiKey) model = "gpt-4o-mini";
         else model = "built-in";
     }
 
-    return { apiKey, model, baseURL, provider: envProvider || "" };
+    return { apiKey, model, baseURL, provider: inferredProvider || "" };
 }
 
 // =============================================
@@ -390,8 +396,13 @@ QUIZ / QUESTIONS (only when asked):
     // Model / anahtar / .env sağlayıcı tespiti
     const envProvider = String(process.env.AI_PROVIDER || "").toLowerCase();
     const envBaseURL = String(process.env.AI_BASE_URL || "").replace(/\/+$/, "");
+    const isAnthropicEndpoint = envProvider === "anthropic" ||
+        /anthropic|evren/i.test(envBaseURL) ||
+        (trimmedKey && trimmedKey.startsWith("sk-ant-"));
     let provider = "compatible";
-    if (model && model.startsWith("gemini")) {
+    if (isAnthropicEndpoint) {
+        provider = "anthropic";
+    } else if (model && model.startsWith("gemini")) {
         provider = "gemini";
     } else if (model && (model.startsWith("llama") || model.startsWith("groq"))) {
         provider = "groq";
@@ -427,6 +438,99 @@ QUIZ / QUESTIONS (only when asked):
             error: true,
             message: `⚠️ **Sağlayıcı & Anahtar Uyumsuzluğu:**\n\nSeçili model **Groq Llama**, ancak girdiğiniz API anahtarı bir **Google Gemini** anahtarıdır (\`AIza...\` ile başlar).\n\n💡 **Çözüm:** Model ve API ayarlarından modeli **"Google Gemini"** olarak seçin veya geçerli bir **Groq API** anahtarı (\`gsk_...\`) girin.`
         };
+    }
+
+    // 0. Anthropic Messages API (/v1/messages) — Evren / Anthropic uyumlu gateway
+    if (provider === "anthropic" && trimmedKey) {
+        try {
+            const historyItems = Array.isArray(conversationHistory) ? [...conversationHistory] : [];
+            const last = historyItems[historyItems.length - 1];
+            if (last && (last.sender !== "English_Mentor" && last.sender !== "English_AI" && last.role !== "assistant" && last.role !== "model") && (last.content === userMessage || last.text === userMessage)) {
+                historyItems.pop();
+            }
+
+            const rawMessages = [];
+            for (const msg of historyItems.slice(-HISTORY_LIMIT)) {
+                let text = (msg.content || msg.text || "").replace(/\[SES:.*?\]/g, "[Sesli Mesaj]").trim();
+                if (!text) continue;
+                const isModel = msg.sender === "English_Mentor" || msg.sender === "English_AI" || msg.role === "assistant" || msg.role === "model";
+                rawMessages.push({ role: isModel ? "assistant" : "user", text: text });
+            }
+            // Güncel mesajı ekle (mükerrer değilse)
+            if (!(rawMessages.length && rawMessages[rawMessages.length - 1].text === userMessage)) {
+                rawMessages.push({ role: "user", text: userMessage || "Hello!" });
+            }
+
+            // Anthropic kuralı: içerik 'user' ile başlamalı ve roller dönüşümlü olmalı
+            const anthMessages = [];
+            for (const item of rawMessages) {
+                if (anthMessages.length === 0 && item.role !== "user") continue;
+                const prev = anthMessages[anthMessages.length - 1];
+                if (prev && prev.role === item.role) {
+                    prev.content += "\n" + item.text;
+                } else {
+                    anthMessages.push({ role: item.role, content: item.text });
+                }
+            }
+            if (anthMessages.length === 0) {
+                anthMessages.push({ role: "user", content: userMessage || "Hello!" });
+            }
+
+            const anthropicBase = (envBaseURL || "https://api.anthropic.com").replace(/\/+$/, "");
+            const anthropicUrl = /\/messages$/.test(anthropicBase)
+                ? anthropicBase
+                : (/\/v1$/.test(anthropicBase) ? anthropicBase + "/messages" : anthropicBase + "/v1/messages");
+            const anthropicModel = model || process.env.AI_MODEL || "claude-3-5-sonnet-latest";
+
+            const res = await fetch(anthropicUrl, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "anthropic-version": "2023-06-01",
+                    "x-api-key": trimmedKey,
+                    "Authorization": `Bearer ${trimmedKey}`
+                },
+                body: JSON.stringify({
+                    model: anthropicModel,
+                    max_tokens: 1024,
+                    temperature: 0.7,
+                    system: systemPrompt,
+                    messages: anthMessages
+                })
+            });
+
+            if (res.ok) {
+                const data = await res.json();
+                const text = (data.content || [])
+                    .filter(part => part && part.type === "text")
+                    .map(part => part.text || "")
+                    .join("\n")
+                    .trim();
+                if (text) return text;
+                return {
+                    error: true,
+                    message: `⚠️ **Anthropic / Evren API boş yanıt döndürdü.** Model: ${anthropicModel}`
+                };
+            } else {
+                const errText = await res.text();
+                console.error(`Anthropic API Hatası [${res.status}]:`, errText);
+                let detail = errText;
+                try {
+                    const json = JSON.parse(errText);
+                    detail = json.error?.message || errText;
+                } catch (e) {}
+                return {
+                    error: true,
+                    message: `⚠️ **Anthropic / Evren API Hatası (HTTP ${res.status}):**\n> *${detail}*`
+                };
+            }
+        } catch (err) {
+            console.error("Anthropic Bağlantı Hatası:", err.message);
+            return {
+                error: true,
+                message: `⚠️ **Anthropic / Evren Bağlantı Hatası:**\n> *${err.message}*`
+            };
+        }
     }
 
     // 1. Groq API
