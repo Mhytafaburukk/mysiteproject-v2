@@ -1154,7 +1154,7 @@
             <div class="form-group">
                 <label class="form-label">Yapay Zeka Modeli</label>
                 <select id="modalModelSelect" class="form-select">
-                    <option value="llama-3.1-8b-instant">Groq Llama 3.3 / 3.1 (Işık Hızında & %100 Ücretsiz)</option>
+                    <option value="llama-3.3-70b-versatile">Groq Llama 3.3 70B (Işık Hızında & %100 Ücretsiz)</option>
                     <option value="gemini-1.5-flash">Google Gemini 1.5 Flash</option>
                     <option value="built-in">Dahili Akıllı Eğitici (API Key Gerekmez)</option>
                 </select>
@@ -1216,7 +1216,13 @@
 
             // Load shared API Key & model from localStorage
             const savedKey = localStorage.getItem("ai_api_key") || localStorage.getItem("mentor_api_key") || "";
-            const savedModel = localStorage.getItem("ai_selected_model") || localStorage.getItem("mentor_model") || "llama-3.1-8b-instant";
+            const savedModelRaw = localStorage.getItem("ai_selected_model") || localStorage.getItem("mentor_model") || "llama-3.3-70b-versatile";
+            const videoModels = ["llama-3.3-70b-versatile", "gemini-1.5-flash", "built-in"];
+            const savedModel = videoModels.includes(savedModelRaw) ? savedModelRaw : "llama-3.3-70b-versatile";
+            if (savedModel !== savedModelRaw) {
+                localStorage.setItem("ai_selected_model", savedModel);
+                localStorage.setItem("mentor_model", savedModel);
+            }
             document.getElementById("modalApiKeyInput").value = savedKey;
             document.getElementById("modalModelSelect").value = savedModel;
             updateModelBadge();
@@ -1587,7 +1593,9 @@
             updateSubtitles(currentTutor, "Thinking...");
 
             const apiKey = localStorage.getItem("ai_api_key") || localStorage.getItem("mentor_api_key") || "";
-            const model = localStorage.getItem("ai_selected_model") || localStorage.getItem("mentor_model") || "llama-3.1-8b-instant";
+            const storedModel = localStorage.getItem("ai_selected_model") || localStorage.getItem("mentor_model") || "llama-3.3-70b-versatile";
+            const videoModels = ["llama-3.3-70b-versatile", "gemini-1.5-flash", "built-in"];
+            const model = videoModels.includes(storedModel) ? storedModel : "llama-3.3-70b-versatile";
 
             try {
                 const res = await fetch(`${API_URL}/api/video-call/chat`, {

@@ -50,7 +50,7 @@ function resolveAIConfig(input = {}) {
     if (!model) {
         if (inferredProvider === "anthropic" || apiKey.startsWith("sk-ant-")) model = "claude-3-5-sonnet-latest";
         else if (inferredProvider === "gemini" || apiKey.startsWith("AIza")) model = "gemini-1.5-flash";
-        else if (inferredProvider === "groq" || apiKey.startsWith("gsk_")) model = "llama-3.1-8b-instant";
+        else if (inferredProvider === "groq" || apiKey.startsWith("gsk_")) model = "llama-3.3-70b-versatile";
         else if (inferredProvider === "openrouter" || apiKey.startsWith("sk-or-")) model = "google/gemini-2.0-flash-exp:free";
         else if (baseURL || apiKey) model = "gpt-4o-mini";
         else model = "built-in";
@@ -283,20 +283,18 @@ async function getActiveGroqModel(apiKey, preferredModel) {
 
             // En kaliteli ve stabil İngilizce LLM modellerini öncelikle tercih et
             const best = models.find(m => m.includes("llama-3.3-70b-versatile")) ||
-                         models.find(m => m.includes("llama-3.1-8b-instant")) ||
                          models.find(m => m.includes("llama-3.3-70b")) ||
-                         models.find(m => m.includes("llama-3.1-8b")) ||
                          models.find(m => m.includes("llama-3")) ||
                          models.find(m => m.includes("mixtral-8x7b")) ||
                          models.find(m => m.includes("gemma2-9b")) ||
-                         "llama-3.1-8b-instant";
+                         "llama-3.3-70b-versatile";
             if (best) {
                 cachedGroqModel = best;
                 return best;
             }
         }
     } catch (e) {}
-    return "llama-3.1-8b-instant";
+    return "llama-3.3-70b-versatile";
 }
 
 // =============================================
@@ -574,19 +572,37 @@ QUIZ / QUESTIONS (only when asked):
             }
             groqMessages.push({ role: "user", content: userMessage });
 
-            const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+            const groqUrl = "https://api.groq.com/openai/v1/chat/completions";
+            const groqPayload = (modelName) => JSON.stringify({
+                model: modelName,
+                messages: groqMessages,
+                temperature: 0.7,
+                max_tokens: 1500
+            });
+
+            let res = await fetch(groqUrl, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
                     "Authorization": `Bearer ${trimmedKey}`
                 },
-                body: JSON.stringify({
-                    model: targetModel,
-                    messages: groqMessages,
-                    temperature: 0.7,
-                    max_tokens: 1500
-                })
+                body: groqPayload(targetModel)
             });
+
+            // 404 (model not found) → llama-3.3-70b-versatile ile bir kez daha dene
+            if (!res.ok && res.status === 404 && targetModel !== "llama-3.3-70b-versatile") {
+                const firstErrText = await res.text();
+                console.warn(`[Groq 404] "${targetModel}" bulunamadı. llama-3.3-70b-versatile ile tekrar deneniyor...`, firstErrText);
+                cachedGroqModel = "llama-3.3-70b-versatile";
+                res = await fetch(groqUrl, {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "Authorization": `Bearer ${trimmedKey}`
+                    },
+                    body: groqPayload("llama-3.3-70b-versatile")
+                });
+            }
 
             if (res.ok) {
                 const data = await res.json();
@@ -863,9 +879,7 @@ async function testAPIKey(apiKey, model) {
             let targetModel = (model && activeModels.includes(model)) ? model : null;
             if (!targetModel) {
                 targetModel = activeModels.find(m => m.includes("llama-3.3-70b-versatile")) ||
-                              activeModels.find(m => m.includes("llama-3.1-8b-instant")) ||
                               activeModels.find(m => m.includes("llama-3.3-70b")) ||
-                              activeModels.find(m => m.includes("llama-3.1-8b")) ||
                               activeModels.find(m => m.includes("llama")) ||
                               activeModels[0];
             }
