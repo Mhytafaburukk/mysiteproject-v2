@@ -254,47 +254,113 @@ try {
 }
 
 let cachedGroqModel = null;
-async function getActiveGroqModel(apiKey, preferredModel) {
-    // Önbellek yalnızca istenen modelle uyumluysa kullanılır; aksi halde güncel liste çekilir.
-    if (cachedGroqModel && (!preferredModel || cachedGroqModel === preferredModel)) return cachedGroqModel;
+let cachedGroqModelKey = null;
+let cachedGroqModels = [];
+let cachedGroqModelsKey = null;
+let cachedGroqModelsAt = 0;
+const GROQ_MODELS_TTL_MS = 10 * 60 * 1000;
+
+// Groq'un güncel sohbet modelleri — önce bunlar, yoksa API'nin döndürdüğü ilk aktif model.
+const GROQ_MODEL_PRIORITY = [
+    "openai/gpt-oss-120b",
+    "openai/gpt-oss-20b",
+    "meta-llama/llama-4-scout-17b-16e-instruct",
+    "meta-llama/llama-4-maverick-17b-128e-instruct",
+    "qwen/qwen3-32b",
+    "moonshotai/kimi-k2-instruct",
+    "llama-3.3-70b-versatile",
+    "llama-3.3-70b",
+    "llama-3",
+    "mixtral-8x7b",
+    "gemma2-9b"
+];
+
+function isGroqChatModel(id) {
+    const lower = String(id || "").toLowerCase();
+    if (!lower) return false;
+    const blocked = ["whisper", "guard", "tts", "orpheus", "playai", "speech", "audio",
+        "vision", "embed", "moderation", "rerank", "arabic", "saudi", "compound"];
+    return !blocked.some(word => lower.includes(word));
+}
+
+/** Aynı API anahtarı için model listesini 10 dakika önbelleğe alarak getirir. */
+async function fetchGroqChatModels(apiKey) {
+    const key = String(apiKey || "").trim();
+    const now = Date.now();
+    if (cachedGroqModels.length && cachedGroqModelsKey === key && (now - cachedGroqModelsAt) < GROQ_MODELS_TTL_MS) {
+        return cachedGroqModels;
+    }
     try {
         const res = await fetch("https://api.groq.com/openai/v1/models", {
-            headers: { "Authorization": `Bearer ${apiKey.trim()}` }
+            headers: { "Authorization": `Bearer ${key}` }
         });
-        if (res.ok) {
-            const data = await res.json();
-            // Kesinlikle ses, guard, vision ve arapça/özel modelleri filtrele
-            const models = (data.data || []).map(m => m.id).filter(id => {
-                const lower = id.toLowerCase();
-                return !lower.includes("whisper") && 
-                       !lower.includes("guard") && 
-                       !lower.includes("vision") && 
-                       !lower.includes("tts") && 
-                       !lower.includes("orpheus") && 
-                       !lower.includes("arabic") && 
-                       !lower.includes("saudi") &&
-                       !lower.includes("compound");
-            });
-
-            if (preferredModel && models.includes(preferredModel)) {
-                cachedGroqModel = preferredModel;
-                return preferredModel;
-            }
-
-            // En kaliteli ve stabil İngilizce LLM modellerini öncelikle tercih et
-            const best = models.find(m => m.includes("llama-3.3-70b-versatile")) ||
-                         models.find(m => m.includes("llama-3.3-70b")) ||
-                         models.find(m => m.includes("llama-3")) ||
-                         models.find(m => m.includes("mixtral-8x7b")) ||
-                         models.find(m => m.includes("gemma2-9b")) ||
-                         "llama-3.3-70b-versatile";
-            if (best) {
-                cachedGroqModel = best;
-                return best;
-            }
+        if (!res.ok) {
+            console.warn(`[Groq Models] Model listesi alınamadı (HTTP ${res.status}).`);
+            return cachedGroqModelsKey === key ? cachedGroqModels : [];
         }
-    } catch (e) {}
+        const data = await res.json();
+        const models = (data.data || [])
+            .map(m => m && m.id)
+            .filter(id => id && isGroqChatModel(id));
+        if (models.length) {
+            cachedGroqModels = models;
+            cachedGroqModelsKey = key;
+            cachedGroqModelsAt = now;
+        }
+        return models;
+    } catch (e) {
+        console.warn("[Groq Models] Model listesi çekilemedi:", e.message);
+        return cachedGroqModelsKey === key ? cachedGroqModels : [];
+    }
+}
+
+function chooseGroqModel(models, preferredModel, excludeModel) {
+    const list = (Array.isArray(models) ? models : []).filter(id => id && id !== excludeModel);
+
+    if (preferredModel && preferredModel !== excludeModel) {
+        const exact = list.find(id => id === preferredModel);
+        if (exact) return exact;
+    }
+
+    // Öncelikli güncel modeller
+    for (const candidate of GROQ_MODEL_PRIORITY) {
+        if (candidate === excludeModel) continue;
+        const exact = list.find(id => id === candidate);
+        if (exact) return exact;
+    }
+    for (const candidate of GROQ_MODEL_PRIORITY) {
+        if (candidate === excludeModel) continue;
+        const fuzzy = list.find(id => id.includes(candidate));
+        if (fuzzy) return fuzzy;
+    }
+
+    if (list.length) return list[0];
+    if (preferredModel && preferredModel !== excludeModel &&
+        /^(llama|groq|mixtral|gemma|qwen|openai\/|meta-llama\/|moonshot)/i.test(preferredModel)) {
+        return preferredModel;
+    }
     return "llama-3.3-70b-versatile";
+}
+
+/**
+ * Erişilebilir sohbet modellerini çeker ve uygun olanı döndürür.
+ * - preferredModel listede varsa onu kullanır.
+ * - yoksa güncel öncelikli modeli, o da yoksa listenin ilk aktif modelini seçer.
+ * - excludeModel, 404 alan modelin tekrar seçilmesini engeller.
+ */
+async function getActiveGroqModel(apiKey, preferredModel, excludeModel) {
+    const key = String(apiKey || "").trim();
+    const cacheValid = cachedGroqModel &&
+        cachedGroqModelKey === key &&
+        cachedGroqModel !== excludeModel &&
+        (!preferredModel || cachedGroqModel === preferredModel);
+    if (cacheValid) return cachedGroqModel;
+
+    const models = await fetchGroqChatModels(key);
+    const chosen = chooseGroqModel(models, preferredModel, excludeModel);
+    cachedGroqModel = chosen;
+    cachedGroqModelKey = key;
+    return chosen;
 }
 
 // =============================================
@@ -546,12 +612,8 @@ QUIZ / QUESTIONS (only when asked):
     // 1. Groq API
     if (provider === "groq") {
         try {
-            // Groq dışı bir model adı seçildiyse (ör. deepseek-v4.1-flash) güncel Groq modeline geç.
-            const groqModelPattern = /^(llama|groq|mixtral|gemma|qwen|deepseek-r1|allam|moonshot|kimi|compound)/i;
-            const requestedGroqModel = (model && groqModelPattern.test(model))
-                ? model
-                : "llama-3.3-70b-versatile";
-            const targetModel = await getActiveGroqModel(trimmedKey, requestedGroqModel);
+            // Önce erişilebilir sohbet modellerini çek; seçili model yoksa listeden uygun olanı kullan.
+            const targetModel = await getActiveGroqModel(trimmedKey, model);
             let groqMessages = [{ role: "system", content: systemPrompt }];
             if (conversationHistory && conversationHistory.length > 0) {
                 // Son mesaj eğer zaten şu anki userMessage ise mükerrer olmaması için çıkar
@@ -589,19 +651,23 @@ QUIZ / QUESTIONS (only when asked):
                 body: groqPayload(targetModel)
             });
 
-            // 404 (model not found) → llama-3.3-70b-versatile ile bir kez daha dene
-            if (!res.ok && res.status === 404 && targetModel !== "llama-3.3-70b-versatile") {
-                const firstErrText = await res.text();
-                console.warn(`[Groq 404] "${targetModel}" bulunamadı. llama-3.3-70b-versatile ile tekrar deneniyor...`, firstErrText);
-                cachedGroqModel = "llama-3.3-70b-versatile";
-                res = await fetch(groqUrl, {
-                    method: "POST",
-                    headers: {
-                        "Content-Type": "application/json",
-                        "Authorization": `Bearer ${trimmedKey}`
-                    },
-                    body: groqPayload("llama-3.3-70b-versatile")
-                });
+            // 404 (model not found) → listeden erişilebilir başka bir sohbet modeliyle tekrar dene
+            let firstErrText = null;
+            if (!res.ok && res.status === 404) {
+                firstErrText = await res.text();
+                const retryModel = await getActiveGroqModel(trimmedKey, "", targetModel);
+                if (retryModel && retryModel !== targetModel) {
+                    console.warn(`[Groq 404] "${targetModel}" bulunamadı; "${retryModel}" ile tekrar deneniyor...`, firstErrText);
+                    res = await fetch(groqUrl, {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "Authorization": `Bearer ${trimmedKey}`
+                        },
+                        body: groqPayload(retryModel)
+                    });
+                    firstErrText = null; // yeni yanıtın gövdesi taze
+                }
             }
 
             if (res.ok) {
@@ -609,7 +675,7 @@ QUIZ / QUESTIONS (only when asked):
                 const text = data.choices?.[0]?.message?.content;
                 if (text) return text.trim();
             } else {
-                const errText = await res.text();
+                const errText = firstErrText || await res.text();
                 console.error(`Groq API Hatası [${res.status}]:`, errText);
                 let detail = errText;
                 try {
@@ -863,30 +929,15 @@ async function testAPIKey(apiKey, model) {
 
             const modelsData = await modelsRes.json();
             const activeModels = (modelsData.data || [])
-                .map(m => m.id)
-                .filter(id => {
-                    const lower = id.toLowerCase();
-                    return !lower.includes("whisper") && 
-                           !lower.includes("guard") && 
-                           !lower.includes("vision") && 
-                           !lower.includes("tts") && 
-                           !lower.includes("orpheus") && 
-                           !lower.includes("arabic") && 
-                           !lower.includes("saudi") &&
-                           !lower.includes("compound");
-                });
+                .map(m => m && m.id)
+                .filter(id => id && isGroqChatModel(id));
 
-            let targetModel = (model && activeModels.includes(model)) ? model : null;
-            if (!targetModel) {
-                targetModel = activeModels.find(m => m.includes("llama-3.3-70b-versatile")) ||
-                              activeModels.find(m => m.includes("llama-3.3-70b")) ||
-                              activeModels.find(m => m.includes("llama")) ||
-                              activeModels[0];
-            }
-
-            if (!targetModel) {
+            if (!activeModels.length) {
                 return { success: false, message: "❌ Groq hesabınızda aktif bir metin modeli bulunamadı." };
             }
+
+            // Seçili model erişilebilir değilse listeden uygun güncel modeli seç.
+            const targetModel = chooseGroqModel(activeModels, model);
 
             // Seçilen modelle test mesajı gönder
             const chatRes = await fetch("https://api.groq.com/openai/v1/chat/completions", {
