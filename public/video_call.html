@@ -160,24 +160,59 @@
         /* Sound waves when tutor speaks */
         .speaking-aura {
             position: absolute;
+            top: calc(50% - 30px);
+            left: 50%;
             width: 320px;
             height: 320px;
+            margin: -160px 0 0 -160px;
             border-radius: 50%;
-            border: 2px solid rgba(56, 189, 248, 0.4);
+            border: 1.5px solid rgba(124, 92, 255, 0.45);
             z-index: 2;
             opacity: 0;
             pointer-events: none;
             transition: opacity 0.3s;
+            box-shadow:
+                0 0 60px rgba(124, 92, 255, 0.18),
+                inset 0 0 50px rgba(91, 140, 255, 0.12);
+        }
+
+        .speaking-aura::before,
+        .speaking-aura::after {
+            content: "";
+            position: absolute;
+            inset: -8px;
+            border-radius: 50%;
+            border: 1px solid rgba(91, 140, 255, 0.4);
+            opacity: 0;
+            pointer-events: none;
         }
 
         .speaking-aura.active {
             opacity: 1;
-            animation: ring-pulse 1.8s infinite ease-out;
+            animation: ring-pulse 2.6s infinite ease-out;
         }
 
+        .speaking-aura.active::before { animation: aura-ring 2.8s ease-out infinite; }
+        .speaking-aura.active::after { animation: aura-ring 2.8s ease-out 1.4s infinite; }
+
         @keyframes ring-pulse {
-            0% { transform: scale(0.9); opacity: 0.8; }
-            100% { transform: scale(1.4); opacity: 0; }
+            0% { transform: scale(0.88); opacity: 0.7; }
+            55% { opacity: 0.28; }
+            100% { transform: scale(1.38); opacity: 0; }
+        }
+
+        @keyframes aura-ring {
+            0% { transform: scale(0.82); opacity: 0; }
+            25% { opacity: 0.55; }
+            100% { transform: scale(1.5); opacity: 0; }
+        }
+
+        @media (max-width: 640px) {
+            .speaking-aura {
+                width: 280px;
+                height: 280px;
+                margin: -140px 0 0 -140px;
+            }
         }
 
         /* --- INTERACTIVE ANIMATED HUMAN AVATAR --- */
@@ -330,7 +365,7 @@
         /* --- QUICK PRACTICE SCENARIOS (PILLS) --- */
         .scenario-pills-bar {
             position: absolute;
-            bottom: 224px;
+            bottom: max(224px, calc(90px + var(--ds-sub-h, 80px) + 14px));
             left: 50%;
             transform: translateX(-50%);
             display: flex;
@@ -736,7 +771,7 @@
             .user-pip-window { width: 120px; height: 95px; bottom: 85px; right: 14px; }
             .subtitles-container { bottom: 85px; width: 94%; padding: 10px 14px; }
             .subtitle-text { font-size: 0.9rem; }
-            .scenario-pills-bar { bottom: 196px; }
+            .scenario-pills-bar { bottom: max(196px, calc(85px + var(--ds-sub-h, 80px) + 12px)); }
             .dock-btn { width: 44px; height: 44px; font-size: 1.1rem; }
             .btn-hangup { width: 50px; height: 50px; }
             .tutor-name-pill { bottom: 110px; padding: 6px 14px; font-size: 0.8rem; }
@@ -1792,6 +1827,26 @@
             closeSettingsModal();
             tutorSpeak("Settings updated! Let's continue our conversation.");
         }
+    </script>
+
+    <!-- Senaryo pill'lerini altyazı kutusunun boyuna göre yukarıda tut -->
+    <script>
+        (function () {
+            var sub = document.getElementById("subtitlesBox");
+            var bar = document.querySelector(".scenario-pills-bar");
+            if (!sub || !bar) return;
+
+            function syncSubtitleHeight() {
+                var height = sub.getBoundingClientRect().height;
+                bar.style.setProperty("--ds-sub-h", height.toFixed(1) + "px");
+            }
+
+            syncSubtitleHeight();
+            if (window.ResizeObserver) {
+                new ResizeObserver(syncSubtitleHeight).observe(sub);
+            }
+            window.addEventListener("resize", syncSubtitleHeight, { passive: true });
+        })();
     </script>
 </body>
 </html>

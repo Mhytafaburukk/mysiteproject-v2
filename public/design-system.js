@@ -118,6 +118,91 @@
 
     injectMediaPolishStyles();
 
+    /* --- 0a. Global Obsidian ambient katmanı (aurora + parçacıklar) ------- */
+
+    function injectAmbientStyles() {
+        if (document.querySelector("style[data-ds-ambient]")) return;
+        var style = document.createElement("style");
+        style.setAttribute("data-ds-ambient", "1");
+        style.textContent =
+            "body{isolation:isolate}" +
+            ".ds-ambient{position:fixed;inset:0;z-index:-1;overflow:hidden;pointer-events:none}" +
+            ".ds-aurora{position:absolute;border-radius:50%;opacity:.55;will-change:transform;animation:ds-aurora-drift 26s ease-in-out infinite alternate}" +
+            ".ds-aurora--indigo{width:56vmax;height:56vmax;left:-14%;top:-20%;background:radial-gradient(circle at 50% 50%,rgba(124,92,255,.34) 0%,rgba(124,92,255,.12) 38%,transparent 70%);animation-duration:28s}" +
+            ".ds-aurora--violet{width:48vmax;height:48vmax;right:-12%;top:8%;background:radial-gradient(circle,rgba(168,85,247,.26) 0%,transparent 68%);animation-duration:34s;animation-delay:-8s}" +
+            ".ds-aurora--cyan{width:44vmax;height:44vmax;left:18%;bottom:-18%;background:radial-gradient(circle,rgba(34,211,238,.22) 0%,transparent 70%);animation-duration:30s;animation-delay:-14s}" +
+            "@keyframes ds-aurora-drift{0%{transform:translate3d(0,0,0) scale(1)}50%{transform:translate3d(4vw,3vh,0) scale(1.07)}100%{transform:translate3d(-3vw,5vh,0) scale(.97)}}" +
+            ".ds-particle-field{position:absolute;inset:-4%;will-change:transform;transition:transform 520ms cubic-bezier(.22,1,.36,1)}" +
+            ".ds-particle{position:absolute;font-family:'Plus Jakarta Sans','Poppins',sans-serif;font-weight:600;font-size:clamp(10px,1.2vw,15px);letter-spacing:.14em;color:#C4B5FF;opacity:.07;text-shadow:0 0 14px rgba(124,92,255,.45);animation:ds-particle-drift var(--dur,26s) ease-in-out infinite alternate;animation-delay:var(--delay,0s);user-select:none;white-space:nowrap}" +
+            ".ds-particle--line{height:1px;width:var(--len,120px);border-radius:1px;background:linear-gradient(90deg,transparent,rgba(124,92,255,.55),transparent);opacity:.08;animation:none}" +
+            "@keyframes ds-particle-drift{0%{transform:translate3d(0,0,0)}50%{transform:translate3d(7px,-16px,0)}100%{transform:translate3d(-6px,10px,0)}}" +
+            "body>.call-room{background:radial-gradient(circle at 50% 30%,rgba(25,20,48,.88) 0%,rgba(7,8,11,.96) 70%)}" +
+            "@media (prefers-reduced-motion:reduce){.ds-aurora,.ds-particle{animation:none!important}.ds-particle-field{transition:none!important}}";
+        document.head.appendChild(style);
+    }
+
+    function mountAmbientScene() {
+        if (!document.body || document.querySelector(".ds-ambient")) return;
+
+        var layer = document.createElement("div");
+        layer.className = "ds-ambient";
+        layer.setAttribute("aria-hidden", "true");
+
+        var tokens = ["Aa", "B2", "C1", "Speak", "AI", "listen", "talk", "hello", "word", "fluent", "grammar", "B1", "C2", "think", "say"];
+        var spots = [
+            [7, 18], [22, 70], [34, 12], [47, 82], [59, 24], [71, 62], [84, 14], [14, 46],
+            [90, 40], [29, 54], [54, 66], [67, 8], [41, 36], [78, 86], [11, 86], [87, 66]
+        ];
+        var html = '<span class="ds-aurora ds-aurora--indigo"></span>' +
+            '<span class="ds-aurora ds-aurora--violet"></span>' +
+            '<span class="ds-aurora ds-aurora--cyan"></span>' +
+            '<div class="ds-particle-field">';
+
+        for (var i = 0; i < spots.length; i++) {
+            html += '<span class="ds-particle" style="left:' + spots[i][0] + '%;top:' + spots[i][1] +
+                '%;--dur:' + (20 + (i % 6) * 3) + 's;--delay:-' + (i * 1.8).toFixed(1) + 's;">' +
+                tokens[i % tokens.length] + '</span>';
+        }
+
+        var lines = [
+            [18, 30, -24, 120], [63, 18, 18, 150], [36, 76, 12, 100], [75, 72, -14, 130], [8, 62, 28, 90]
+        ];
+        for (var j = 0; j < lines.length; j++) {
+            html += '<span class="ds-particle ds-particle--line" style="left:' + lines[j][0] + '%;top:' +
+                lines[j][1] + '%;--len:' + lines[j][3] + 'px;transform:rotate(' + lines[j][2] + 'deg);"></span>';
+        }
+        html += "</div>";
+        layer.innerHTML = html;
+
+        document.body.insertBefore(layer, document.body.firstChild);
+
+        // Hafif fare parallax'ı — yalnızca hassas işaretçi ve hareket azaltma kapalıysa
+        var finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
+        var field = layer.querySelector(".ds-particle-field");
+        if (field && finePointer && !reduceMotion) {
+            var scheduled = false;
+            var targetX = 0;
+            var targetY = 0;
+            document.addEventListener("pointermove", function (event) {
+                targetX = ((event.clientX / window.innerWidth) - 0.5) * 18;
+                targetY = ((event.clientY / window.innerHeight) - 0.5) * 14;
+                if (scheduled) return;
+                scheduled = true;
+                window.requestAnimationFrame(function () {
+                    field.style.transform = "translate3d(" + targetX.toFixed(2) + "px," + targetY.toFixed(2) + "px,0)";
+                    scheduled = false;
+                });
+            }, { passive: true });
+        }
+    }
+
+    injectAmbientStyles();
+    if (document.body) {
+        mountAmbientScene();
+    } else {
+        document.addEventListener("DOMContentLoaded", mountAmbientScene);
+    }
+
     /* --- 0b. Bento spotlight: fareyi takip eden iç ışık ------------------- */
 
     var finePointer = window.matchMedia("(hover: hover) and (pointer: fine)").matches;
