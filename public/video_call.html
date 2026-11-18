@@ -1590,7 +1590,8 @@
                         history: conversationHistory,
                         apiKey: apiKey,
                         model: model,
-                        tutorName: currentTutor
+                        tutorName: currentTutor,
+                        englishLevel: localStorage.getItem("ai_level") || "auto"
                     })
                 });
 

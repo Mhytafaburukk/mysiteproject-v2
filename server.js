@@ -1,7 +1,34 @@
 const express = require("express");
 const path = require("path");
+const fs = require("fs");
 const cors = require("cors");
 const DB = require("./database");
+
+// --- Basit .env yükleyici (ek bağımlılık gerektirmez) ---
+function loadEnvFile(filePath) {
+    try {
+        if (!fs.existsSync(filePath)) return;
+        const lines = fs.readFileSync(filePath, "utf-8").split(/\r?\n/);
+        for (const line of lines) {
+            const trimmed = line.trim();
+            if (!trimmed || trimmed.startsWith("#")) continue;
+            const eq = trimmed.indexOf("=");
+            if (eq === -1) continue;
+            const key = trimmed.slice(0, eq).trim();
+            let value = trimmed.slice(eq + 1).trim();
+            if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+                value = value.slice(1, -1);
+            }
+            if (key && process.env[key] === undefined) process.env[key] = value;
+        }
+    } catch (e) {
+        console.warn(".env dosyası okunamadı:", e.message);
+    }
+}
+
+loadEnvFile(path.join(__dirname, ".env"));
+
+// .env yüklendikten SONRA AI servisi require edilir (AI_HISTORY_LIMIT vb. için)
 const aiService = require("./ai_service");
 
 const app = express();
@@ -78,7 +105,7 @@ app.get("/get-messages/:username1/:username2", (req, res) => {
 });
 
 app.post("/send-message", async (req, res) => {
-    let { sender, receiver, content, apiKey, model, focusMode, englishLevel } = req.body;
+    let { sender, receiver, content, apiKey, model, focusMode, englishLevel, history: clientHistory } = req.body;
     if (receiver === "English_AI") receiver = AI_BOT;
 
     if (!DB.getUser(sender)) return res.status(404).json({ success: false, message: "Gönderen bulunamadı!" });
@@ -91,18 +118,22 @@ app.post("/send-message", async (req, res) => {
 
     // Eğer alıcı AI ise yanıt üret
     if (receiver === AI_BOT) {
+        const aiConfig = aiService.resolveAIConfig({ apiKey, model });
         console.log(`[MESAJ] '${sender}' -> English Mentor | "${content.slice(0, 50)}"`);
-        console.log(`[AI AYARLARI] Model: ${model || "built-in"} | API Key: ${apiKey ? "Mevcut (" + apiKey.slice(0, 4) + "...)" : "YOK"}`);
+        console.log(`[AI AYARLARI] Sağlayıcı: ${aiConfig.provider || "auto"} | Model: ${aiConfig.model || "built-in"} | API Key: ${aiConfig.apiKey ? "Mevcut (" + aiConfig.apiKey.slice(0, 4) + "...)" : "YOK (.env veya dahili motor)"}`);
 
-        const history = DB.getConversation(sender, AI_BOT).slice(-8);
+        let history = Array.isArray(clientHistory) && clientHistory.length > 0
+            ? clientHistory
+            : DB.getConversation(sender, AI_BOT);
+        history = history.slice(-24);
 
-        // 1. Canlı API dene (API key varsa ve built-in değilse)
-        if (apiKey && model && model !== "built-in") {
+        // 1. Canlı API dene (istemci anahtarı veya .env yapılandırması varsa)
+        if (aiConfig.apiKey && aiConfig.model && aiConfig.model !== "built-in") {
             try {
-                const apiRes = await aiService.callExternalAI(content, apiKey, model, focusMode, englishLevel, history);
+                const apiRes = await aiService.callExternalAI(content, aiConfig.apiKey, aiConfig.model, focusMode, englishLevel, history);
                 if (typeof apiRes === "string") {
                     mentorReplyText = apiRes;
-                    console.log(`[CANLI API BAŞARILI] ${model} yanıt üretti.`);
+                    console.log(`[CANLI API BAŞARILI] ${aiConfig.model} yanıt üretti.`);
                 } else if (apiRes && apiRes.error) {
                     console.warn(`[CANLI API HATASI]`, apiRes.message);
                     const fallback = aiService.generateFallbackResponse(content, sender, DB, history);
@@ -244,20 +275,21 @@ app.post("/api/ai/generate-question", (req, res) => {
 app.post("/api/interview/chat", async (req, res) => {
     try {
         const { username, mode, message, history, apiKey, model, isDebrief } = req.body || {};
-        const safeHistory = Array.isArray(history) ? history : [];
+        const safeHistory = Array.isArray(history) ? history.slice(-24) : [];
         const safeMode = mode || "Mode 5: Full Remote ML Engineer Mock Interview";
+        const aiConfig = aiService.resolveAIConfig({ apiKey, model });
 
         console.log(`[MOCK INTERVIEW] User: ${username || "Anonymous"} | Mode: ${safeMode} | Turn: ${safeHistory.length} | Debrief: ${!!isDebrief}`);
 
         let aiReply = null;
 
-        // 1. Canlı LLM API dene (Groq, Gemini, OpenRouter)
-        if (apiKey && model && model !== "built-in") {
+        // 1. Canlı LLM API dene (Groq, Gemini, OpenAI, OpenRouter, .env)
+        if (aiConfig.apiKey && aiConfig.model && aiConfig.model !== "built-in") {
             try {
                 const apiRes = await aiService.callInterviewAI(
                     message,
-                    apiKey,
-                    model,
+                    aiConfig.apiKey,
+                    aiConfig.model,
                     safeMode,
                     safeHistory,
                     !!isDebrief
@@ -324,24 +356,26 @@ app.get("/api/interview/history/:username", (req, res) => {
 
 app.post("/api/video-call/chat", async (req, res) => {
     try {
-        const { username, message, history, apiKey, model, tutorName } = req.body || {};
-        const safeHistory = Array.isArray(history) ? history : [];
+        const { username, message, history, apiKey, model, tutorName, englishLevel } = req.body || {};
+        const safeHistory = Array.isArray(history) ? history.slice(-24) : [];
         const safeTutor = tutorName || "Sarah";
+        const aiConfig = aiService.resolveAIConfig({ apiKey, model });
 
-        console.log(`[VIDEO CALL] User: ${username || "Anonymous"} | Tutor: ${safeTutor} | Message: "${(message || '').slice(0, 40)}"`);
+        console.log(`[VIDEO CALL] User: ${username || "Anonymous"} | Tutor: ${safeTutor} | Provider: ${aiConfig.provider || "auto"} | Message: "${(message || '').slice(0, 40)}"`);
 
         let replyText = null;
         let apiError = null;
 
-        // 1. Canlı API dene
-        if (apiKey && model && model !== "built-in") {
+        // 1. Canlı API dene (istemci anahtarı veya .env)
+        if (aiConfig.apiKey && aiConfig.model && aiConfig.model !== "built-in") {
             try {
                 const apiRes = await aiService.callVideoCallAI(
                     message,
-                    apiKey,
-                    model,
+                    aiConfig.apiKey,
+                    aiConfig.model,
                     safeTutor,
-                    safeHistory
+                    safeHistory,
+                    englishLevel || "auto"
                 );
                 if (typeof apiRes === "string" && apiRes.trim()) {
                     replyText = apiRes.trim();

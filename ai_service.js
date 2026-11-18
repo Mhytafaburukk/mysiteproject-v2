@@ -4,6 +4,54 @@ const fs = require("fs");
 const path = require("path");
 
 // =============================================
+// .ENV YAPILANDIRMASI (OpenAI / OpenAI-uyumlu / Gemini / Groq)
+// =============================================
+
+const HISTORY_LIMIT = Math.max(6, Math.min(30, parseInt(process.env.AI_HISTORY_LIMIT || "16", 10) || 16));
+
+function cleanApiKey(value) {
+    return String(value || "").replace(/^[“"'`\s]+|[”"'`\s]+$/g, "").trim();
+}
+
+/**
+ * İstemciden gelen anahtar/model ile .env değerlerini birleştirir.
+ * - İstemci geçerli bir anahtar gönderdiyse onun model seçimi korunur.
+ * - Anahtar yoksa .env'deki AI_API_KEY / sağlayıcı anahtarı + AI_MODEL kullanılır.
+ */
+function resolveAIConfig(input = {}) {
+    const clientKey = cleanApiKey(input.apiKey);
+    const clientModel = String(input.model || "").trim();
+    const envProvider = String(process.env.AI_PROVIDER || "").trim().toLowerCase();
+    const baseURL = String(process.env.AI_BASE_URL || "").trim().replace(/\/+$/, "");
+
+    const envKey = cleanApiKey(process.env.AI_API_KEY) ||
+        cleanApiKey(process.env.OPENAI_API_KEY) ||
+        cleanApiKey(process.env.GROQ_API_KEY) ||
+        cleanApiKey(process.env.GEMINI_API_KEY) ||
+        cleanApiKey(process.env.GOOGLE_API_KEY) ||
+        cleanApiKey(process.env.OPENROUTER_API_KEY);
+
+    // Kullanıcı bilinçli olarak yerleşik motoru seçtiyse ona saygı duy.
+    if (!clientKey && clientModel === "built-in") {
+        return { apiKey: "", model: "built-in", baseURL, provider: "built-in" };
+    }
+
+    const apiKey = clientKey || envKey;
+    // İstemci anahtarı yoksa .env modeli kullanılır; o da yoksa anahtar önekinden türetilir.
+    let model = clientKey ? clientModel : String(process.env.AI_MODEL || "").trim();
+
+    if (!model) {
+        if (envProvider === "gemini" || apiKey.startsWith("AIza")) model = "gemini-1.5-flash";
+        else if (envProvider === "groq" || apiKey.startsWith("gsk_")) model = "llama-3.1-8b-instant";
+        else if (envProvider === "openrouter" || apiKey.startsWith("sk-or-")) model = "google/gemini-2.0-flash-exp:free";
+        else if (baseURL || apiKey) model = "gpt-4o-mini";
+        else model = "built-in";
+    }
+
+    return { apiKey, model, baseURL, provider: envProvider || "" };
+}
+
+// =============================================
 // ZENGİN KELİME HAVUZU (Yerleşik + Dosyadan)
 // =============================================
 const BUILTIN_VOCABULARY = [
@@ -259,8 +307,8 @@ function sanitizeContentsForGemini(history, currentMessage) {
             items.pop();
         }
 
-        // Son 8 mesajı alalım
-        const recent = items.slice(-8);
+        // Bağlam penceresi: son N mesaj (varsayılan 16)
+        const recent = items.slice(-HISTORY_LIMIT);
         for (const msg of recent) {
             const isModel = (msg.sender === "English_Mentor" || msg.sender === "English_AI" || msg.role === "assistant" || msg.role === "model");
             const role = isModel ? "model" : "user";
@@ -309,45 +357,62 @@ async function callExternalAI(userMessage, apiKey, model, focusMode, level, conv
 
     let systemPrompt = customSystemPrompt;
     if (!systemPrompt) {
-        systemPrompt = `You are "English Mentor", a warm, world-class certified English language tutor and conversation partner on an English learning platform.
-Student English Level: ${level || "auto (adapt to student)"}.
+        systemPrompt = `You are "English Mentor", a warm, genuinely curious English conversation partner on an English learning platform. You are NOT a scripted teacher bot.
+Student English Level: ${level || "auto — quietly adapt to the student's level"}.
 Focus Coaching Mode: ${focusMode || "coach"}.
 
-CRITICAL INSTRUCTIONS:
-1. LANGUAGE USAGE:
-   - If the student speaks or asks in Turkish (e.g. "bana resilience kelimesini anlatır mısın", "cümle kur", "bu doğru mu"):
-     Answer in fluent Turkish with warm encouragement, but ALWAYS provide rich, natural English example sentences, English explanations, pronunciation hints, and Turkish translations.
-   - If the student writes in English, reply in natural, engaging English and gently point out any grammar improvements.
-   - STRICT RULE: You must NEVER respond in Arabic or any unrelated language. Only English or Turkish.
-2. WORD EXPLANATIONS:
-   - When asked about a specific word, provide:
-     • Turkish definition and part of speech (Noun/Verb/Adj)
-     • Pronunciation guide
-     • 2-3 realistic example sentences from daily life / business with Turkish translations
-     • Key collocations / common prepositions (e.g. "resilience to/against", "involvement in")
-     • An inviting prompt asking the student to write their own sentence using this word.
-3. QUIZ / QUESTIONS:
-   - If asked for a question or quiz, write a clean fill-in-the-blank question with 4 clear options (A, B, C, D) and a Turkish hint.
-4. TONE:
-   - Natural, lively, highly supportive, professional tutor. Never use dry robotic disclaimers. Format with clean Markdown (bolding, bullet points, blockquotes).`;
+NON-NEGOTIABLE CONVERSATION RULES:
+1. NEVER use canned, robotic teacher praise. These are BANNED: "Wonderful! A good day is always worth celebrating.", "Your English is so good!", "I love chatting with you!", "Great job!" as a standalone sentence.
+2. React to the SPECIFIC detail the student just shared (their job, game, coffee, tiredness, exam, family, city, plan). Quote or paraphrase that detail so it is obvious you actually read it.
+3. You receive the full "messages" conversation history. Remember and naturally reference topics from several turns ago ("Earlier you mentioned your job interview — how did that go?"). NEVER ask a question that has already been answered.
+4. If the student writes English, keep the conversation flowing in English. If they write Turkish, reply in Turkish but still model natural English phrases.
+5. Adapt automatically to their level: short simple sentences for A1–A2, richer vocabulary for B1–B2+, but never lecture.
+6. Correct small grammar mistakes GENTLY inside the flow of the reply — recast the correct form once ("I agree with you — 'I agree' is the natural form"), then continue. Do not stop the conversation for a grammar lesson unless explicitly asked.
+7. ALWAYS end with exactly one creative, open follow-up question that grows out of their answer.
+8. Keep normal conversational replies to 2–3 short sentences (this is read aloud by TTS). Use Markdown only for word explanations, quizzes, or when the student asks for a structured lesson.
+9. Never respond in Arabic or any unrelated language. English or Turkish only.
+
+WORD EXPLANATIONS (only when asked):
+- Turkish definition + part of speech
+- Pronunciation guide
+- 2-3 realistic example sentences with Turkish translations
+- Key collocations / prepositions
+- Invite the student to write their own sentence.
+
+QUIZ / QUESTIONS (only when asked):
+- Clean fill-in-the-blank sentence with 4 clear options (A, B, C, D) and a Turkish hint.`;
     }
 
     // Sağlayıcı Anahtar Tipi Otomatik Tespiti
     const trimmedKey = (apiKey || "").replace(/^[“"'`\s]+|[”"'`\s]+$/g, "").trim();
     if (!trimmedKey) return null;
 
-    // Model seçimi birincil belirleyicidir
-    let provider = "groq";
+    // Model / anahtar / .env sağlayıcı tespiti
+    const envProvider = String(process.env.AI_PROVIDER || "").toLowerCase();
+    const envBaseURL = String(process.env.AI_BASE_URL || "").replace(/\/+$/, "");
+    let provider = "compatible";
     if (model && model.startsWith("gemini")) {
         provider = "gemini";
     } else if (model && (model.startsWith("llama") || model.startsWith("groq"))) {
         provider = "groq";
     } else if (model && model.startsWith("openrouter")) {
         provider = "openrouter";
+    } else if (model && (model.startsWith("gpt") || model.startsWith("o1") || model.startsWith("o3") || model.startsWith("o4"))) {
+        provider = "compatible";
     } else if (trimmedKey.startsWith("AIza")) {
         provider = "gemini";
     } else if (trimmedKey.startsWith("gsk_")) {
         provider = "groq";
+    } else if (trimmedKey.startsWith("sk-or-")) {
+        provider = "openrouter";
+    } else if (envProvider === "gemini") {
+        provider = "gemini";
+    } else if (envProvider === "groq") {
+        provider = "groq";
+    } else if (envProvider === "openrouter") {
+        provider = "openrouter";
+    } else if (envBaseURL || trimmedKey.startsWith("sk-")) {
+        provider = "compatible";
     }
 
     // Anahtar ve Model Uyumsuzluğu Kontrolü
@@ -377,7 +442,7 @@ CRITICAL INSTRUCTIONS:
                     historyItems.pop();
                 }
 
-                for (const msg of historyItems.slice(-6)) {
+                for (const msg of historyItems.slice(-HISTORY_LIMIT)) {
                     let text = (msg.content || msg.text || "").replace(/\[SES:.*?\]/g, "[Sesli Mesaj]").trim();
                     if (!text) continue;
                     groqMessages.push({
@@ -494,7 +559,7 @@ CRITICAL INSTRUCTIONS:
                     historyItems.pop();
                 }
 
-                for (const msg of historyItems.slice(-6)) {
+                for (const msg of historyItems.slice(-HISTORY_LIMIT)) {
                     let text = (msg.content || msg.text || "").replace(/\[SES:.*?\]/g, "[Sesli Mesaj]").trim();
                     if (!text) continue;
                     orMessages.push({
@@ -545,31 +610,40 @@ CRITICAL INSTRUCTIONS:
         }
     }
 
-    // 4. OpenAI API
-    if (model && model.startsWith("gpt") && apiKey) {
+    // 4. OpenAI / OpenAI-uyumlu endpoint (AI_BASE_URL ile özelleştirilebilir)
+    if (provider === "compatible" && trimmedKey) {
         try {
-            let openaiMessages = [{ role: "system", content: systemPrompt }];
+            const openaiMessages = [{ role: "system", content: systemPrompt }];
 
             if (conversationHistory && conversationHistory.length > 0) {
-                for (const msg of conversationHistory.slice(-6)) {
-                    let text = (msg.content || "").replace(/\[SES:.*?\]/g, "[Sesli Mesaj]").trim();
+                const historyItems = [...conversationHistory];
+                const last = historyItems[historyItems.length - 1];
+                if (last && (last.sender !== "English_Mentor" && last.sender !== "English_AI" && last.role !== "assistant" && last.role !== "model") && (last.content === userMessage || last.text === userMessage)) {
+                    historyItems.pop();
+                }
+
+                for (const msg of historyItems.slice(-HISTORY_LIMIT)) {
+                    let text = (msg.content || msg.text || "").replace(/\[SES:.*?\]/g, "[Sesli Mesaj]").trim();
                     if (!text) continue;
                     openaiMessages.push({
-                        role: (msg.sender === "English_Mentor" || msg.sender === "English_AI") ? "assistant" : "user",
+                        role: (msg.sender === "English_Mentor" || msg.sender === "English_AI" || msg.role === "assistant" || msg.role === "model") ? "assistant" : "user",
                         content: text
                     });
                 }
             }
             openaiMessages.push({ role: "user", content: userMessage });
 
-            const res = await fetch("https://api.openai.com/v1/chat/completions", {
+            const baseURL = (envBaseURL || "https://api.openai.com/v1").replace(/\/+$/, "");
+            const targetModel = model || process.env.AI_MODEL || "gpt-4o-mini";
+
+            const res = await fetch(`${baseURL}/chat/completions`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
-                    "Authorization": `Bearer ${apiKey.trim()}`
+                    "Authorization": `Bearer ${trimmedKey}`
                 },
                 body: JSON.stringify({
-                    model: model || "gpt-4o-mini",
+                    model: targetModel,
                     messages: openaiMessages,
                     temperature: 0.7,
                     max_tokens: 1500
@@ -582,7 +656,7 @@ CRITICAL INSTRUCTIONS:
                 if (text) return text.trim();
             } else {
                 const errText = await res.text();
-                console.error(`OpenAI API Hatası [${res.status}]:`, errText);
+                console.error(`OpenAI/uyumlu API Hatası [${res.status}]:`, errText);
                 let detail = errText;
                 try {
                     const json = JSON.parse(errText);
@@ -590,14 +664,14 @@ CRITICAL INSTRUCTIONS:
                 } catch(e) {}
                 return {
                     error: true,
-                    message: `⚠️ **OpenAI API Hatası (HTTP ${res.status}):**\n> *${detail}*`
+                    message: `⚠️ **OpenAI / OpenAI-uyumlu API Hatası (HTTP ${res.status}):**\n> *${detail}*`
                 };
             }
         } catch (err) {
-            console.error("OpenAI Bağlantı Hatası:", err.message);
+            console.error("OpenAI/uyumlu Bağlantı Hatası:", err.message);
             return {
                 error: true,
-                message: `⚠️ **OpenAI Bağlantı Hatası:**\n> *${err.message}*`
+                message: `⚠️ **OpenAI / OpenAI-uyumlu Bağlantı Hatası:**\n> *${err.message}*`
             };
         }
     }
@@ -992,14 +1066,14 @@ function generateFallbackResponse(userMessage, senderUsername, dbModule, convers
         return `🗣️ **Günün İngilizce Deyimi (Idiom):**\n\n🌟 **"${pick.en}"**\n🇹🇷 **Anlamı:** ${pick.tr}\n\n📌 **Örnek Cümle:**\n> *"${pick.ex}"*\n> 🇹🇷 *"${pick.extr}"*\n\nBu deyimi kullanarak bir cümle kurmayı denemek ister misin?`;
     }
 
-    // --- İngilizce Selamlaşma & Sohbet (Kullanıcı İngilizce yazmışsa İNGİLİZCE yanıt ver) ---
+    // --- İngilizce Selamlaşma & Sohbet (kullanıcı İngilizce yazmışsa İngilizce yanıt ver) ---
     if (lower.match(/^(hey|hi|hello|howdy|what's\s*up|good\s*(morning|afternoon|evening))/i) || (!isLikelyTurkish(raw) && lower.includes("how are you"))) {
-        return `Hey ${senderUsername}! 👋\n\nI'm doing fantastic, thank you for asking! 😊 It's always a pleasure to practice English with you.\n\nHow is your day going so far? What would you like to work on today — speaking practice, learning new vocabulary, or checking a sentence?`;
+        return generateContextualConversationFallback(raw, "English Mentor", false, conversationHistory);
     }
 
     // --- Saf İngilizce Mesaj (Kullanıcı İngilizce konuşuyorsa İNGİLİZCE devam et) ---
     if (!isLikelyTurkish(raw) && raw.length > 3) {
-        return generateConversationalResponse(raw, "English Mentor", false, conversationHistory);
+        return generateContextualConversationFallback(raw, "English Mentor", false, conversationHistory);
     }
 
     // --- Kelime Anlatımı / Cümle İsteği / Ne Demek ---
@@ -1294,19 +1368,36 @@ function generateFallbackInterviewResponse(userMessage, modeName, conversationHi
 // 8. GÖRÜNTÜLÜ İNGİLİZCE MENTOR (VIDEO CALL AVATAR TUTOR)
 // =============================================
 
-function getVideoCallSystemPrompt(tutorName = "Sarah") {
-    return `[ROLE: LIVE VIDEO CALL ENGLISH TUTOR]
-You are ${tutorName || "Sarah"}, a friendly, warm, energetic native English teacher having a face-to-face video call with an English student.
+function getVideoCallSystemPrompt(tutorName = "Sarah", level = "auto") {
+    return `[ROLE]
+You are ${tutorName || "Sarah"}, a real person on a live one-on-one video call with an English learner. You are warm, quick-witted, genuinely curious, and you talk like a friend — never like a scripted teacher bot.
 
-CRITICAL INSTRUCTIONS FOR LIVE VIDEO CONVERSATION:
-1. SPOKEN & CONCISE: Keep your response short, natural, and expressive (strictly 2 to 3 spoken sentences per turn). This is a real-time face-to-face video call, NOT a text essay.
-2. 100% ENGLISH: Always speak in clear, natural, native English (unless student explicitly asks for Turkish help).
-3. ACTIVE LISTENER & HUMAN-LIKE: NEVER give canned generic praise like "Your English is so good" or "I love chatting with you". ALWAYS directly answer and react to what the student actually said! 
-   - If they ask "what about you?" or "how are you?", tell them genuinely how your day is going!
-   - If they describe their day, work, school, gym, or feelings (tired, happy, busy), empathize and comment on the specific details they shared!
-   - If they practiced a sentence with a target word, give specific feedback on their word choice.
-4. ENGAGING: Always finish your turn with an open-ended conversational question to keep the video conversation flowing!
-5. CAMERA PRESENCE: Be enthusiastic, warm, encouraging, and expressive.`;
+[STUDENT LEVEL]
+${level && level !== "auto" ? `The student's level is roughly ${level}.` : "Infer the student's level from their messages and quietly match it."} Use short, simple sentences for beginners and richer, idiomatic English for advanced students.
+
+[NON-NEGOTIABLE RULES]
+1. React to the SPECIFIC detail the student just said. If they mention their job, a game, coffee, being tired, an exam, a friend, or a plan, directly reference that detail in your first sentence.
+2. NEVER use canned generic teacher praise. These are BANNED:
+   - "Wonderful! A good day is always worth celebrating."
+   - "Your English is so good!"
+   - "I love chatting with you!"
+   - "Great job!" / "Well done!" as a standalone sentence.
+   Also never repeat a reaction you have already used earlier in this conversation.
+3. You receive the full "messages" array on every request. Use it as real memory: remember topics from 3+ turns ago and bring them back naturally ("Earlier you mentioned your job — did that deadline go okay?"). Never re-ask a question the student has already answered.
+4. If the student asks about you ("what about you?", "how are you?"), answer in character with a concrete, believable detail of your own day, then return the question to them.
+5. GRAMMAR: Do not interrupt the flow for every mistake. If there is a clear error, recast the correct form once, naturally inside your reply ("I agree — we usually say 'I agree' rather than 'I am agree'"). Ignore tiny article/preposition slips during a fast spoken conversation.
+6. LANGUAGE: Speak natural English. Only switch to Turkish if the student explicitly asks for help in Turkish.
+7. Always end with exactly ONE open-ended follow-up question that grows out of their answer and keeps the conversation moving.
+8. OUTPUT FORMAT: 2 to 3 short spoken sentences, TTS-friendly. No markdown, no bullet points, no emojis, no lists, no headings.
+9. Do not invent facts about the student. Only use what they actually told you in the messages.
+
+[STYLE EXAMPLES]
+Student: "I had a long day at work, lots of meetings."
+Bad: "Wonderful! A good day is always worth celebrating."
+Good: "Meetings all day can melt your brain — was it one of those days where the calendar never let you breathe? What was the meeting you dreaded most?"
+
+Student: "I played a new game yesterday, it was hard."
+Good: "A hard game is usually the one that hooks you, right? Which part kept catching you out — the mechanics or a specific level?"`;
 }
 
 function generateConversationalResponse(userMessage, tutorName = "Sarah", isVideoCall = false, conversationHistory = []) {
@@ -1424,9 +1515,9 @@ function generateConversationalResponse(userMessage, tutorName = "Sarah", isVide
     if (feelingGood) {
         const goodReplies = isVideoCall ? [
             `That's so great to hear! What made today especially good for you?`,
-            `Wonderful! A good day is always worth celebrating. Did anything specific make it stand out?`,
-            `I love hearing that! Positive days are so valuable. What was the highlight of your day?`,
-            `That's amazing! You deserve good days. Was there something in particular that made it enjoyable?`
+            `Okay, I need the details — what was the best part of today?`,
+            `Positive days are rare enough that they deserve a proper recap. What happened?`,
+            `That's amazing. Was there one specific moment that made it click for you?`
         ] : [
             `I'm so glad to hear that! 😊 A positive mood makes speaking and practicing English feel effortless.\n\nDid anything special happen today, or are you just in high spirits?`,
             `That's wonderful! 🌟 Good days give you so much energy.\n\nWhat was the best part of your day?`
@@ -1607,14 +1698,289 @@ function generateConversationalResponse(userMessage, tutorName = "Sarah", isVide
         : dynamicChatReplies[Math.floor(Math.random() * dynamicChatReplies.length)];
 }
 
-async function callVideoCallAI(userMessage, apiKey, model, tutorName = "Sarah", conversationHistory = []) {
-    const prompt = getVideoCallSystemPrompt(tutorName);
+// =============================================
+// 8b. GEÇMİŞİ HATIRLAYAN, DETAYA TEPKİ VEREN YEDEK MOTOR
+// =============================================
+
+const FALLBACK_STOPWORDS = new Set([
+    "the", "and", "but", "for", "with", "that", "this", "have", "has", "had", "was", "were",
+    "you", "your", "yours", "i'm", "im", "it's", "its", "isn't", "wasn't", "don't", "didn't",
+    "not", "very", "just", "really", "about", "from", "today", "yesterday", "tomorrow", "now",
+    "then", "there", "here", "what", "when", "where", "how", "why", "who", "because", "like",
+    "lot", "lots", "some", "any", "all", "also", "too", "more", "most", "been", "being", "get",
+    "got", "going", "went", "did", "does", "doing", "one", "two", "day", "days", "time", "thing",
+    "things", "something", "anything", "well", "good", "bad", "okay", "ok", "yeah", "yes", "no"
+]);
+
+const CONVERSATION_TOPIC_RULES = [
+    {
+        key: "tired",
+        re: /\b(tired|exhausted|drained|sleepy|wiped out|long day|stressful|stressed|overwhelmed|busy day)\b/i,
+        lines: [
+            "You sound properly wiped out — was it {detail} that did it, or just one of those non-stop days?",
+            "Being {detail} makes even small things feel heavy. What's one thing that would make tonight easier?",
+            "I can hear the tiredness in that. Was it work, people, or just too much happening at once?"
+        ]
+    },
+    {
+        key: "work",
+        re: /\b(work|office|job|boss|manager|meeting|meetings|client|clients|shift|deadline|project|colleagues?)\b/i,
+        lines: [
+            "You mentioned {detail} — was it the kind of day that followed you home?",
+            "So {detail} kept you busy today. What was the most annoying part of it?",
+            "{detail} can swallow a whole day, can't it? What actually went well?"
+        ]
+    },
+    {
+        key: "game",
+        re: /\b(game|gaming|played|playing|playstation|xbox|chess|football|match|level|boss fight)\b/i,
+        lines: [
+            "{detail} sounds like a good way to switch off — did you win, or was it one of those frustrating sessions?",
+            "A session of {detail} can eat hours before you notice. What was the best moment?",
+            "I'm curious about {detail} — what made you pick it up today?"
+        ]
+    },
+    {
+        key: "food",
+        re: /\b(coffee|tea|breakfast|lunch|dinner|food|pizza|burger|cook|cooked|cooking|restaurant|cafe)\b/i,
+        lines: [
+            "{detail} is such a small thing, but it can genuinely turn a day around. Was it as good as it sounds?",
+            "You had {detail} — comfort food or just convenience? What else did your day look like?",
+            "Now I'm hungry. What made the {detail} part of your day stand out?"
+        ]
+    },
+    {
+        key: "family",
+        re: /\b(family|mom|mother|mum|dad|father|parents|sister|brother|cousin|grandma|grandpa|relatives?)\b/i,
+        lines: [
+            "It's lovely that {detail} came up today — what did you talk about?",
+            "Time with {detail} always stirs something up. How did everyone seem?",
+            "You mentioned {detail} — was it a happy catch-up or a complicated one?"
+        ]
+    },
+    {
+        key: "study",
+        re: /\b(study|studying|school|university|college|class|classes|lecture|homework|exam|exams|test|assignment)\b/i,
+        lines: [
+            "{detail} can eat up an entire afternoon. Do you feel like it's starting to click?",
+            "So {detail} was the main event today — which part was hardest?",
+            "I'm curious how the {detail} went. Did you get through what you planned?"
+        ]
+    },
+    {
+        key: "media",
+        re: /\b(movie|movies|film|series|netflix|watch|watched|watching|book|books|read|reading)\b/i,
+        lines: [
+            "{detail} — okay, I need your honest verdict. Was it actually good?",
+            "You spent some time with {detail}; did it live up to the hype?",
+            "I love hearing what people are watching or reading. What was the best bit of {detail}?"
+        ]
+    },
+    {
+        key: "fitness",
+        re: /\b(gym|workout|working out|exercise|fitness|running|ran|walk|walked|walking|football|sports|training)\b/i,
+        lines: [
+            "{detail} is a solid way to clear your head. Did you push hard today or keep it easy?",
+            "Nice — {detail} always changes the mood of a day. How did your body feel afterwards?",
+            "I'm curious about the {detail}. Was it a planned session or a spontaneous one?"
+        ]
+    },
+    {
+        key: "social",
+        re: /\b(friend|friends|hangout|hanging out|party|weekend|travel|trip|shopping|mall|park)\b/i,
+        lines: [
+            "Time with {detail} sounds like exactly what you needed. What did you get up to?",
+            "You mentioned {detail} — was it a relaxed hangout or something more chaotic?",
+            "{detail} always leaves me with stories. What was the funniest moment?"
+        ]
+    }
+];
+
+const GENERIC_CONTEXT_LINES = [
+    "You mentioned {detail} — I'm curious, what was the most interesting part of that?",
+    "So {detail} was part of your day. How did you feel about it afterwards?",
+    "I'm still thinking about your point about {detail}. What made it stand out?",
+    "That's a detail I want to hear more about — what happened with {detail}?",
+    "Okay, you've got my attention with {detail}. What was going through your mind?"
+];
+
+function hashString(value) {
+    let hash = 0;
+    const str = String(value || "");
+    for (let i = 0; i < str.length; i++) {
+        hash = ((hash << 5) - hash + str.charCodeAt(i)) | 0;
+    }
+    return Math.abs(hash);
+}
+
+function isUserHistoryItem(msg) {
+    const sender = msg && (msg.sender || msg.role);
+    return !(sender === "English_Mentor" || sender === "English_AI" || sender === "assistant" || sender === "model");
+}
+
+function getLastAssistantText(history) {
+    if (!Array.isArray(history)) return "";
+    for (let i = history.length - 1; i >= 0; i--) {
+        const sender = history[i] && (history[i].sender || history[i].role);
+        if (sender === "English_Mentor" || sender === "English_AI" || sender === "assistant" || sender === "model") {
+            return String(history[i].content || history[i].text || "");
+        }
+    }
+    return "";
+}
+
+function pickSalientDetail(text) {
+    const words = String(text || "").toLowerCase().match(/[a-z][a-z'-]{2,}/g) || [];
+    const meaningful = words.filter(function (word) { return !FALLBACK_STOPWORDS.has(word); });
+    return meaningful.length ? meaningful[meaningful.length - 1] : "that";
+}
+
+function findEarlierTopic(history, currentMessage) {
+    if (!Array.isArray(history)) return "";
+    const current = String(currentMessage || "").toLowerCase();
+    for (let i = history.length - 1; i >= 0; i--) {
+        const msg = history[i];
+        if (!isUserHistoryItem(msg)) continue;
+        const text = String(msg.content || msg.text || "");
+        if (!text || text === currentMessage) continue;
+        for (const rule of CONVERSATION_TOPIC_RULES) {
+            const match = text.match(rule.re);
+            if (!match) continue;
+            const detail = match[0].toLowerCase();
+            if (!current.includes(detail)) return detail;
+        }
+    }
+    return "";
+}
+
+function gentleGrammarRecast(text) {
+    const raw = String(text || "");
+    if (/\bi\s+am\s+agree\b/i.test(raw)) return 'Small note: we usually say "I agree", not "I am agree".';
+    if (/\bi\s+have\s+\d+\s+years?\s+old\b/i.test(raw)) return 'Tiny note: for age, say "I\'m 25 years old", not "I have 25 years".';
+    if (/\b(he|she|it)\s+go\b/i.test(raw) && !/\bgoes\b/i.test(raw)) return 'Quick tip: with he, she and it we say "goes".';
+    if (/\byesterday\s+i\s+(go|see|eat|have|do)\b/i.test(raw)) return 'Small past-tense tip: "yesterday I went / saw / ate / had".';
+    if (/\bi\s+very\s+(like|love)\b/i.test(raw)) return 'A natural alternative is "I really like..." instead of "I very like...".';
+    return "";
+}
+
+/**
+ * LLM yokken bile önceki mesajları hatırlayan, kullanıcının son mesajındaki
+ * somut detaya atıfta bulunan ve tekrar etmeyen yedek konuşma üreticisi.
+ */
+function generateContextualConversationFallback(userMessage, tutorName = "Sarah", isVideoCall = false, conversationHistory = []) {
+    const raw = String(userMessage || "").trim();
+    const lower = raw.toLowerCase();
+    const history = Array.isArray(conversationHistory) ? conversationHistory : [];
+
+    if (!raw) {
+        return isVideoCall
+            ? "I'm still here — take your time. What's been on your mind today?"
+            : "I'm still here! 😊 What would you like to talk about?";
+    }
+
+    // Selamlaşma — ilk turda kalıp olmayan, kişisel bir açılış
+    if (/^(hello|hi|hey|good\s*(morning|afternoon|evening)|howdy)\b/i.test(raw.trim())) {
+        const greetings = isVideoCall ? [
+            "Hey! Good to see you. What's been going on in your world today?",
+            "Hi there! I'm glad you're here. What's one thing that happened today, good or bad?",
+            "Hey! I've been looking forward to our chat. What's on your mind?"
+        ] : [
+            "Hey! 😊 Good to see you. What's been going on today?",
+            "Hi! I'm glad you're here. Tell me one thing about your day — anything at all.",
+            "Hey there! What's on your mind right now?"
+        ];
+        return greetings[hashString(raw) % greetings.length];
+    }
+
+    // "What about you?" / "How are you?" — kendi gününden somut bir detay ver
+    if (/\b(what|how)\s+about\s+you\b|\band\s+you\b|how\s+are\s+you|how\s+is\s+your\s+day|how\s+was\s+your\s+day|\bwbu\b|\bhbu\b/i.test(raw)) {
+        const replies = isVideoCall ? [
+            "I'm doing well, thanks for asking — I spilled coffee on my notes earlier, so it's been that kind of morning. What about yours?",
+            "Pretty good! I've been catching up on emails and dreaming about lunch, honestly. How has your day been treating you?",
+            "I'm good, a little caffeinated and very curious about your day. What have you been up to?"
+        ] : [
+            "I'm doing well, thank you! 😊 I've been reading and answering questions all morning, which I genuinely enjoy. How has your day been?",
+            "Pretty good on my side — busy, but the interesting kind of busy. What about you? What's been happening today?"
+        ];
+        return replies[hashString(raw) % replies.length];
+    }
+
+    // Kısa onay/ret cevaplarında konuşmayı aç
+    if (/^(yes|yeah|yep|sure|of\s*course|absolutely|no|nope|not\s*really|nah|nothing|not\s*much|idk|i\s*don'?t\s*know)\b/i.test(raw.trim()) && raw.trim().split(/\s+/).length <= 4) {
+        const shortReplies = [
+            "Fair enough — give me a little more than that. What's behind your answer?",
+            "Okay, now I'm curious. What made you say that?",
+            "I get that. Tell me one detail about it — anything that stood out?"
+        ];
+        return shortReplies[hashString(raw) % shortReplies.length];
+    }
+
+    // Duygu durumuna doğrudan tepki
+    if (/\b(i'?m|i\s*am|feeling|today\s*was|day\s*was)\s+(good|great|fine|amazing|awesome|wonderful|nice|happy|not\s*bad)\b/i.test(raw) || /^(good|great|fine|pretty\s*good|all\s*good)\b/i.test(raw.trim())) {
+        const goodDayReplies = [
+            "That sounds like a win — what made it land so well?",
+            "Good days deserve a proper breakdown. What was the best moment?",
+            "I'm glad to hear that. Was it one specific thing, or just the overall mood?"
+        ];
+        return goodDayReplies[hashString(raw) % goodDayReplies.length];
+    }
+
+    if (/\b(i'?m|i\s*am|feeling)\s+(bad|sad|down|awful|terrible|rough|lonely)\b/i.test(raw)) {
+        const badDayReplies = [
+            "That sounds heavy — do you want to talk about what happened, or would a distraction help more?",
+            "I'm sorry it's been like that. Was there one thing that made it worse, or was it everything at once?",
+            "That's a lot to carry. What would make the rest of today a little easier?"
+        ];
+        return badDayReplies[hashString(raw) % badDayReplies.length];
+    }
+
+    let rule = null;
+    let detail = "";
+    for (const candidate of CONVERSATION_TOPIC_RULES) {
+        const match = raw.match(candidate.re);
+        if (match) {
+            rule = candidate;
+            detail = match[0].toLowerCase();
+            break;
+        }
+    }
+    if (!detail) detail = pickSalientDetail(raw);
+
+    const earlierTopic = findEarlierTopic(history, raw);
+    const correction = gentleGrammarRecast(raw);
+    const lines = rule ? rule.lines : GENERIC_CONTEXT_LINES;
+    const seed = hashString(raw + "|" + history.length + "|" + (rule ? rule.key : "generic")) % lines.length;
+
+    let main = lines[seed].replace(/\{detail\}/g, detail);
+    const lastAssistant = getLastAssistantText(history);
+    if (lastAssistant && main.trim() === lastAssistant.trim()) {
+        main = lines[(seed + 1) % lines.length].replace(/\{detail\}/g, detail);
+    }
+
+    const parts = [main];
+    if (correction) parts.push(correction);
+
+    const userTurnCount = history.filter(isUserHistoryItem).length;
+    if (earlierTopic && earlierTopic !== detail && (userTurnCount >= 2 || !rule) && (seed % 3 === 0 || !rule)) {
+        parts.push(`Earlier you mentioned ${earlierTopic} — did that end up going the way you hoped?`);
+    }
+
+    let text = parts.join(" ");
+    let sentences = text.match(/[^.!?]+[.!?]+/g) || [text];
+    if (!sentences.join(" ").includes("?")) {
+        sentences.push(isVideoCall ? "What happened next?" : "What happened next? 😊");
+    }
+    return sentences.slice(0, 3).join(" ").trim();
+}
+
+async function callVideoCallAI(userMessage, apiKey, model, tutorName = "Sarah", conversationHistory = [], level = "auto") {
+    const prompt = getVideoCallSystemPrompt(tutorName, level);
     return await callExternalAI(
         userMessage,
         apiKey,
         model,
         "video_call_tutor",
-        "conversational",
+        level || "conversational",
         conversationHistory,
         prompt
     );
@@ -1623,17 +1989,25 @@ async function callVideoCallAI(userMessage, apiKey, model, tutorName = "Sarah", 
 function generateVideoCallFallback(userMessage, tutorName = "Sarah", conversationHistory = []) {
     const raw = (userMessage || "").trim();
     const lower = raw.toLowerCase();
+    const history = Array.isArray(conversationHistory) ? conversationHistory : [];
+    const priorUserTurns = history.filter(isUserHistoryItem).length;
 
-    // 1. Selamlaşma
-    if (lower.match(/^(hello|hi|hey|good\s*(morning|afternoon|evening)|howdy)\b/i)) {
-        return `Hello there! It is so lovely to see you on camera today! How are you feeling, and how has your day been going so far?`;
+    // İlk turda kişiselleştirilmiş, kalıp olmayan karşılama
+    if (priorUserTurns === 0 && lower.match(/^(hello|hi|hey|good\s*(morning|afternoon|evening)|howdy)\b/i)) {
+        const openers = [
+            `Hey, it's great to see you on camera! I'm curious — what kind of day are you having so far?`,
+            `Hi! Good to finally put a face to the conversation. What's been the main event of your day?`,
+            `Hey there! I've got my coffee and I'm ready to chat. What have you been up to today?`
+        ];
+        return openers[hashString(raw) % openers.length];
     }
 
-    // 2. Empatik, bağlamsal konuşma motoru (artık conversationHistory de geçiriliyor)
-    return generateConversationalResponse(raw, tutorName, true, conversationHistory);
+    // Geçmişi ve son mesajdaki detayı kullanan akıllı yedek motor
+    return generateContextualConversationFallback(raw, tutorName, true, history);
 }
 
 module.exports = {
+    resolveAIConfig,
     callExternalAI,
     callInterviewAI,
     getMockInterviewSystemPrompt,

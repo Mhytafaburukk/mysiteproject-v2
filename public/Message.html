@@ -1222,14 +1222,15 @@
                     const response = await fetch(`${API_URL}/send-message`, {
                         method: "POST",
                         headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ 
-                            sender: savedUsername, 
-                            receiver: currentPartner, 
+                        body: JSON.stringify({
+                            sender: savedUsername,
+                            receiver: currentPartner,
                             content: text,
                             apiKey: userApiKey,
                             model: selectedModel,
                             focusMode: focusMode,
-                            englishLevel: englishLevel
+                            englishLevel: englishLevel,
+                            history: window._allChatMessages || []
                         })
                     });
 
