@@ -330,15 +330,20 @@
         /* --- QUICK PRACTICE SCENARIOS (PILLS) --- */
         .scenario-pills-bar {
             position: absolute;
-            bottom: 160px;
+            bottom: 224px;
             left: 50%;
             transform: translateX(-50%);
             display: flex;
             gap: 8px;
-            z-index: 22;
+            z-index: 24;
             overflow-x: auto;
             max-width: 90%;
             padding: 6px 10px;
+            background: rgba(8, 9, 13, 0.55);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 999px;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
             scrollbar-width: none;
         }
         .scenario-pills-bar::-webkit-scrollbar { display: none; }
@@ -731,7 +736,7 @@
             .user-pip-window { width: 120px; height: 95px; bottom: 85px; right: 14px; }
             .subtitles-container { bottom: 85px; width: 94%; padding: 10px 14px; }
             .subtitle-text { font-size: 0.9rem; }
-            .scenario-pills-bar { bottom: 155px; }
+            .scenario-pills-bar { bottom: 196px; }
             .dock-btn { width: 44px; height: 44px; font-size: 1.1rem; }
             .btn-hangup { width: 50px; height: 50px; }
             .tutor-name-pill { bottom: 110px; padding: 6px 14px; font-size: 0.8rem; }
@@ -1243,11 +1248,14 @@
             if (!pill) return;
 
             if (errorStatus) {
+                const detail = typeof errorStatus === "string" ? errorStatus : JSON.stringify(errorStatus);
+                console.error("[Sarah AI] Canlı API hatası — tam mesaj:", detail);
                 pill.style.background = "rgba(239, 68, 68, 0.25)";
                 pill.style.borderColor = "rgba(239, 68, 68, 0.5)";
                 pill.style.color = "#fca5a5";
                 pill.innerHTML = `⚠️ API Hatası (Dahili Motor)`;
-                pill.title = errorStatus;
+                pill.title = detail;
+                pill.setAttribute("data-api-error", detail);
                 return;
             }
 
@@ -1255,6 +1263,7 @@
             pill.style.background = "";
             pill.style.borderColor = "";
             pill.style.color = "";
+            pill.removeAttribute("data-api-error");
 
             if (mod.includes("gemini")) {
                 pill.innerHTML = hasKey ? "🟢 ⚡ Gemini 1.5 Flash" : "⚠️ Gemini (Key Eksik)";

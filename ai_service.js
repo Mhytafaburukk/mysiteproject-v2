@@ -40,8 +40,10 @@ function resolveAIConfig(input = {}) {
     // İstemci anahtarı yoksa .env modeli kullanılır; o da yoksa anahtar önekinden türetilir.
     let model = clientKey ? clientModel : String(process.env.AI_MODEL || "").trim();
 
-    // Evren / Anthropic uyumlu gateway otomatik tespiti
-    const inferredProvider = envProvider ||
+    // Sağlayıcı tespiti: gsk_ anahtarı / açık Groq seçimi her şeyden önce gelir.
+    const inferredProvider =
+        (apiKey.startsWith("gsk_") || envProvider === "groq") ? "groq" :
+        envProvider ||
         (/anthropic|evren/i.test(baseURL) ? "anthropic" : "") ||
         (apiKey.startsWith("sk-ant-") ? "anthropic" : "");
 
@@ -253,7 +255,8 @@ try {
 
 let cachedGroqModel = null;
 async function getActiveGroqModel(apiKey, preferredModel) {
-    if (cachedGroqModel) return cachedGroqModel;
+    // Önbellek yalnızca istenen modelle uyumluysa kullanılır; aksi halde güncel liste çekilir.
+    if (cachedGroqModel && (!preferredModel || cachedGroqModel === preferredModel)) return cachedGroqModel;
     try {
         const res = await fetch("https://api.groq.com/openai/v1/models", {
             headers: { "Authorization": `Bearer ${apiKey.trim()}` }
@@ -399,8 +402,17 @@ QUIZ / QUESTIONS (only when asked):
     const isAnthropicEndpoint = envProvider === "anthropic" ||
         /anthropic|evren/i.test(envBaseURL) ||
         (trimmedKey && trimmedKey.startsWith("sk-ant-"));
+
+    // gsk_ anahtarı veya açık Groq seçimi, .env'deki anthropic/Evren ayarlarından önce gelir.
+    const keyForcesGroq = trimmedKey.startsWith("gsk_");
+    const providerForcesGroq = envProvider === "groq";
+    const modelSuggestsGroq = !isAnthropicEndpoint && model && (model.startsWith("llama") || model.startsWith("groq") || model.startsWith("mixtral") || model.startsWith("gemma"));
+    const isGroqRequest = keyForcesGroq || providerForcesGroq || modelSuggestsGroq;
+
     let provider = "compatible";
-    if (isAnthropicEndpoint) {
+    if (isGroqRequest) {
+        provider = "groq";
+    } else if (isAnthropicEndpoint) {
         provider = "anthropic";
     } else if (model && model.startsWith("gemini")) {
         provider = "gemini";
@@ -536,7 +548,12 @@ QUIZ / QUESTIONS (only when asked):
     // 1. Groq API
     if (provider === "groq") {
         try {
-            const targetModel = await getActiveGroqModel(trimmedKey, model);
+            // Groq dışı bir model adı seçildiyse (ör. deepseek-v4.1-flash) güncel Groq modeline geç.
+            const groqModelPattern = /^(llama|groq|mixtral|gemma|qwen|deepseek-r1|allam|moonshot|kimi|compound)/i;
+            const requestedGroqModel = (model && groqModelPattern.test(model))
+                ? model
+                : "llama-3.3-70b-versatile";
+            const targetModel = await getActiveGroqModel(trimmedKey, requestedGroqModel);
             let groqMessages = [{ role: "system", content: systemPrompt }];
             if (conversationHistory && conversationHistory.length > 0) {
                 // Son mesaj eğer zaten şu anki userMessage ise mükerrer olmaması için çıkar
