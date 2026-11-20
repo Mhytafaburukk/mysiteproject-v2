@@ -523,9 +523,31 @@
             let titleInterval = null;
 
             if (!username) {
-                window.location.href = "giris.html";
+                window.location.replace("giris.html");
                 return;
             }
+
+            // --- OTURUM & GERİ TUŞU KORUMASI ---
+            // Panel durumunu geçmişe sabitle; oturum açıkken geri tuşu login sayfasına düşürmesin.
+            try {
+                history.replaceState({ panel: true }, "", window.location.href);
+                history.pushState({ panel: true }, "", window.location.href);
+            } catch (e) { /* yoksay */ }
+
+            window.addEventListener("popstate", function () {
+                // Oturum hâlâ açıksa kullanıcıyı panelde tut.
+                if (!localStorage.getItem("username")) return;
+                try {
+                    history.pushState({ panel: true }, "", window.location.href);
+                } catch (e) { /* yoksay */ }
+            });
+
+            // Başka sekmede çıkış yapıldıysa geri dönüşte (bfcache) oturumu doğrula.
+            window.addEventListener("pageshow", function (event) {
+                if (event.persisted && !localStorage.getItem("username")) {
+                    window.location.replace("giris.html");
+                }
+            });
 
             const welcomeKey = LanguageManager.t('welcome');
             document.getElementById("welcomeMsg").textContent = `${welcomeKey}, ${username}`;
@@ -544,9 +566,11 @@
             }
 
 
+            // Yalnızca açık "Çıkış Yap" eylemi oturumu temizler ve login sayfasına döner.
             document.getElementById("logoutBtn").onclick = () => {
                 localStorage.removeItem("username");
-                window.location.href = "index.html";
+                localStorage.removeItem("currentusername");
+                window.location.replace("giris.html");
             };
 
             const notifBtn = document.getElementById("notifBtn");

@@ -43,6 +43,11 @@
     <script>
 const LOGIN_URL = window.location.origin + "/login";
 
+        // Aktif oturum varsa login ekranını gösterme; doğrudan panele dön.
+        if (localStorage.getItem("username")) {
+            window.location.replace("girisliindex.html");
+        }
+
         document.getElementById("girisForm").addEventListener("submit", async function (event) {
             event.preventDefault();
             const labelenter = document.getElementById("labelenter");
@@ -71,7 +76,8 @@ const LOGIN_URL = window.location.origin + "/login";
                     localStorage.setItem("username", username);
 
                     setTimeout(() => {
-                        window.location.href = "girisliindex.html";
+                        // replace: login sayfası geçmişte kalmasın, geri tuşu buraya dönmesin.
+                        window.location.replace("girisliindex.html");
                     }, 1000);
                 } else {
                     throw new Error(data.message || "Kullanıcı adı veya şifre hatalı.");

@@ -1,481 +1,872 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="tr" data-theme="dark">
 
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>İngilizce Kelime Testi - Profil</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <title>Profil - English Learning Platform</title>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <style>
-        /* TEMEL STİLLER */
-        a:hover, a:visited, a:active, a:link { text-decoration: none; }
-        
-        #Menu {
-            padding: 15px;
-            position: absolute;
-            right: 0px;
-            top: 0px;
-            z-index: 20;
+        :root {
+            --bg: #07080B;
+            --surface: #141418;
+            --surface-2: rgba(255, 255, 255, 0.035);
+            --border: rgba(255, 255, 255, 0.08);
+            --border-strong: rgba(255, 255, 255, 0.14);
+            --text: #F4F5F7;
+            --text-soft: #A7ADBA;
+            --text-faint: #6E7482;
+            --accent: #7C5CFF;
+            --accent-2: #5B8CFF;
+            --danger: #F2555A;
+            --radius: 20px;
         }
 
-        #forbackbutton {
-            position: absolute;
-            left: 15px;
-            top: 15px;
-            z-index: 20;
-        }
+        * { box-sizing: border-box; }
+
+        [hidden] { display: none !important; }
+
+        html, body { margin: 0; }
 
         body {
-            font-family: 'Poppins', sans-serif;
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-        }
-
-        #container {
-            padding: 20px;
-            border-radius: 10px;
-            max-width: 90%;
-            width: 500px;
-            text-align: center;
-            z-index: 10;
-            position: relative;
-            background: rgba(255, 255, 255, 0.1) !important;
-            backdrop-filter: blur(5px);
-        }
-
-        .header, #section, #section2, .result1 {
-            background: rgba(255, 255, 255, 0.2) !important;
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-            border-radius: 10px;
-            padding: 15px;
-            margin-bottom: 10px;
-            color: white;
-        }
-
-        button {
-            color: black;
-            border: none;
-            padding: 10px 15px;
-            margin: 5px;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: 0.3s;
-            font-weight: 600;
-        }
-
-        #content1 {
-            overflow-y: auto;
-            max-height: 150px;
-            text-align: left;
-        }
-
-        /* PROFİL RESMİ */
-        .profile-pic-container {
-            position: relative;
-            width: 100px;
-            height: 100px;
-            margin: 0 auto 15px;
-        }
-
-        .profile-pic {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            object-fit: cover;
-            border: 3px solid white;
-            background: #eee;
-        }
-
-        .upload-label {
-            position: absolute;
-            bottom: 0;
-            right: 0;
-            background: #6a5acd;
-            color: white;
-            border-radius: 50%;
-            width: 30px;
-            height: 30px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            font-size: 18px;
-            border: 2px solid white;
-        }
-
-        #fileInput { display: none; }
-
-        .egik { border-radius: 10px; color: white; padding: 5px 10px; }
-
-        /* ANİMASYON ELEMENTLERİ */
-        p[id^='büyük'], p[id^='kücük'], p[id^='hareketli'] {
-            width: 10px; height: 10px; position: fixed; border-radius: 50%; z-index: 0; pointer-events: none;
-        }
-
-        /* USERS LİSTESİ TABLO */
-        table { width: 100%; color: white; border-collapse: collapse; }
-        td { padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-        .visit-btn { background-color: #6a5acd; color: white; padding: 5px 10px; font-size: 12px; }
-
-        /* --- Inline SVG ikon rozetleri --- */
-        .icon-badge {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 22px; height: 22px; border-radius: 7px;
-            background: linear-gradient(135deg, rgba(108,92,231,.18), rgba(56,189,248,.12)), rgba(255,255,255,.16);
-            border: 1px solid rgba(255,255,255,.28);
-            color: #e0e7ff; flex-shrink: 0; vertical-align: -.28em; line-height: 0;
-            box-shadow: inset 0 1px 0 rgba(255,255,255,.18);
-        }
-        .icon-badge svg { width: 13px; height: 13px; display: block; }
-        .icon-badge--sm { width: 18px; height: 18px; border-radius: 6px; }
-        .icon-badge--sm svg { width: 10.5px; height: 10.5px; }
-        .icon-inline { display: inline-block; vertical-align: -.18em; margin: 0 2px; }
-
-        /* ==================================================================
-           OBSIDIAN PROFİL — koyu bento estetiği
-           ================================================================== */
-        body {
-            background:
-                radial-gradient(1100px 560px at 12% -12%, rgba(124, 92, 255, 0.30), transparent 62%),
-                radial-gradient(900px 520px at 100% 0%, rgba(91, 140, 255, 0.18), transparent 58%),
-                radial-gradient(700px 420px at 50% 110%, rgba(34, 211, 238, 0.08), transparent 60%),
-                #07080B !important;
-            color: #F4F5F7;
-            height: auto;
             min-height: 100vh;
-            overflow-y: auto;
-            align-items: flex-start;
-            padding: 26px 0;
-        }
-
-        #container {
-            width: min(680px, calc(100% - 28px)) !important;
-            max-width: 680px !important;
-            padding: 136px 30px 30px !important;
-            border-radius: 30px !important;
+            padding: 84px 16px 44px;
+            font-family: 'Plus Jakarta Sans', 'Poppins', sans-serif;
+            color: var(--text);
             background:
-                linear-gradient(180deg, rgba(255, 255, 255, 0.04) 0%, transparent 42%),
-                #141418 !important;
-            border: 1px solid rgba(255, 255, 255, 0.09) !important;
-            box-shadow:
-                0 50px 110px -60px rgba(0, 0, 0, 0.95),
-                inset 0 1px 0 rgba(255, 255, 255, 0.06) !important;
-            overflow: visible !important;
-            margin: auto;
+                radial-gradient(1100px 560px at 12% -12%, rgba(124, 92, 255, 0.24), transparent 62%),
+                radial-gradient(900px 520px at 100% 0%, rgba(91, 140, 255, 0.14), transparent 58%),
+                radial-gradient(700px 420px at 50% 110%, rgba(34, 211, 238, 0.06), transparent 60%),
+                var(--bg);
+            -webkit-font-smoothing: antialiased;
         }
 
-        /* Ambient mesh kapak şeridi */
-        #container::before {
-            content: "";
+        a { text-decoration: none; color: inherit; }
+
+        /* --- ÜST NAVİGASYON --- */
+        .profile-nav {
             position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            height: 182px;
-            border-radius: 30px 30px 0 0;
-            background:
-                radial-gradient(420px 220px at 10% -10%, rgba(124, 92, 255, 0.75), transparent 62%),
-                radial-gradient(380px 240px at 88% 10%, rgba(91, 140, 255, 0.55), transparent 64%),
-                radial-gradient(320px 200px at 55% 120%, rgba(255, 92, 200, 0.26), transparent 66%),
-                linear-gradient(135deg, #191430 0%, #101018 100%);
-            border-bottom: 1px solid rgba(124, 92, 255, 0.28);
-            pointer-events: none;
-            z-index: 0;
-        }
-
-        #container > * {
-            position: relative;
-            z-index: 1;
-        }
-
-        /* Neon çerçeveli, kapaktan taşan avatar */
-        .profile-pic-container {
-            width: 122px;
-            height: 122px;
-            margin: -96px auto 14px;
-            z-index: 3;
-            border-radius: 50%;
-            padding: 4px;
-            background: linear-gradient(135deg, #7C5CFF 0%, #5B8CFF 55%, #22D3EE 100%);
-            box-shadow:
-                0 0 0 1px rgba(124, 92, 255, 0.55),
-                0 0 38px rgba(124, 92, 255, 0.6),
-                0 24px 44px -20px rgba(0, 0, 0, 0.95);
-        }
-
-        .profile-pic {
-            border: 3px solid #0B0C10 !important;
-            background: #101014;
-        }
-
-        .upload-label {
-            width: 36px;
-            height: 36px;
-            right: -2px;
-            bottom: 2px;
-            background: linear-gradient(135deg, #7C5CFF, #5B8CFF);
-            border: 3px solid #141418;
-            box-shadow: 0 10px 22px -8px rgba(124, 92, 255, 0.9);
-            transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
-        }
-
-        .upload-label:hover { transform: scale(1.1); }
-
-        .header,
-        #greeting {
-            background: transparent !important;
-            border: 0 !important;
-            box-shadow: none !important;
-            padding: 4px 2px 14px !important;
-            font-size: clamp(1.35rem, 3vw, 1.7rem);
-            font-weight: 700;
-            letter-spacing: -0.03em;
-            color: #FFFFFF;
-        }
-
-        #section,
-        .result1,
-        #section2 {
-            background: rgba(255, 255, 255, 0.035) !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            border-radius: 20px !important;
-            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04) !important;
-            padding: 16px !important;
-            margin-bottom: 12px;
-        }
-
-        #section2 {
+            top: 18px;
             display: flex;
-            justify-content: center;
-            gap: 10px;
-            flex-wrap: wrap;
+            align-items: center;
+            gap: 8px;
+            z-index: 20;
         }
 
-        button {
-            background: rgba(255, 255, 255, 0.06);
-            color: #E8EAF0;
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 12px;
-            padding: 10px 16px;
-            font-weight: 600;
-            transition:
-                transform 260ms cubic-bezier(0.34, 1.56, 0.64, 1),
-                background-color 200ms ease,
-                border-color 200ms ease,
-                box-shadow 200ms ease;
-        }
+        .profile-nav--left { left: 18px; }
 
-        button:hover {
-            transform: translateY(-2px);
-            background: rgba(124, 92, 255, 0.18);
-            border-color: rgba(124, 92, 255, 0.5);
-            box-shadow: 0 14px 28px -16px rgba(124, 92, 255, 0.75);
-            color: #FFFFFF;
-        }
+        .profile-nav--right { right: 18px; }
 
-        button:active { transform: scale(0.97); }
-
-        #followStats > div {
-            background: rgba(255, 255, 255, 0.045);
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        .nav-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 13px;
             border-radius: 999px;
-            padding: 8px 16px;
-            color: #A7ADBA;
-        }
-
-        #followStats strong {
-            color: #C4B5FF;
-            font-size: 1.05rem;
-            font-variant-numeric: tabular-nums;
-        }
-
-        #langStats > div {
-            background: rgba(124, 92, 255, 0.12) !important;
-            border: 1px solid rgba(124, 92, 255, 0.3) !important;
-            border-radius: 999px !important;
-            color: #E7E3FF !important;
-        }
-
-        #content1 {
-            color: #A7ADBA;
-            font-size: 0.875rem;
-            line-height: 1.6;
-            padding: 4px 2px;
-        }
-
-        #content1 table { width: 100%; border-collapse: collapse; }
-
-        #content1 td {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            padding: 10px 6px;
-        }
-
-        #content1 img { border-radius: 50%; }
-
-        .visit-btn {
-            background: rgba(124, 92, 255, 0.2) !important;
-            border: 1px solid rgba(124, 92, 255, 0.45);
-            color: #DCD6FF !important;
-            border-radius: 10px;
-        }
-
-        #Deleteaccount {
-            background: linear-gradient(135deg, #F2555A, #D33A40) !important;
-            border-radius: 12px !important;
-            color: #FFFFFF !important;
-            box-shadow: 0 12px 26px -14px rgba(242, 85, 90, 0.8);
-        }
-
-        #Menu { display: flex; gap: 8px; align-items: center; }
-
-        .egik {
+            border: 1px solid var(--border);
             background: rgba(20, 20, 24, 0.72);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-            border-radius: 999px;
             color: #E8EAF0;
-            padding: 7px 14px;
-            font-size: 0.82rem;
+            font-size: 0.78rem;
+            font-family: inherit;
+            font-weight: 500;
+            cursor: pointer;
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
             transition: background-color 200ms ease, border-color 200ms ease, color 200ms ease;
         }
 
-        .egik:hover {
-            background: rgba(124, 92, 255, 0.2);
-            border-color: rgba(124, 92, 255, 0.5);
+        .nav-pill:hover {
+            background: rgba(124, 92, 255, 0.18);
+            border-color: rgba(124, 92, 255, 0.45);
             color: #FFFFFF;
         }
 
-        #forbackbutton button {
-            background: rgba(20, 20, 24, 0.72);
-            border: 1px solid rgba(255, 255, 255, 0.1);
+        .nav-pill svg { width: 14px; height: 14px; }
+
+        /* --- SAYFA --- */
+        .profile-page {
+            width: 100%;
+            max-width: 780px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 14px;
+        }
+
+        .page-head {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            padding: 0 2px 6px;
+        }
+
+        .page-head .eyebrow {
+            margin: 0;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            color: #7FA6FF;
+        }
+
+        .page-head h1 {
+            margin: 0;
+            font-size: clamp(1.35rem, 3vw, 1.7rem);
+            font-weight: 700;
+            letter-spacing: -0.03em;
+        }
+
+        /* --- BENTO GRID --- */
+        .bento {
+            display: grid;
+            grid-template-columns: minmax(0, 1.1fr) minmax(0, 0.9fr);
+            gap: 14px;
+        }
+
+        .bento-card {
+            position: relative;
+            padding: 18px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+            background:
+                linear-gradient(180deg, rgba(255, 255, 255, 0.045) 0%, transparent 40%),
+                var(--surface);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+            transition: border-color 240ms ease, transform 240ms ease, box-shadow 240ms ease;
+        }
+
+        .bento-card:hover {
+            border-color: rgba(124, 92, 255, 0.32);
+            box-shadow: 0 18px 40px -30px rgba(124, 92, 255, 0.9);
+        }
+
+        .card-eyebrow {
+            margin: 0;
+            font-size: 0.64rem;
+            font-weight: 700;
+            letter-spacing: 0.11em;
+            text-transform: uppercase;
+            color: var(--text-faint);
+        }
+
+        .card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            margin-bottom: 14px;
+        }
+
+        /* --- KİMLİK KARTI --- */
+        .identity-card {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            gap: 18px;
+            background:
+                radial-gradient(520px 240px at 0% -30%, rgba(124, 92, 255, 0.28), transparent 65%),
+                radial-gradient(420px 220px at 100% 120%, rgba(91, 140, 255, 0.16), transparent 62%),
+                var(--surface);
+            border-color: rgba(124, 92, 255, 0.22);
+        }
+
+        .avatar-wrap {
+            position: relative;
+            width: 76px;
+            height: 76px;
+            flex-shrink: 0;
+        }
+
+        .avatar {
+            width: 76px;
+            height: 76px;
+            padding: 2px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, #7C5CFF 0%, #5B8CFF 55%, #22D3EE 100%);
+            box-shadow: 0 0 0 1px rgba(124, 92, 255, 0.45), 0 0 26px rgba(124, 92, 255, 0.35);
+            overflow: hidden;
+        }
+
+        .avatar__inner {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            background: linear-gradient(150deg, #1B1630 0%, #101015 100%);
+            border: 1px solid rgba(124, 92, 255, 0.4);
+            overflow: hidden;
+            font-size: 1.65rem;
+            font-weight: 700;
+            color: #C4B5FF;
+            letter-spacing: -0.02em;
+        }
+
+        .avatar__image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .avatar-upload {
+            position: absolute;
+            right: -3px;
+            bottom: -1px;
+            width: 28px;
+            height: 28px;
+            display: grid;
+            place-items: center;
+            border-radius: 50%;
+            cursor: pointer;
+            color: #FFFFFF;
+            background: linear-gradient(135deg, #7C5CFF, #5B8CFF);
+            border: 2px solid var(--surface);
+            box-shadow: 0 8px 18px -8px rgba(124, 92, 255, 0.9);
+            transition: transform 220ms cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .avatar-upload:hover { transform: scale(1.08); }
+
+        .avatar-upload svg { width: 13px; height: 13px; }
+
+        #fileInput { display: none; }
+
+        .identity-meta {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+        .identity-name {
+            margin: 0;
+            font-size: 1.28rem;
+            font-weight: 700;
+            letter-spacing: -0.03em;
+            color: #FFFFFF;
+            overflow-wrap: anywhere;
+        }
+
+        .identity-sub {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .level-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 0.68rem;
+            font-weight: 600;
+            color: #CFC6FF;
+            background: rgba(124, 92, 255, 0.14);
+            border: 1px solid rgba(124, 92, 255, 0.35);
+        }
+
+        .identity-stats {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.78rem;
+            color: var(--text-soft);
+            font-variant-numeric: tabular-nums;
+        }
+
+        .identity-stats strong { color: #C4B5FF; font-weight: 700; }
+
+        .identity-stats .dot { color: var(--text-faint); }
+
+        /* --- DİL ÇİFTİ KARTI --- */
+        .lang-card { display: flex; flex-direction: column; }
+
+        .lang-pair {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .lang-side {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+            min-width: 0;
+        }
+
+        .lang-side--right { text-align: right; align-items: flex-end; }
+
+        .lang-side__label {
+            font-size: 0.62rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: var(--text-faint);
+        }
+
+        .lang-side__value {
+            font-size: 0.9rem;
+            font-weight: 600;
             color: #E8EAF0;
-            backdrop-filter: blur(12px);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
         }
 
-        /* Arka plan partikülleri koyu temada yumuşasın */
-        p[id^='büyük'], p[id^='kücük'], p[id^='hareketli'] {
-            opacity: 0.35;
-            filter: blur(2px);
+        .lang-side__value--native { color: #7FE3B4; }
+
+        .lang-side__value--learning { color: #7FB4FF; }
+
+        .lang-arrow {
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            color: #9AA7C7;
+            background: rgba(255, 255, 255, 0.045);
+            border: 1px solid var(--border);
         }
 
-        @media (max-width: 560px) {
-            #container { padding: 122px 18px 20px !important; }
-            .profile-pic-container { width: 104px; height: 104px; }
-            #Menu { position: static; justify-content: center; padding: 0 0 8px; }
-            #forbackbutton { position: static; padding: 0 0 8px; }
+        .lang-arrow svg { width: 13px; height: 13px; }
+
+        .mini-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 5px 10px;
+            border-radius: 9px;
+            border: 1px solid var(--border-strong);
+            background: rgba(255, 255, 255, 0.04);
+            color: #DCD6FF;
+            font-family: inherit;
+            font-size: 0.68rem;
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: background-color 200ms ease, border-color 200ms ease;
+        }
+
+        .mini-btn:hover {
+            background: rgba(124, 92, 255, 0.2);
+            border-color: rgba(124, 92, 255, 0.5);
+        }
+
+        .mini-btn svg { width: 12px; height: 12px; }
+
+        /* --- HIZLI ERİŞİM KARTI --- */
+        .quick-card { display: flex; flex-direction: column; }
+
+        .quick-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .quick-row {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            width: 100%;
+            padding: 10px 12px;
+            border-radius: 13px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.025);
+            color: #E8EAF0;
+            font-family: inherit;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-align: left;
+            cursor: pointer;
+            transition: background-color 200ms ease, border-color 200ms ease, transform 200ms ease;
+        }
+
+        .quick-row:hover {
+            background: rgba(124, 92, 255, 0.12);
+            border-color: rgba(124, 92, 255, 0.38);
+            transform: translateX(2px);
+        }
+
+        .quick-row__icon {
+            flex-shrink: 0;
+            display: grid;
+            place-items: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 9px;
+            color: #C9BEFF;
+            background: linear-gradient(135deg, rgba(124, 92, 255, 0.22), rgba(91, 140, 255, 0.12));
+            border: 1px solid rgba(124, 92, 255, 0.3);
+        }
+
+        .quick-row__icon svg { width: 14px; height: 14px; }
+
+        .quick-row__text {
+            display: flex;
+            flex-direction: column;
+            gap: 1px;
+            min-width: 0;
+            flex: 1;
+        }
+
+        .quick-row__text small {
+            font-size: 0.68rem;
+            font-weight: 400;
+            color: var(--text-faint);
+        }
+
+        .quick-row__chevron {
+            flex-shrink: 0;
+            color: var(--text-faint);
+            display: grid;
+            place-items: center;
+        }
+
+        .quick-row__chevron svg { width: 13px; height: 13px; }
+
+        /* --- KULLANICILAR PANELİ --- */
+        .users-panel {
+            grid-column: 1 / -1;
+            display: none;
+        }
+
+        .users-panel.is-open { display: block; }
+
+        .users-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            max-height: 340px;
+            overflow-y: auto;
+            padding-right: 4px;
+        }
+
+        .user-row {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            padding: 9px 11px;
+            border-radius: 13px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .user-row__avatar {
+            flex-shrink: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: grid;
+            place-items: center;
+            object-fit: cover;
+            font-size: 0.78rem;
+            font-weight: 700;
+            color: #C4B5FF;
+            background: linear-gradient(150deg, #241E44 0%, #141418 100%);
+            border: 1px solid rgba(124, 92, 255, 0.32);
+        }
+
+        .user-row__name {
+            flex: 1;
+            min-width: 0;
+            font-size: 0.82rem;
+            font-weight: 600;
+            color: #E8EAF0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            overflow-wrap: anywhere;
+        }
+
+        .teacher-tag {
+            flex-shrink: 0;
+            font-size: 0.6rem;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 999px;
+            color: #CFE3FF;
+            background: rgba(91, 140, 255, 0.16);
+            border: 1px solid rgba(91, 140, 255, 0.35);
+        }
+
+        .visit-btn {
+            flex-shrink: 0;
+            padding: 6px 12px;
+            border-radius: 9px;
+            border: 1px solid rgba(124, 92, 255, 0.4);
+            background: rgba(124, 92, 255, 0.16);
+            color: #DCD6FF;
+            font-family: inherit;
+            font-size: 0.7rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 200ms ease;
+        }
+
+        .visit-btn:hover { background: rgba(124, 92, 255, 0.3); }
+
+        .users-empty {
+            padding: 18px 10px;
+            text-align: center;
+            font-size: 0.78rem;
+            color: var(--text-faint);
+        }
+
+        /* --- HESAP YÖNETİMİ --- */
+        .account-bar {
+            grid-column: 1 / -1;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 12px;
+            padding: 13px 18px;
+            border-radius: 16px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.018);
+        }
+
+        .account-bar__label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 0.74rem;
+            font-weight: 600;
+            color: var(--text-faint);
+            letter-spacing: 0.02em;
+        }
+
+        .account-bar__label svg { width: 14px; height: 14px; }
+
+        .account-bar__actions {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .logout-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-strong);
+            background: transparent;
+            color: #D8DCE6;
+            font-family: inherit;
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 200ms ease, border-color 200ms ease;
+        }
+
+        .logout-btn:hover {
+            background: rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.24);
+        }
+
+        .logout-btn svg { width: 13px; height: 13px; }
+
+        .danger-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 4px 2px;
+            border: 0;
+            background: none;
+            color: var(--text-faint);
+            font-family: inherit;
+            font-size: 0.74rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: color 200ms ease;
+        }
+
+        .danger-link svg { width: 13px; height: 13px; }
+
+        .danger-link:hover { color: var(--danger); }
+
+        /* --- TOAST --- */
+        .profile-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 26px;
+            transform: translate(-50%, 14px);
+            max-width: min(420px, calc(100vw - 32px));
+            padding: 10px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--border-strong);
+            background: rgba(20, 20, 24, 0.94);
+            color: #E8EAF0;
+            font-size: 0.78rem;
+            line-height: 1.45;
+            text-align: center;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            box-shadow: 0 18px 40px -20px rgba(0, 0, 0, 0.9);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 220ms ease, transform 260ms ease;
+            z-index: 60;
+        }
+
+        .profile-toast.is-visible {
+            opacity: 1;
+            transform: translate(-50%, 0);
+        }
+
+        .profile-toast.is-error { border-color: rgba(242, 85, 90, 0.5); color: #FFC9CB; }
+
+        @media (max-width: 680px) {
+            body { padding: 76px 14px 36px; }
+            .bento { grid-template-columns: minmax(0, 1fr); }
+            .identity-card { flex-direction: column; align-items: flex-start; gap: 14px; }
+            .profile-nav--right { top: 14px; right: 14px; }
+            .profile-nav--left { top: 14px; left: 14px; }
+            .nav-pill { font-size: 0.72rem; padding: 6px 11px; }
+            .account-bar { justify-content: flex-start; }
         }
     </style>
 </head>
 
 <body>
-    <p id="büyük"></p><p id="kücük"></p><p id="hareketliKutu"></p><p id="hareketliKutu2"></p>
-    <p id="büyük2"></p><p id="büyük3"></p><p id="büyük4"></p><p id="büyük5"></p>
-    <p id="büyük6"></p><p id="büyük7"></p><p id="büyük8"></p>
-
-    <div id="forbackbutton">
-        <button id="backbutton">Back</button>
+    <div class="profile-nav profile-nav--left">
+        <button id="backbutton" class="nav-pill" type="button">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg>
+            Geri
+        </button>
     </div>
 
-    <div id="Menu">
-        <a href="girisliindex.html" class="egik">Anasayfa</a>
-        <a href="kelime.html" class="egik">İngilizce testler</a>
+    <div class="profile-nav profile-nav--right">
+        <a href="girisliindex.html" class="nav-pill">Anasayfa</a>
+        <a href="kelime.html" class="nav-pill">İngilizce Testler</a>
     </div>
 
-    <div id="container">
-        <div class="profile-pic-container">
-            <img src="https://via.placeholder.com/100" id="profileImage" class="profile-pic">
-            <label for="fileInput" class="upload-label">+</label>
-            <input type="file" id="fileInput" accept="image/*">
-        </div>
+    <main class="profile-page">
+        <header class="page-head">
+            <p class="eyebrow">Hesabım</p>
+            <h1>Profil</h1>
+        </header>
 
-        <div class="header" id="greeting">Hoşgeldiniz</div>
-
-        <div id="section">
-            <button id="Favorikelime">My Favourite Words</button>
-            <button id="users">Users</button>
-            <div id="followStats" style="margin-top: 15px; display: flex; justify-content: center; gap: 20px;">
-                <div id="followersClick" style="cursor: pointer;"><strong id="followerCount">0</strong> Takipçi</div>
-                <div id="followingClick" style="cursor: pointer;"><strong id="followingCount">0</strong> Takip Edilen</div>
-            </div>
-            <div id="langStats" style="margin-top: 15px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,0.15); display: flex; justify-content: center; gap: 15px; flex-wrap: wrap;">
-                <div style="background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 20px; font-size: 13px;">
-                    <span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="m3 10.5 9-7.5 9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M10 21v-6h4v6"/></svg></span> Ana Dil: <span id="userNativeLangBadge" style="font-weight: 600; color: #34d399;">Türkçe</span>
+        <div class="bento">
+            <!-- KİMLİK KARTI -->
+            <section class="bento-card identity-card" aria-label="Kimlik kartı">
+                <div class="avatar-wrap">
+                    <div class="avatar">
+                        <div class="avatar__inner">
+                            <span id="avatarInitial">B</span>
+                            <img id="profileImage" class="avatar__image" alt="Profil fotoğrafı" hidden>
+                        </div>
+                    </div>
+                    <label for="fileInput" class="avatar-upload" title="Profil fotoğrafını değiştir" aria-label="Profil fotoğrafını değiştir">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="6" width="18" height="14" rx="3"/><circle cx="12" cy="13" r="3.2"/><path d="M8 6l1.4-2h5.2L16 6"/></svg>
+                    </label>
+                    <input type="file" id="fileInput" accept="image/*">
                 </div>
-                <div style="background: rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 20px; font-size: 13px;">
-                    <span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1.4"/></svg></span> Öğrenilen Dil: <span id="userLearningLangBadge" style="font-weight: 600; color: #38bdf8;">İngilizce</span>
+
+                <div class="identity-meta">
+                    <h2 class="identity-name" id="greeting">Kullanıcı</h2>
+                    <div class="identity-sub">
+                        <span class="level-pill">
+                            <svg viewBox="0 0 24 24" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l2.6 5.6 6.1.8-4.5 4.2 1.2 6-5.4-3-5.4 3 1.2-6L3.3 9.4l6.1-.8L12 3Z"/></svg>
+                            <span id="userLevelBadge">Başlangıç</span>
+                        </span>
+                        <span class="identity-stats">
+                            <strong id="followerCount">0</strong> Takipçi
+                            <span class="dot">·</span>
+                            <strong id="followingCount">0</strong> Takip Edilen
+                        </span>
+                    </div>
                 </div>
-            </div>
-        </div>
+            </section>
 
-        <div class="result1">
-            <div id="content1">Bir işlem seçin...</div>
-        </div>
+            <!-- DİL ÇİFTİ -->
+            <section class="bento-card lang-card" aria-label="Dil çifti">
+                <div class="card-head">
+                    <p class="card-eyebrow">Dil Çifti</p>
+                    <button id="language" class="mini-btn" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18"/><path d="M12 3a15 15 0 0 0 0 18"/></svg>
+                        Dil Tercihi
+                    </button>
+                </div>
+                <div class="lang-pair">
+                    <div class="lang-side">
+                        <span class="lang-side__label">Ana Dil</span>
+                        <span class="lang-side__value lang-side__value--native" id="userNativeLangBadge">Türkçe</span>
+                    </div>
+                    <span class="lang-arrow" aria-hidden="true">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"/><path d="m13 6 6 6-6 6"/></svg>
+                    </span>
+                    <div class="lang-side lang-side--right">
+                        <span class="lang-side__label">Öğrenilen Dil</span>
+                        <span class="lang-side__value lang-side__value--learning" id="userLearningLangBadge">İngilizce</span>
+                    </div>
+                </div>
+            </section>
 
-        <div id="section2">
-            <button id="Deleteaccount" style="background-color: #ff4d4d; color: white;">Delete Account</button>
-            <button id="language"><span class="icon-badge icon-badge--sm" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/><path d="M12 3a15 15 0 0 1 0 18"/><path d="M12 3a15 15 0 0 0 0 18"/></svg></span> Dil Tercihi</button>
+            <!-- HIZLI ERİŞİM -->
+            <section class="bento-card quick-card" aria-label="Hızlı erişim">
+                <div class="card-head">
+                    <p class="card-eyebrow">Hızlı Erişim</p>
+                </div>
+                <div class="quick-list">
+                    <a class="quick-row" id="Favorikelime" href="TumKelimeler.html">
+                        <span class="quick-row__icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1Z"/></svg>
+                        </span>
+                        <span class="quick-row__text">
+                            Favori Kelimelerim
+                            <small>Kelime listeni keşfet</small>
+                        </span>
+                        <span class="quick-row__chevron">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+                        </span>
+                    </a>
+
+                    <button class="quick-row" id="users" type="button">
+                        <span class="quick-row__icon">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-5.4 6-5.4s6 2.1 6 5.4"/><path d="M16 5.2a3.2 3.2 0 0 1 0 6.2"/><path d="M18 14.6c2 .7 3 2.4 3 4.6"/></svg>
+                        </span>
+                        <span class="quick-row__text">
+                            Kullanıcılar
+                            <small>Topluluğa göz at</small>
+                        </span>
+                        <span class="quick-row__chevron">
+                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>
+                        </span>
+                    </button>
+                </div>
+            </section>
+
+            <!-- KULLANICILAR PANELİ -->
+            <section class="bento-card users-panel" id="usersPanel" aria-label="Kullanıcılar">
+                <div class="card-head">
+                    <p class="card-eyebrow">Kullanıcılar / Topluluk</p>
+                    <button id="closeUsers" class="mini-btn" type="button" aria-label="Kullanıcı listesini kapat">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12"/><path d="M18 6 6 18"/></svg>
+                        Kapat
+                    </button>
+                </div>
+                <div class="users-list" id="usersList">
+                    <div class="users-empty">Listelemek için dokun.</div>
+                </div>
+            </section>
+
+            <!-- HESAP YÖNETİMİ -->
+            <section class="account-bar" aria-label="Hesap yönetimi">
+                <div class="account-bar__label">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3 4 6v5c0 5 3.4 8 8 10 4.6-2 8-5 8-10V6l-8-3Z"/><path d="M12 9v4"/><path d="M12 16.5h.01"/></svg>
+                    Hesap Yönetimi
+                </div>
+                <div class="account-bar__actions">
+                    <button id="logoutProfileBtn" class="logout-btn" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5"/><path d="M21 12H9"/></svg>
+                        Çıkış Yap
+                    </button>
+                    <button id="Deleteaccount" class="danger-link" type="button">
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="M19 6l-1 14H6L5 6"/><path d="M10 11v5"/><path d="M14 11v5"/></svg>
+                        Hesabı Sil
+                    </button>
+                </div>
+            </section>
         </div>
-    </div>
+    </main>
+
+    <div class="profile-toast" id="profileToast" role="status" aria-live="polite"></div>
 
     <script src="languages.js"></script>
     <script>
         document.addEventListener("DOMContentLoaded", function () {
             const API_URL = window.location.origin;
-            const savedUsername = localStorage.getItem("username") || "Kullanıcı";
-            const savedTheme = localStorage.getItem("selectedTheme");
-            const profileImage = document.getElementById("profileImage");
-            const content1 = document.getElementById("content1");
+            const savedUsername = (localStorage.getItem("username") || "").trim();
 
+            // Oturum yoksa profil sayfası açılmaz; login'e yönlendir.
+            if (!savedUsername) {
+                window.location.replace("giris.html");
+                return;
+            }
+
+            const profileImage = document.getElementById("profileImage");
+            const avatarInitial = document.getElementById("avatarInitial");
+            const toast = document.getElementById("profileToast");
+            let toastTimer = null;
+
+            function showToast(message, isError) {
+                if (!toast) return;
+                toast.textContent = String(message || "").replace(/<[^>]*>/g, "");
+                toast.classList.toggle("is-error", Boolean(isError));
+                toast.classList.add("is-visible");
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(function () {
+                    toast.classList.remove("is-visible");
+                }, 3200);
+            }
+
+            function setInitial(name) {
+                const first = String(name || "").trim().charAt(0).toUpperCase();
+                avatarInitial.textContent = first || "B";
+                avatarInitial.hidden = false;
+                profileImage.hidden = true;
+            }
+
+            function setProfilePic(src) {
+                profileImage.src = src;
+                profileImage.hidden = false;
+                avatarInitial.hidden = true;
+            }
+
+            function levelFromKnown(known) {
+                const value = Number(known) || 0;
+                if (value < 100) return "Başlangıç";
+                if (value < 350) return "Orta";
+                if (value < 700) return "İleri";
+                return "Uzman";
+            }
+
+            document.getElementById("greeting").textContent = savedUsername;
+            setInitial(savedUsername);
+
+            // DİL ROZETLERİ (emoji yok: yalnızca dil adı)
             function updateLangBadges(nativeCode, learningCode) {
                 const nMeta = LanguageManager.getLanguageMeta(nativeCode || "tr");
                 const lMeta = LanguageManager.getLanguageMeta(learningCode || "en");
                 const nEl = document.getElementById("userNativeLangBadge");
                 const lEl = document.getElementById("userLearningLangBadge");
-                if (nEl) nEl.textContent = `${nMeta.flag} ${nMeta.name}`;
-                if (lEl) lEl.textContent = `${lMeta.flag} ${lMeta.name}`;
+                if (nEl) nEl.textContent = nMeta.name;
+                if (lEl) lEl.textContent = lMeta.name;
             }
 
-            // Başlangıçta localStorage'daki tercihleri göster
             const currentPrefs = LanguageManager.getPreferences();
             updateLangBadges(currentPrefs.nativeLang, currentPrefs.learningLang);
 
-            // TEMA UYGULAMA
-            if (savedTheme === 'black') {
-                document.body.style.backgroundColor = "#222831";
-                document.getElementById("container").style.backgroundColor = "rgba(0,0,0,0.5)";
-            } else {
-                document.body.style.backgroundColor = "#6482AD";
-                document.getElementById("container").style.backgroundColor = "rgba(255,255,255,0.1)";
-            }
-
-            // KULLANICI BİLGİLERİNİ VE RESMİ ÇEKME
+            // KULLANICI BİLGİLERİ
             function loadUserInfo() {
-                fetch(`${API_URL}/get-user-info/${savedUsername}`)
+                fetch(`${API_URL}/get-user-info/${encodeURIComponent(savedUsername)}`)
                     .then(res => res.json())
                     .then(data => {
-                        if (data.success && data.user) {
-                            // Eğer veritabanında profil resmi varsa yükle
-                            if (data.user.profilePic) {
-                                profileImage.src = data.user.profilePic;
-                            }
-                            document.getElementById("followerCount").textContent = (data.user.followers || []).length;
-                            document.getElementById("followingCount").textContent = (data.user.following || []).length;
-                            document.getElementById("greeting").textContent = "Hoşgeldiniz, " + savedUsername;
+                        if (!data.success || !data.user) return;
 
-                            // Dil tercihleri veritabanından al ve güncelle
-                            if (data.user.nativeLang || data.user.learningLang) {
-                                const nLang = data.user.nativeLang || "tr";
-                                const lLang = data.user.learningLang || "en";
-                                LanguageManager.setPreferences(nLang, lLang, { syncServer: false });
-                                updateLangBadges(nLang, lLang);
-                            }
+                        if (data.user.profilePic) {
+                            setProfilePic(data.user.profilePic);
+                        }
+
+                        document.getElementById("followerCount").textContent = (data.user.followers || []).length;
+                        document.getElementById("followingCount").textContent = (data.user.following || []).length;
+                        document.getElementById("userLevelBadge").textContent = levelFromKnown(data.user.knownWords);
+
+                        if (data.user.nativeLang || data.user.learningLang) {
+                            const nLang = data.user.nativeLang || "tr";
+                            const lLang = data.user.learningLang || "en";
+                            LanguageManager.setPreferences(nLang, lLang, { syncServer: false });
+                            updateLangBadges(nLang, lLang);
                         }
                     })
                     .catch(err => console.error("Bilgi çekme hatası:", err));
@@ -483,138 +874,163 @@
 
             loadUserInfo();
 
-            // DİL TERCİHİ BUTONU
+            // DİL TERCİHİ
             document.getElementById("language").onclick = function () {
-                LanguageManager.openModal(function(newPrefs) {
+                LanguageManager.openModal(function (newPrefs) {
                     updateLangBadges(newPrefs.nativeLang, newPrefs.learningLang);
-                    content1.innerHTML = `<span style='color:#00ff00; font-weight:600;'>Dil tercihleri güncellendi:</span><br>Ana Dil: <strong>${LanguageManager.getLanguageMeta(newPrefs.nativeLang).name}</strong> | Öğrenilen: <strong>${LanguageManager.getLanguageMeta(newPrefs.learningLang).name}</strong>`;
+                    showToast("Dil tercihlerin güncellendi.");
                 });
             };
 
-            // PROFİL RESMİ GÜNCELLEME
+            // PROFİL FOTOĞRAFI
             document.getElementById("fileInput").addEventListener("change", function () {
-                const file = this.files[0];
-                if (file) {
-                    // Dosya boyutu kontrolü (Örn: Max 2MB)
-                    if (file.size > 2 * 1024 * 1024) {
-                        content1.innerHTML = "<span style='color:red;'>Hata: Dosya boyutu çok büyük (Max 2MB).</span>";
-                        return;
-                    }
+                const file = this.files && this.files[0];
+                if (!file) return;
 
-                    const reader = new FileReader();
-                    content1.innerHTML = "Resim yükleniyor...";
+                if (file.size > 2 * 1024 * 1024) {
+                    showToast("Dosya boyutu çok büyük (en fazla 2MB).", true);
+                    this.value = "";
+                    return;
+                }
 
-                    reader.onload = function (e) {
-                        const base64Image = e.target.result;
+                const reader = new FileReader();
+                showToast("Fotoğraf yükleniyor...");
 
-                        fetch(`${API_URL}/update-profile-pic`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({ 
-                                username: savedUsername, 
-                                imageBase64: base64Image 
-                            })
-                        })
+                reader.onload = function (e) {
+                    const base64Image = e.target.result;
+
+                    fetch(`${API_URL}/update-profile-pic`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({ username: savedUsername, imageBase64: base64Image })
+                    })
                         .then(res => res.json())
                         .then(data => {
-                            if(data.success) {
-                                profileImage.src = base64Image;
-                                content1.innerHTML = "<span style='color:#00ff00;'>Profil resmi başarıyla güncellendi!</span>";
+                            if (data.success) {
+                                setProfilePic(base64Image);
+                                showToast("Profil fotoğrafın güncellendi.");
                             } else {
-                                content1.innerHTML = "<span style='color:red;'>Yükleme hatası: " + data.message + "</span>";
+                                showToast("Yükleme hatası: " + (data.message || "Bilinmeyen hata"), true);
                             }
                         })
-                        .catch(err => {
-                            content1.innerHTML = "<span style='color:red;'>Sunucu hatası oluştu.</span>";
-                        });
-                    };
-                    reader.readAsDataURL(file);
-                }
+                        .catch(() => showToast("Sunucu hatası oluştu.", true));
+                };
+
+                reader.readAsDataURL(file);
             });
 
-            // USERS LİSTESİ
-            document.getElementById("users").onclick = function () {
-                content1.innerHTML = "Kullanıcılar listeleniyor...";
+            // KULLANICILAR / TOPLULUK
+            const usersPanel = document.getElementById("usersPanel");
+            const usersList = document.getElementById("usersList");
+            let usersLoaded = false;
+
+            function openUsers(forceReload) {
+                usersPanel.classList.add("is-open");
+                if (usersLoaded && !forceReload) return;
+
+                usersList.innerHTML = '<div class="users-empty">Kullanıcılar yükleniyor...</div>';
+
                 fetch(`${API_URL}/users`)
                     .then(res => res.json())
                     .then(usersArray => {
-                        const others = usersArray.filter(u => u.username !== savedUsername);
-                        let html = "<table>";
-                        others.forEach(u => {
-                            const miniPic = u.profilePic ? u.profilePic : 'https://via.placeholder.com/30';
+                        const others = Array.isArray(usersArray)
+                            ? usersArray.filter(u => u && u.username !== savedUsername)
+                            : [];
+
+                        if (!others.length) {
+                            usersList.innerHTML = '<div class="users-empty">Henüz başka kullanıcı yok.</div>';
+                            usersLoaded = true;
+                            return;
+                        }
+
+                        usersList.innerHTML = others.map(u => {
                             const isBot = (u.username === "English_AI" || u.username === "English_Mentor" || u.isAI);
-                            const badge = isBot ? `<span style="background:linear-gradient(135deg, #0284c7, #2563eb); color:white; font-size:10px; padding:2px 7px; border-radius:10px; margin-left:6px; font-weight:600;">Eğitmen</span>` : '';
+                            const initial = String(u.username || "?").trim().charAt(0).toUpperCase() || "?";
+                            const avatar = u.profilePic
+                                ? `<img class="user-row__avatar" src="${u.profilePic}" alt="">`
+                                : `<span class="user-row__avatar">${initial}</span>`;
+                            const tag = isBot ? '<span class="teacher-tag">Eğitmen</span>' : '';
                             const btnText = isBot ? "Konuş" : "Ziyaret Et";
-                            const btnColor = isBot ? "background-color: #4f46e5;" : "background-color: #6a5acd;";
 
-                            html += `<tr>
-                                <td><img src="${miniPic}" style="width:30px; height:30px; border-radius:50%; vertical-align:middle; margin-right:10px;"><strong>${u.username}</strong>${badge}</td>
-                                <td align="right"><button class="visit-btn" data-user="${u.username}" data-isai="${isBot}" style="${btnColor}">${btnText}</button></td>
-                            </tr>`;
-                        });
-                        html += "</table>";
-                        content1.innerHTML = html;
+                            return `<div class="user-row">
+                                ${avatar}
+                                <span class="user-row__name">${u.username}${tag}</span>
+                                <button class="visit-btn" data-user="${u.username}" data-isai="${isBot}" type="button">${btnText}</button>
+                            </div>`;
+                        }).join("");
 
-                        document.querySelectorAll(".visit-btn").forEach(btn => {
-                            btn.onclick = function() {
+                        usersList.querySelectorAll(".visit-btn").forEach(btn => {
+                            btn.onclick = function () {
                                 const targetUser = this.getAttribute("data-user");
                                 const isAi = this.getAttribute("data-isai") === "true";
                                 localStorage.setItem("currentusername", targetUser);
-                                if (isAi) {
-                                    window.location.href = "Message.html";
-                                } else {
-                                    window.location.href = "Otherprofiles.html";
-                                }
+                                window.location.href = isAi ? "Message.html" : "Otherprofiles.html";
                             };
                         });
-                    });
-            };
 
-            // HESAP SİLME
-            document.getElementById("Deleteaccount").onclick = function () {
-                const confirmation = confirm("Hesabınızı silmek istediğinize emin misiniz?");
-                if (confirmation) {
-                    fetch(`${API_URL}/delete-account`, {
-                        method: "DELETE",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({ username: savedUsername })
+                        usersLoaded = true;
                     })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.success) {
-                            alert("Hesabınız silindi.");
-                            localStorage.clear();
-                            window.location.href = "index.html";
-                        }
+                    .catch(() => {
+                        usersList.innerHTML = '<div class="users-empty">Kullanıcı listesi alınamadı.</div>';
                     });
+            }
+
+            document.getElementById("users").onclick = function () {
+                if (usersPanel.classList.contains("is-open")) {
+                    usersPanel.classList.remove("is-open");
+                } else {
+                    openUsers(false);
                 }
             };
 
-            // ANİMASYON
-            function hareket(box) {
-                let t = Math.random()*500, l = Math.random()*800, vd=1, hd=1;
-                setInterval(() => {
-                    l += 2*hd; t += 2*vd;
-                    if(l <= 0 || l+30 >= window.innerWidth) hd *= -1;
-                    if(t <= 0 || t+30 >= window.innerHeight) vd *= -1;
-                    box.style.top = t+"px"; box.style.left = l+"px";
-                }, 100);
-            }
-            document.querySelectorAll("p[id^='büyük'], p[id^='hareketli'], p[id^='kücük']").forEach(p => {
-                hareket(p);
-                p.style.boxShadow = (savedTheme === 'black') ? "0 0 30px 15px #76ABAE" : "0 0 30px 15px #E2DAD6";
-            });
+            document.getElementById("closeUsers").onclick = function () {
+                usersPanel.classList.remove("is-open");
+            };
 
-            document.getElementById("backbutton").onclick = () => window.location.href = "girisliindex.html";
+            // HESAP: ÇIKIŞ
+            document.getElementById("logoutProfileBtn").onclick = function () {
+                localStorage.removeItem("username");
+                localStorage.removeItem("currentusername");
+                window.location.replace("giris.html");
+            };
+
+            // HESAP: SİLME
+            document.getElementById("Deleteaccount").onclick = function () {
+                const confirmation = confirm("Hesabınızı silmek istediğinize emin misiniz? Bu işlem geri alınamaz.");
+                if (!confirmation) return;
+
+                fetch(`${API_URL}/delete-account`, {
+                    method: "DELETE",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ username: savedUsername })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            localStorage.removeItem("username");
+                            localStorage.removeItem("currentusername");
+                            showToast("Hesabın silindi.");
+                            setTimeout(() => window.location.replace("index.html"), 700);
+                        } else {
+                            showToast("Hesap silinemedi: " + (data.message || "Bilinmeyen hata"), true);
+                        }
+                    })
+                    .catch(() => showToast("Sunucu hatası oluştu.", true));
+            };
+
+            // GERİ
+            document.getElementById("backbutton").onclick = function () {
+                window.location.href = "girisliindex.html";
+            };
+
+            // Anasayfadan "Kullanıcılar" ile gelindiyse paneli aç
+            try {
+                const params = new URLSearchParams(window.location.search);
+                if (params.get("action") === "users") openUsers(false);
+            } catch (e) { /* yoksay */ }
         });
     </script>
     <script src="design-system.js"></script>
 </body>
+
 </html>
-
-
-
-
-
-
-
