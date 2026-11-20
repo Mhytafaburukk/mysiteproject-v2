@@ -431,6 +431,12 @@ app.post("/api/video-call/chat", async (req, res) => {
         let replyText = null;
         let apiError = null;
 
+        // Native alternatif, ana sohbet yanıtıyla PARALEL üretilir (gecikme eklemez).
+        const hasEnglishMessage = Boolean(message) && !/[ğüşıöçĞÜŞİÖÇ]/.test(String(message));
+        const alternativePromise = (hasEnglishMessage && aiConfig.apiKey && aiConfig.model && aiConfig.model !== "built-in")
+            ? aiService.generateNativeAlternative(message, aiConfig.apiKey, aiConfig.model)
+            : Promise.resolve(null);
+
         // 1. Canlı API dene (istemci anahtarı veya .env)
         if (aiConfig.apiKey && aiConfig.model && aiConfig.model !== "built-in") {
             try {
@@ -463,6 +469,17 @@ app.post("/api/video-call/chat", async (req, res) => {
         replyText = aiService.stripEmojis(replyText);
         if (apiError) apiError = aiService.stripEmojis(apiError);
 
+        // Native alternatif: AI önerisi varsa onu kullan, yoksa kural tabanlı yedeğe düş.
+        let natural = await alternativePromise;
+        if (!natural || !natural.alternative) {
+            const fallbackText = aiService.suggestNaturalPhrase(message);
+            natural = fallbackText ? { alternative: fallbackText, reason: "" } : { alternative: "", reason: "" };
+        }
+        // Güvenlik ağı: öneri kullanıcının cümlesiyle aynıysa (noktalama/harf farkıyla bile) gösterme.
+        if (natural.alternative && aiService.isSamePhrase(natural.alternative, message)) {
+            natural = { alternative: "", reason: "" };
+        }
+
         res.json({
             success: true,
             reply: replyText,
@@ -470,7 +487,8 @@ app.post("/api/video-call/chat", async (req, res) => {
             apiError: apiError,
             scenarioId: safeScenarioId,
             scenarioProgress: aiService.analyzeScenarioProgress(safeScenarioId, safeHistory, message),
-            naturalSuggestion: aiService.suggestNaturalPhrase(message)
+            naturalSuggestion: natural.alternative || "",
+            naturalReason: natural.reason || ""
         });
     } catch (e) {
         console.error("Video call chat error:", e.message);

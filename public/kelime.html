@@ -621,6 +621,8 @@
 
         // --- AI SORU ÜRETİCİ MANTIĞI ---
         let currentAIQuestionData = null;
+        // Kullanıcı bir şık seçip soruyu yanıtladı mı? (TTS spoiler kontrolü için)
+        let aiQuestionAnswered = false;
 
         async function fetchAIQuestion(random = false) {
             const input = document.getElementById("aiWordInput");
@@ -631,6 +633,7 @@
             const optionsGrid = document.getElementById("aiOptionsGrid");
             const explanationBox = document.getElementById("aiExplanation");
 
+            aiQuestionAnswered = false;
             sentenceBox.innerHTML = "Yapay zeka soru üretiyor, lütfen bekleyin...";
             optionsGrid.innerHTML = "";
             explanationBox.style.display = "none";
@@ -655,6 +658,7 @@
             const optionsGrid = document.getElementById("aiOptionsGrid");
             const explanationBox = document.getElementById("aiExplanation");
 
+            aiQuestionAnswered = false;
             const formattedSentence = q.sentence.replace("_______", `<span class="blank-space">_______</span>`);
             sentenceBox.innerHTML = formattedSentence;
 
@@ -668,6 +672,7 @@
         }
 
         function checkAIAnswer(btn, selected, correct) {
+            aiQuestionAnswered = true;
             const allBtns = document.querySelectorAll("#aiOptionsGrid .option-btn");
             allBtns.forEach(b => b.disabled = true);
 
@@ -695,12 +700,23 @@
         }
 
         function speakSentence() {
-            if (currentAIQuestionData && 'speechSynthesis' in window) {
-                const text = currentAIQuestionData.sentence.replace("_______", currentAIQuestionData.correctAnswer);
-                const utter = new SpeechSynthesisUtterance(text);
-                utter.lang = 'en-US';
-                window.speechSynthesis.speak(utter);
-            }
+            if (!currentAIQuestionData || !('speechSynthesis' in window)) return;
+
+            const sentence = String(currentAIQuestionData.sentence || "");
+            const correct = String(currentAIQuestionData.correctAnswer || "");
+
+            // Kullanıcı henüz cevaplamadıysa doğru cevabı ASLA okuma: boşluğu "bla bla" olarak seslendir.
+            // Cevapladıktan sonra boşluk doğru kelimeyle doldurulur.
+            const filler = aiQuestionAnswered ? ` ${correct} ` : " bla bla ";
+            const text = sentence
+                .replace(/\s*_{3,}\s*|\s*\.{3,}\s*/g, filler)
+                .replace(/\s+/g, " ")
+                .trim();
+
+            const utter = new SpeechSynthesisUtterance(text);
+            utter.lang = 'en-US';
+            window.speechSynthesis.cancel();
+            window.speechSynthesis.speak(utter);
         }
     </script>
 </body>

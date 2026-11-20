@@ -1215,6 +1215,13 @@
             color: #7FA6FF;
         }
 
+        .natural-suggestion__reason {
+            display: none;
+            margin-top: 4px;
+            font-size: 0.7rem;
+            color: #93A2C4;
+        }
+
         /* --- KONUŞMA KARNESİ / FLASHCARDS --- */
         .report-grid {
             display: grid;
@@ -1426,6 +1433,7 @@
         <div class="natural-suggestion" id="naturalSuggestion" aria-live="polite">
             <span class="natural-suggestion__label">Daha doğal nasıl söylenir?</span>
             <span id="naturalSuggestionText"></span>
+            <span class="natural-suggestion__reason" id="naturalSuggestionReason"></span>
         </div>
 
         <!-- MAIN TUTOR STAGE -->
@@ -2071,16 +2079,45 @@
                 });
         }
 
-        function showNaturalSuggestion(suggestion) {
+        // Noktalama / büyük-küçük harf / boşluk farklarını yok sayan karşılaştırma anahtarı.
+        function normalizePhrase(text) {
+            return String(text || "")
+                .toLowerCase()
+                .replace(/[’']/g, "'")
+                .replace(/[.,!?;:"“”…\-–—]/g, " ")
+                .replace(/\s+/g, " ")
+                .trim();
+        }
+
+        function showNaturalSuggestion(suggestion, reason, originalText) {
             const box = document.getElementById("naturalSuggestion");
             const text = document.getElementById("naturalSuggestionText");
+            const reasonEl = document.getElementById("naturalSuggestionReason");
             if (!box || !text) return;
-            text.textContent = suggestion || "Cümlen zaten doğal görünüyor.";
+
+            const cleanSuggestion = String(suggestion || "")
+                .replace(/^["'“”]+|["'“”]+$/g, "")
+                .replace(/\s+/g, " ")
+                .trim();
+
+            // Öneri yoksa veya kullanıcının kendi cümlesiyle aynıysa hiç gösterme.
+            if (!cleanSuggestion || normalizePhrase(cleanSuggestion) === normalizePhrase(originalText)) {
+                box.classList.remove("show");
+                return;
+            }
+
+            text.textContent = cleanSuggestion;
+            if (reasonEl) {
+                const cleanReason = String(reason || "").trim();
+                reasonEl.textContent = cleanReason;
+                reasonEl.style.display = cleanReason ? "block" : "none";
+            }
+
             box.classList.add("show");
             clearTimeout(window._naturalSuggestionTimer);
             window._naturalSuggestionTimer = setTimeout(function () {
                 box.classList.remove("show");
-            }, 9000);
+            }, 11000);
         }
 
         // --- SES DİLİ ALGILAMA ---
@@ -2579,7 +2616,7 @@
 
                     const looksTurkish = /[ğüşıöçĞÜŞİÖÇ]/.test(messageText) || /\b(ve|bir|için|ben|sen|bugün|nasıl|merhaba|teşekkür)\b/i.test(messageText);
                     if (!looksTurkish) {
-                        showNaturalSuggestion(data.naturalSuggestion || "");
+                        showNaturalSuggestion(data.naturalSuggestion || "", data.naturalReason || "", messageText);
                     }
 
                     if (data.apiError) {

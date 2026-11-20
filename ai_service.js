@@ -210,6 +210,23 @@ function analyzeScenarioProgress(scenarioId, history, currentMessage) {
     };
 }
 
+// Büyük/küçük harf, noktalama ve boşluk farklarını yok sayarak iki cümleyi karşılaştırır.
+function normalizeForPhraseCompare(text) {
+    return String(text || "")
+        .toLowerCase()
+        .replace(/[’']/g, "'")
+        .replace(/[.,!?;:"“”…\-–—]/g, " ")
+        .replace(/\s+/g, " ")
+        .trim();
+}
+
+// Öneri kullanıcının kendi cümlesiyle birebir (noktalama/harf farkı dahil) aynı mı?
+function isSamePhrase(a, b) {
+    const left = normalizeForPhraseCompare(a);
+    const right = normalizeForPhraseCompare(b);
+    return Boolean(left) && left === right;
+}
+
 function suggestNaturalPhrase(text) {
     let phrase = String(text || "").trim().replace(/\s+/g, " ");
     if (!phrase || isLikelyTurkish(phrase)) return "";
@@ -226,7 +243,73 @@ function suggestNaturalPhrase(text) {
     phrase = phrase.charAt(0).toUpperCase() + phrase.slice(1);
     if (!/[.!?]$/.test(phrase)) phrase += ".";
 
-    return phrase === original ? "" : phrase;
+    // Aynı cümleyi (noktalama/harf farkıyla bile) öneri olarak döndürmeyelim.
+    if (isSamePhrase(phrase, original)) return "";
+    return phrase;
+}
+
+// Canlı AI için "daha doğal / native alternatif" sistem prompt'u.
+// Gramer hatası varsa düzeltilmiş hali; cümle doğruysa daha zengin/deyimsel (C1) FARKLI bir alternatif ister.
+function getNativeAlternativeSystemPrompt() {
+    return `[ROLE]
+You are an English fluency coach inside a live speaking app. The student speaks English and writes one message per turn. Your job is to suggest the version a native speaker would most naturally use, plus one short explanation in Turkish.
+
+[NON-NEGOTIABLE RULES]
+1. NEVER return the student's sentence itself. The "alternative" must be different in wording from the student's message, even when it is grammatically correct. Copying it back with only punctuation or capitalisation changes is a failure.
+2. If the student's sentence has a grammar or word-choice error, return the corrected, natural version (keep their meaning).
+3. If the student's sentence is already grammatically correct, do NOT repeat it. Offer a richer, more fluent, idiomatic C1-level alternative that a native speaker would prefer (better collocation, idiom, or more natural phrasing), without changing the meaning.
+4. The alternative must be one clean English sentence, TTS-friendly: no quotes around it, no markdown, no emojis, no lists, no labels inside the sentence.
+5. "reason" must be ONE short Turkish sentence explaining why the alternative is more natural. No emojis, no markdown.
+6. If the student's message is Turkish or not English, return alternative as an empty string.
+7. Output ONLY valid JSON in exactly this shape:
+{"alternative": "<English sentence>", "reason": "<kısa Türkçe açıklama>"}`;
+}
+
+// Canlı AI ile native alternatif üretir. Anahtar yoksa / hata olursa null döner.
+async function generateNativeAlternative(text, apiKey, model) {
+    const clean = String(text || "").trim().replace(/\s+/g, " ");
+    if (!clean || isLikelyTurkish(clean) || !apiKey || !model || model === "built-in") return null;
+
+    try {
+        const result = await callExternalAI(
+            clean,
+            apiKey,
+            model,
+            "native_alternative",
+            "C1",
+            [],
+            getNativeAlternativeSystemPrompt()
+        );
+        if (!result || typeof result !== "string") return null;
+
+        let parsed = null;
+        const raw = result.replace(/```(?:json)?/gi, "").trim();
+        const match = raw.match(/\{[\s\S]*\}/);
+        if (match) {
+            try { parsed = JSON.parse(match[0]); } catch (e) { parsed = null; }
+        }
+        if (!parsed && raw) {
+            // JSON gelmezse: ilk satır alternatif, "NEDEN:" ile başlayan satır açıklama.
+            const lines = raw.split(/\r?\n/).map(line => line.trim()).filter(Boolean);
+            const reasonLine = lines.find(line => /^neden[:\s]/i.test(line)) || "";
+            const altLine = lines.find(line => line && line !== reasonLine) || "";
+            parsed = { alternative: altLine, reason: reasonLine.replace(/^neden[:\s]*/i, "") };
+        }
+
+        let alternative = String((parsed && parsed.alternative) || "")
+            .replace(/^["'“”]+|["'“”]+$/g, "")
+            .replace(/\s+/g, " ")
+            .trim();
+        const reason = String((parsed && parsed.reason) || "").replace(/\s+/g, " ").trim();
+
+        if (!alternative || isLikelyTurkish(alternative)) return null;
+        if (isSamePhrase(alternative, clean)) return null;
+        if (!/[.!?]$/.test(alternative)) alternative += ".";
+
+        return { alternative, reason };
+    } catch (e) {
+        return null;
+    }
 }
 
 async function translateToTurkish(text, apiKey, model) {
@@ -2465,6 +2548,9 @@ module.exports = {
     getScenario,
     analyzeScenarioProgress,
     suggestNaturalPhrase,
+    generateNativeAlternative,
+    getNativeAlternativeSystemPrompt,
+    isSamePhrase,
     callExternalAI,
     callInterviewAI,
     getMockInterviewSystemPrompt,
